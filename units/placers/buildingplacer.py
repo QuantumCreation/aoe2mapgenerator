@@ -203,7 +203,6 @@ def add_borders(map, array_space_type, border_type = 1, border_margin = 1):
     for point in points:
         if is_on_border(points, point, border_margin):
             x, y = point
-            print("HERE")
             map.set_point(x,y,border_type)
     
     return
