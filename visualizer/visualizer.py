@@ -6,7 +6,8 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from common.constants.constants import DEFAULT_EMPTY_VALUE
 from copy import deepcopy
-
+from functools import reduce
+from utils.utils import set_from_matrix, unique_value_list
 
 def visualize_points(mapsize, points, mapping = [], colors = [(255,255,255)]):
     """
@@ -32,7 +33,7 @@ def visualize_points(mapsize, points, mapping = [], colors = [(255,255,255)]):
 
     ax.matshow(mat)
 
-def visualize_mat(matrix):
+def visualize_mat(matrix, include_zones = False):
     """
     Visualizes a matrix.
 
@@ -43,15 +44,12 @@ def visualize_mat(matrix):
 
     mat = deepcopy(matrix)
 
-    values = set()
-
     for i in range(len(mat)):
         for j in range(len(mat[0])):
-            if type(mat[i][j]) == int and mat[i][j] < 0:
+            if include_zones and type(mat[i][j]) == int and mat[i][j] < 0:
                 mat[i][j] = 0
-            values.add(mat[i][j])
-    
-    values = list(values)
+
+    values = unique_value_list(mat)
     remap = dict(zip(values,range(len(values))))
 
     for i in range(len(mat)):
@@ -106,3 +104,5 @@ def visualize_map(map):
 
 
     ax.matshow(mat)
+
+

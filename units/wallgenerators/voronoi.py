@@ -1,16 +1,41 @@
 from re import I
 import numpy as np
-from matplotlib.pylab import matshow
-import matplotlib.pyplot as plt
 
+def generate_voronoi_cells(size, interpoint_distance):
+    """
+    Generates an array of voronoi shapes, numbers starting from -1 and going down.
+
+    Args:
+        size: Size of an nxn array:
+        interpoint_distance: Minimum distance between points.
+    """
+    array = [[0 for i in range(size)] for j in range(size)]
+    points = _generate_poisson_voronoi_point_distribution(size, interpoint_distance)
+    _assign_voronoi_cell_numbers(array, points)
+
+
+    total = -1
+
+    while(total != 0):
+        total = 0
+        new_points = []
+        for (x,y) in points:
+            new_points.extend(_voronoi_grow_single(array, (x,y), point_type=array[x][y]))
+        
+        total += len(new_points)
+        points = new_points
     
-def generate_poisson_voronoi_point_distribution(size, interpoint_distance):
+    return array
+
+# ------------------------- HELPER METHODS ----------------------------------
+
+def _generate_poisson_voronoi_point_distribution(size, interpoint_distance):
     """
     Generates a list of points for creating a voronoi pattern
     """
     k = 40
 
-    points = poisson_disk_sample(size,size,interpoint_distance,k)
+    points = _poisson_disk_sample(size,size,interpoint_distance,k)
     points = np.ndarray.tolist(points)
 
     for i, (a,b) in enumerate(points):
@@ -18,7 +43,7 @@ def generate_poisson_voronoi_point_distribution(size, interpoint_distance):
     
     return points
 
-def assign_voronoi_cell_numbers(array, points):
+def _assign_voronoi_cell_numbers(array, points):
     """
     Assigns a point value to each point.
 
@@ -28,38 +53,12 @@ def assign_voronoi_cell_numbers(array, points):
     """
 
     for i, (x,y) in enumerate(points):
-        if valid(array,x,y):
+        if _valid(array,x,y):
             array[x][y] = -(i+1)
     
     return array
 
-def generate_voronoi_walls(size, interpoint_distance):
-    """
-    Generates an array of voronoi shapes, numbers starting from -1 and going down.
-
-    Args:
-        size: Size of an nxn array:
-        interpoint_distance: Minimum distance between points.
-    """
-    array = [[0 for i in range(size)] for j in range(size)]
-    points = generate_poisson_voronoi_point_distribution(size, interpoint_distance)
-    assign_voronoi_cell_numbers(array, points)
-
-
-    total = -1
-
-    while(total != 0):
-        total = 0
-        new_points = []
-        for (x,y) in points:
-            new_points.extend(voronoi_grow_single(array, (x,y), point_type=array[x][y]))
-        
-        total += len(new_points)
-        points = new_points
-    
-    return array
-
-def valid(array, x, y):
+def _valid(array, x, y):
     """
     Checks that point coordinates are valid.
 
@@ -69,7 +68,7 @@ def valid(array, x, y):
     """
     return (0<=x<len(array)) and (0<=y<len(array[0]))
 
-def voronoi_grow_single(array, point, point_type):
+def _voronoi_grow_single(array, point, point_type):
     """
     Grows a single cell for creating a voronoi pattern.
 
@@ -85,13 +84,13 @@ def voronoi_grow_single(array, point, point_type):
     for i in range(-1,2):
         for j in range(-1,2):
             if abs(i) + abs(j) != 0:
-                if valid(array, x+i, y+j) and array[x+i][y+j] == 0:
+                if _valid(array, x+i, y+j) and array[x+i][y+j] == 0:
                     array[x+i][y+j] = point_type
                     new_points.append([x+i,y+j])
     
     return new_points
 
-def poisson_disk_sample(width=1.0, height=1.0, radius=0.025, k=30):
+def _poisson_disk_sample(width=1.0, height=1.0, radius=0.025, k=30):
     """
     Generates random points with the poisson disk method
 
