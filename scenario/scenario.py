@@ -7,7 +7,7 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 
-from constants.constants import BASE_SCENE_DIR
+from common.constants.constants import BASE_SCENE_DIR
 
 from units.placers.buildingplacer import get_valid_points
 import random

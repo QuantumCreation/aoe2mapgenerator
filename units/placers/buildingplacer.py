@@ -1,7 +1,7 @@
 
 import random
 from re import A
-from constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE
+from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE
 
 
 def check_placement(obj_space, point, obj_size, margin, width = -1, height = -1):

@@ -5,7 +5,7 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from matplotlib.pyplot import new_figure_manager
-from constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_EMPTY_VALUE
+from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_EMPTY_VALUE
 
 
 class map():
@@ -42,6 +42,15 @@ class map():
         
         return new_dict
     
+
+    def get_point_type(self, new_value):
+        """
+        Returns the type of the new value point.
+
+        Args:
+            new_value: The value of the point being added.
+        """
+        
     def set_point(self, x, y, new_value):
         """
         Takes an x and y coordinate and updates both the array and set representation.

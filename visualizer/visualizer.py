@@ -4,7 +4,7 @@ from matplotlib.pylab import matshow
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
-from constants.constants import DEFAULT_EMPTY_VALUE
+from common.constants.constants import DEFAULT_EMPTY_VALUE
 from copy import deepcopy
 
 
