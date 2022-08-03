@@ -42,7 +42,7 @@ class map():
         
         return new_dict
     
-
+    # String
     def get_point_type(self, new_value):
         """
         Returns the type of the new value point.
