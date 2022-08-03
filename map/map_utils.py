@@ -1,4 +1,4 @@
-from common.enums.type_enum import ValueType
+from common.enums.enum import ValueType
 
 class MapUtilsMixin():
     """
@@ -23,6 +23,8 @@ class MapUtilsMixin():
             return self.object_dict
         elif value_type == ValueType.DECOR:
             return self.decor_dict
+        elif value_type == ValueType.ELEVATION:
+            return self.elevation_dict
         
         raise ValueError("Retrieving dictionary from value type failed.")
     
@@ -41,5 +43,7 @@ class MapUtilsMixin():
             return self.object_array
         elif value_type == ValueType.DECOR:
             return self.decor_array
+        elif value_type == ValueType.ELEVATION:
+            return self.elevation_array
         
         raise ValueError("Retrieving array from value type failed.")

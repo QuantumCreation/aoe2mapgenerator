@@ -7,24 +7,15 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 
-from common.constants.constants import BASE_SCENE_DIR
+from common.constants.constants import BASE_SCENE_DIR, X_SHIFT, Y_SHIFT
 
 from units.placers.buildingplacer import get_valid_points
 import random
 import numpy as np
-
+from common.enums.enum import ObjectSize
 import os
 
-X_SHIFT = 0.5
-Y_SHIFT = 0.5
 
-input_path = r"C:\Users\josep\Games\Age of Empires 2 DE\76561198242754748\resources\_common\scenario\Basic_Py.aoe2scenario"
-output_path = r"C:\Users\josep\Games\Age of Empires 2 DE\76561198242754748\resources\_common\scenario\Basic_Py2.aoe2scenario"
-
-NON_SHIFT_CLASSES = {
-    BuildingInfo.CASTLE,
-    BuildingInfo.HOUSE,
-}
 
 def make_scenario(file_name):
     """
@@ -53,7 +44,7 @@ def write_units(scenario, points: set, unit_const, player: int, rotation = -1):
     for i, (x,y) in enumerate(points):
         rotation = int(random.random()*50)
 
-        if unit_const in NON_SHIFT_CLASSES:
+        if ObjectSize(unit_const._name_).value%2 == 0:
             unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y,rotation=rotation)
         else:
             unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x+X_SHIFT,y=y+Y_SHIFT,rotation=rotation)
@@ -72,11 +63,11 @@ def write_terrain(scenario, points, terrain_const: TerrainId):
 
     return scenario
 
-def write_multiple(scenario, map, player: int):
+def write_multiple(self, scenario, player: int):
     """
     TODO
     """
-
+    # HAS TO BE CHANGED
     for k in map.object_dict:
         points = map.object_dict[k]
 

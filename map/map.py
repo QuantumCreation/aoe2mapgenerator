@@ -1,23 +1,12 @@
-
-from typing import Any, Dict, List, Optional
-from AoE2ScenarioParser.datasets.players import PlayerId
-from AoE2ScenarioParser.datasets.units import UnitInfo
-from AoE2ScenarioParser.datasets.buildings import BuildingInfo
-from AoE2ScenarioParser.datasets.other import OtherInfo
-from AoE2ScenarioParser.datasets.terrains import TerrainId
-from matplotlib.pyplot import new_figure_manager
-from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_EMPTY_VALUE
-from visualizer.visualizer import visualize_map, visualize_mat
-from scenario.scenario import write_units, write_map, make_scenario, save_file, write_multiple, write_terrain
-from units.placers.buildingplacer import place_groups, place_all, add_borders
+from common.constants.constants import DEFAULT_EMPTY_VALUE
 from units.wallgenerators.voronoi import generate_voronoi_cells
-from common.enums.type_enum import ValueType
+from common.enums.enum import ValueType
 from units.placers.buildingplacer import PlacerMixin
 from map.map_utils import MapUtilsMixin
+from visualizer.visualizer import VisualizerMixin
 
 
-
-class map(PlacerMixin):
+class Map(PlacerMixin, VisualizerMixin):
 
     def __init__(self, size: int = 256):
         """
@@ -26,6 +15,7 @@ class map(PlacerMixin):
         Args:
             size: Size of the map.
         """
+        self.size = size
         self.object_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
         self.object_dict = self._create_dict(self.object_array)
         self.terrain_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
@@ -34,6 +24,8 @@ class map(PlacerMixin):
         self.decor_dict = self._create_dict(self.decor_array)
         self.zone_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
         self.zone_dict = self._create_dict(self.zone_array)
+        self.elevation_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
+        self.elevation_dict = self._create_dict(self.elevation_array)
 
     def _create_dict(self, array: list[list[object]]) -> dict:
         """
@@ -61,7 +53,8 @@ class map(PlacerMixin):
             new_value: Value to set the point to.
         """
         # Retrieve correct dictionary and array.
-        
+        d = self.get_dictionary_from_value_type(value_type)
+        a = self.get_array_from_value_type(value_type)
         
         # Remove element from the dictionary.
         d[a[x][y]].remove((x,y))

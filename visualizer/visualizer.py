@@ -6,103 +6,109 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from common.constants.constants import DEFAULT_EMPTY_VALUE
 from copy import deepcopy
-from functools import reduce
-from utils.utils import set_from_matrix, unique_value_list
+from utils.utils import unique_value_list
+from common.enums.enum import ValueType
+from map.map_utils import MapUtilsMixin
 
-def visualize_points(mapsize, points, mapping = [], colors = [(255,255,255)]):
+class VisualizerMixin(MapUtilsMixin):
     """
-    Visualizes a list of points.
-
-    Args:
-        mapsize: Size of the map.
-        points: Points to plot in (x,y) form.
-        mapping: Maps points to object ids.
-        colors: TBD
+    TODO
     """
-    c = {BuildingInfo.FORTIFIED_WALL:(255,255,255)}
 
-    if len(mapping) < len(points):
-        mapping.extend([BuildingInfo.FORTIFIED_WALL]*(len(points)-len(mapping)))
+    def visualize_points(self, mapsize, points, mapping = [], colors = [(255,255,255)]):
+        """
+        Visualizes a list of points.
 
-    mat = [[(0,0,0) for i in range(mapsize)] for j in range(mapsize)]
-    
-    for i, (x,y) in enumerate(points):
-        mat[x][y] = c[mapping[i]]
-    
-    fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
+        Args:
+            mapsize: Size of the map.
+            points: Points to plot in (x,y) form.
+            mapping: Maps points to object ids.
+            colors: TBD
+        """
+        c = {BuildingInfo.FORTIFIED_WALL:(255,255,255)}
 
-    ax.matshow(mat)
+        if len(mapping) < len(points):
+            mapping.extend([BuildingInfo.FORTIFIED_WALL]*(len(points)-len(mapping)))
 
-def visualize_mat(matrix, include_zones = False):
-    """
-    Visualizes a matrix.
+        mat = [[(0,0,0) for i in range(mapsize)] for j in range(mapsize)]
+        
+        for i, (x,y) in enumerate(points):
+            mat[x][y] = c[mapping[i]]
+        
+        fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
 
-    Args:
-        mat: Matrix to visualize
-    """
-    fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
+        ax.matshow(mat)
 
-    mat = deepcopy(matrix)
+    def visualize_mat(self, value_type: ValueType, include_zones = False):
+        """
+        Visualizes a matrix.
 
-    for i in range(len(mat)):
-        for j in range(len(mat[0])):
-            if include_zones and type(mat[i][j]) == int and mat[i][j] < 0:
-                mat[i][j] = 0
+        Args:
+            mat: Matrix to visualize
+        """
+        fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
 
-    values = unique_value_list(mat)
-    remap = dict(zip(values,range(len(values))))
+        mat = deepcopy(self.get_array_from_value_type(value_type))
 
-    for i in range(len(mat)):
-        for j in range(len(mat[0])):
-            mat[i][j] = remap[mat[i][j]]
+        for i in range(len(mat)):
+            for j in range(len(mat[0])):
+                if include_zones and type(mat[i][j]) == int and mat[i][j] < 0:
+                    mat[i][j] = 0
 
-    ax.hlines(y=np.arange(0, len(mat))+0.5, xmin=np.full(len(mat), 0)-0.5, xmax=np.full(len(mat), len(mat))-0.5, color="black")
-    ax.vlines(x=np.arange(0, len(mat))+0.5, ymin=np.full(len(mat), 0)-0.5, ymax=np.full(len(mat), len(mat))-0.5, color="black")
+        values = unique_value_list(mat)
+        remap = dict(zip(values,range(len(values))))
 
+        for i in range(len(mat)):
+            for j in range(len(mat[0])):
+                mat[i][j] = remap[mat[i][j]]
 
-    ax.matshow(mat)
-
-def visualize_map(map):
-    """
-    Visualizes a map.
-
-    Args:
-        map: Map to visualize
-    """
-    fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
-    terrain_matrix = deepcopy(map.terrain_array)
-    object_matrix = deepcopy(map.object_array)
-    mat = terrain_matrix
-
-    values = set()
-
-    for i in range(len(mat)):
-        for j in range(len(mat[0])):
-            if type(mat[i][j]) == int and mat[i][j] < 0:
-                mat[i][j] = DEFAULT_EMPTY_VALUE
-            values.add(terrain_matrix[i][j])
-            values.add(object_matrix[i][j])
-
-    for i in range(len(mat)):
-        for j in range(len(mat[0])):
-            if object_matrix[i][j] != DEFAULT_EMPTY_VALUE:
-                mat[i][j] = object_matrix[i][j]
-    
-    
-
-    
-    print(values)
-    values = list(values)
-    remap = dict(zip(values,range(len(values))))
-
-    for i in range(len(mat)):
-        for j in range(len(mat[0])):
-            mat[i][j] = remap[mat[i][j]]
-
-    ax.hlines(y=np.arange(0, len(mat))+0.5, xmin=np.full(len(mat), 0)-0.5, xmax=np.full(len(mat), len(mat))-0.5, color="black")
-    ax.vlines(x=np.arange(0, len(mat))+0.5, ymin=np.full(len(mat), 0)-0.5, ymax=np.full(len(mat), len(mat))-0.5, color="black")
+        ax.hlines(y=np.arange(0, len(mat))+0.5, xmin=np.full(len(mat), 0)-0.5, xmax=np.full(len(mat), len(mat))-0.5, color="black")
+        ax.vlines(x=np.arange(0, len(mat))+0.5, ymin=np.full(len(mat), 0)-0.5, ymax=np.full(len(mat), len(mat))-0.5, color="black")
 
 
-    ax.matshow(mat)
+        ax.matshow(mat)
+
+    def visualize_map(self):
+        """
+        Visualizes a map.
+
+        Args:
+            map: Map to visualize
+        """
+        fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
+        terrain_matrix = deepcopy(self.terrain_array)
+        object_matrix = deepcopy(self.object_array)
+        mat = terrain_matrix
+
+        values = set()
+
+        for i in range(len(mat)):
+            for j in range(len(mat[0])):
+                if type(mat[i][j]) == int and mat[i][j] < 0:
+                    mat[i][j] = DEFAULT_EMPTY_VALUE
+                values.add(terrain_matrix[i][j])
+                values.add(object_matrix[i][j])
+
+        for i in range(len(mat)):
+            for j in range(len(mat[0])):
+                if object_matrix[i][j] != DEFAULT_EMPTY_VALUE:
+                    mat[i][j] = object_matrix[i][j]
+        
+        
+
+        
+        print(values)
+        values = list(values)
+        remap = dict(zip(values,range(len(values))))
+
+        for i in range(len(mat)):
+            for j in range(len(mat[0])):
+                mat[i][j] = remap[mat[i][j]]
+
+        ax.hlines(y=np.arange(0, len(mat))+0.5, xmin=np.full(len(mat), 0)-0.5, xmax=np.full(len(mat), len(mat))-0.5, color="black")
+        ax.vlines(x=np.arange(0, len(mat))+0.5, ymin=np.full(len(mat), 0)-0.5, ymax=np.full(len(mat), len(mat))-0.5, color="black")
+
+
+        ax.matshow(mat)
 
 
