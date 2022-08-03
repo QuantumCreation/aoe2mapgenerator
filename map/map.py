@@ -4,6 +4,9 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
+from matplotlib.pyplot import new_figure_manager
+from constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_EMPTY_VALUE
+
 
 class map():
 
@@ -14,10 +17,14 @@ class map():
         Args:
             size: Size of the map.
         """
-        self.map_array = [[0 for i in range(size)] for j in range(size)]
-        self.map_dict = self.create_set(self.map_array)
-        self.terrain_array = [[0 for i in range(size)] for j in range(size)]
+        self.object_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
+        self.object_dict = self.create_set(self.object_array)
+        self.terrain_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
         self.terrain_dict = self.create_set(self.terrain_array)
+        self.decor_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
+        self.decor_dict = self.create_set(self.decor_array)
+        self.zone_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
+        self.zone_dict = self.create_set(self.zone_array)
 
     def create_set(self, array):
         """
@@ -38,21 +45,37 @@ class map():
     def set_point(self, x, y, new_value):
         """
         Takes an x and y coordinate and updates both the array and set representation.
+
+        Args:
+            x: X coordinate.
+            y: Y coordinate.
+            new_value: Value to set the point to.
         """
-        if new_value in TerrainId:
+        # Retrieve correct dictionary and array.
+        if type(new_value) == int:
+            d = self.zone_dict
+            a = self.zone_array
+        elif new_value in TerrainId:
             d = self.terrain_dict
             a = self.terrain_array
+        elif any(new_value in enum for enum in {UnitInfo, BuildingInfo, OtherInfo}):
+            d = self.object_dict
+            a = self.object_array
         else:
-            d = self.map_dict
-            a = self.map_array
+            d = self.decor_dict
+            a = self.decor_array
         
+        # Remove element from the dictionary.
         d[a[x][y]].remove((x,y))
 
+        # Remove entire dictionary entry if there are not elements left.
         if len(d[a[x][y]]) == 0:
             d.pop(a[x][y], None)
 
+        # Assign new value to the array.
         a[x][y] = new_value
 
+        # Add the value to the dictionary.
         if new_value in d:
             d[a[x][y]].add((x,y))
         else:

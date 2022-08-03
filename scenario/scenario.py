@@ -77,8 +77,8 @@ def write_multiple(scenario, map, player: int):
     TODO
     """
 
-    for k in map.map_dict:
-        points = map.map_dict[k]
+    for k in map.object_dict:
+        points = map.object_dict[k]
 
         if type(k) == int:
             continue

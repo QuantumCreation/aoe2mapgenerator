@@ -35,7 +35,11 @@ def assign_voronoi_cell_numbers(array, points):
 
 def generate_voronoi_walls(size, interpoint_distance):
     """
-    TODO
+    Generates an array of voronoi shapes, numbers starting from -1 and going down.
+
+    Args:
+        size: Size of an nxn array:
+        interpoint_distance: Minimum distance between points.
     """
     array = [[0 for i in range(size)] for j in range(size)]
     points = generate_poisson_voronoi_point_distribution(size, interpoint_distance)
@@ -57,7 +61,11 @@ def generate_voronoi_walls(size, interpoint_distance):
 
 def valid(array, x, y):
     """
-    Checks that point coordinates are valid
+    Checks that point coordinates are valid.
+
+    Args:
+        x: X coordinate.
+        y: Y coordinate.
     """
     return (0<=x<len(array)) and (0<=y<len(array[0]))
 
@@ -159,5 +167,3 @@ def poisson_disk_sample(width=1.0, height=1.0, radius=0.025, k=30):
             if in_limits(q) and not in_neighborhood(q):
                 add_point(q)
     return P[M]
-
-    

@@ -1,9 +1,7 @@
 
 import random
 from re import A
-
-GHOST_OBJECT_DISPLACEMENT = 999
-DEFAULT_OBJECT_TYPE = 155
+from constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE
 
 
 def check_placement(obj_space, point, obj_size, margin, width = -1, height = -1):
@@ -45,7 +43,7 @@ def place(map, point, obj_type, obj_size, margin):
 
     for i in range(-margin, eff_size):
         for j in range(-margin, eff_size):
-            map.set_point(x+i,y+j,999)
+            map.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT)
     
     map.set_point(x+obj_size//2, y+obj_size//2, obj_type)
 
@@ -84,8 +82,8 @@ def place_one(map, array_space_type, obj_type, obj_size, margin):
         margin: Area around the object to be placed.
     """
     
-    if array_space_type in map.map_dict:
-        points = map.map_dict[array_space_type]
+    if array_space_type in map.object_dict:
+        points = map.object_dict[array_space_type]
     else:
         return
     
@@ -103,8 +101,8 @@ def place_group(map, array_space_type, obj_type, obj_size, margin = 0, group_siz
     """
     TODO
     """
-    if array_space_type in map.map_dict:
-        points = map.map_dict[array_space_type]
+    if array_space_type in map.object_dict:
+        points = map.object_dict[array_space_type]
     else:
         return
 
@@ -195,8 +193,8 @@ def add_borders(map, array_space_type, border_type = 1, border_margin = 1):
         border_type: Type of border to place.
         border_margin: Type of margin to place.
     """
-    if array_space_type in map.map_dict:
-        points = map.map_dict[array_space_type].copy()
+    if array_space_type in map.object_dict:
+        points = map.object_dict[array_space_type].copy()
     else:
         return
 
