@@ -1,6 +1,7 @@
 
 import random
 from re import A
+from site import abs_paths
 from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
 from map.map_utils import MapUtilsMixin
 from utils.utils import set_from_matrix
@@ -213,8 +214,8 @@ class PlacerMixin(MapUtilsMixin):
         x, y = point
 
         for i in range(-border_margin,border_margin+1):
-            for j in range(-(abs(i)-border_margin),(abs(i)-border_margin)+1):
-                if abs(i)+abs(j)<border_margin and not (x+i,y+j) in points:
+            for j in range(-abs(abs(i)-border_margin),abs(abs(i)-border_margin)+1):
+                if not (x+i,y+j) in points:
                     return True
 
         return False
