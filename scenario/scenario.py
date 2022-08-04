@@ -28,7 +28,7 @@ class Scenario():
         self.scenario = self.get_scenario(file_name)
         self.map = map
 
-    def get_scenario(file_name):
+    def get_scenario(self, file_name):
         """
         Creates a scenario with the given name.
 
@@ -75,28 +75,32 @@ class Scenario():
             tile = map_manager.get_tile(x, y)
             tile.terrain_id = terrain_const.value
 
-    def write_any_type(self, value_type, player: int = None):
+
+    def write_any_type(self, value_type):
         """
         TODO
         """
         # HAS TO BE CHANGED
         d = self.map.get_dictionary_from_value_type(value_type)
 
-        for k in d:
-            points = d[k]
-
-            if not isinstance(k, Enum):
+        for key in d:
+            if type(key) == tuple:
+                (aoe2_object, player_id) = key
+            else:
                 continue
             
-            if isinstance(value_type, ValueType.TERRAIN) and isinstance(k, TerrainId):
-                self.write_terrain(points, k)
-            elif isinstance(value_type, ValueType.UNIT):
-                if isinstance(k, BuildingInfo) or isinstance(k, UnitInfo):
-                    self.write_units(points, k, player)
-                elif isinstance(k, OtherInfo):
-                    self.write_units(points, k, PlayerId.GAIA)
+            points = d[(aoe2_object, player_id)]
 
-    def write_map(self, map):
+            if value_type == ValueType.TERRAIN:
+                if isinstance(aoe2_object, TerrainId):
+                    self.write_terrain(points, aoe2_object)
+            elif value_type == ValueType.UNIT:
+                if isinstance(aoe2_object, BuildingInfo) or isinstance(aoe2_object, UnitInfo):
+                    self.write_units(points, aoe2_object, player_id)
+                elif isinstance(aoe2_object, OtherInfo):
+                    self.write_units(points, aoe2_object, player_id)
+
+    def write_map(self):
         """
         TODO
         """

@@ -1,4 +1,5 @@
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.players import PlayerId
 
 """
 Universal constants.
@@ -10,6 +11,7 @@ GHOST_OBJECT_DISPLACEMENT = 999
 GHOST_OBJECT_MARGIN = 998
 DEFAULT_OBJECT_TYPE = 155
 DEFAULT_EMPTY_VALUE = 0
+DEFAULT_PLAYER = PlayerId.GAIA
 
 X_SHIFT = 0.5
 Y_SHIFT = 0.5

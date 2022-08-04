@@ -4,6 +4,7 @@ from common.enums.enum import ValueType
 from units.placers.buildingplacer import PlacerMixin
 from map.map_utils import MapUtilsMixin
 from visualizer.visualizer import VisualizerMixin
+from AoE2ScenarioParser.datasets.players import PlayerId
 from copy import deepcopy
 
 class Map(PlacerMixin, VisualizerMixin):
@@ -43,7 +44,7 @@ class Map(PlacerMixin, VisualizerMixin):
         
         return new_dict
 
-    def set_point(self, x, y, new_value, value_type: ValueType,):
+    def set_point(self, x, y, new_value, value_type: ValueType, player_id: PlayerId):
         """
         Takes an x and y coordinate and updates both the array and set representation.
 
@@ -59,15 +60,16 @@ class Map(PlacerMixin, VisualizerMixin):
         # Remove element from the dictionary.
         d[a[x][y]].remove((x,y))
 
+
         # Remove entire dictionary entry if there are not elements left.
         if len(d[a[x][y]]) == 0:
             d.pop(a[x][y], None)
 
         # Assign new value to the array.
-        a[x][y] = new_value
+        a[x][y] = (new_value, player_id)
 
         # Add the value to the dictionary.
-        if new_value in d:
+        if (new_value, player_id) in d:
             d[a[x][y]].add((x,y))
         else:
             d[a[x][y]] = {(x,y)}
@@ -81,3 +83,6 @@ class Map(PlacerMixin, VisualizerMixin):
 
         self.object_array = deepcopy(self.zone_array)
         self.object_dict = self._create_dict(self.object_array)
+
+        self.terrain_array = deepcopy(self.zone_array)
+        self.terrain_dict = self._create_dict(self.terrain_array)

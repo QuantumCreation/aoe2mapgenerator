@@ -1,17 +1,18 @@
 
 import random
 from re import A
-from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE, GHOST_OBJECT_MARGIN
+from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
 from map.map_utils import MapUtilsMixin
 from utils.utils import set_from_matrix
 from common.enums.enum import ObjectSize
+from AoE2ScenarioParser.datasets.players import PlayerId
 
 class PlacerMixin(MapUtilsMixin):
     """
     TODO
     """
 
-    def place_all(self, value_type, array_space_type, obj_type = DEFAULT_OBJECT_TYPE,  margin = 0, total = 1):
+    def place_all(self, value_type, array_space_type, obj_type = DEFAULT_OBJECT_TYPE, player_id = DEFAULT_PLAYER, margin = 0, total = 1):
         """
         Places n number of objects randomly.
 
@@ -24,12 +25,12 @@ class PlacerMixin(MapUtilsMixin):
         """
 
         for i in range(total):
-            if not self._check_and_place(value_type, array_space_type=array_space_type, obj_type=obj_type, margin=margin):
+            if not self._check_and_place(value_type, array_space_type, obj_type, player_id, margin):
                 return
         
         return
 
-    def place_group(self, value_type, array_space_type, obj_type, margin = 0, group_size = 1, clumping = 1):
+    def place_group(self, value_type, array_space_type, obj_type = DEFAULT_OBJECT_TYPE, player_id = DEFAULT_PLAYER, margin = 0, group_size = 1, clumping = 1):
         """
         TODO
         """
@@ -50,19 +51,19 @@ class PlacerMixin(MapUtilsMixin):
                 return
 
             if self._check_placement(points, (x,y), obj_type, margin=margin):
-                self._place(value_type, (x,y), obj_type=obj_type, margin=margin)
+                self._place(value_type, (x,y), obj_type, player_id, margin)
                 placed += 1
 
         return
 
-    def place_groups(self, value_type, array_space_type, obj_type, margin = 0, group_size = 1, groups = 1, clumping = 1):
+    def place_groups(self, value_type, array_space_type, obj_type = DEFAULT_OBJECT_TYPE, player_id = DEFAULT_PLAYER, margin = 0, group_size = 1, groups = 1, clumping = 1):
         """
         TODO
         """
         for i in range(groups):
-            self.place_group(value_type, array_space_type, obj_type, margin, group_size, clumping)
+            self.place_group(value_type, array_space_type, obj_type, player_id, margin, group_size, clumping)
 
-    def add_borders(self, value_type, array_space_type, border_type, border_margin):
+    def add_borders(self, value_type, array_space_type, border_type, border_margin, player_id = DEFAULT_PLAYER):
         """
         Adds borders to a cell based on border margin size and type.
 
@@ -82,11 +83,12 @@ class PlacerMixin(MapUtilsMixin):
         for point in points:
             if self._is_on_border(points, point, border_margin):
                 x, y = point
-                self.set_point(x,y,border_type, value_type)
+                self.set_point(x,y,border_type, value_type, player_id)
         
         return
     
-    def add_borders_all(self, value_type, border_type, border_margin):
+    # SOMETHING LEADS TO MASSIVE PROBLEMS HERE
+    def add_borders_all(self, value_type, border_type, border_margin, player_id = DEFAULT_PLAYER):
         """
         Adds borders to a cell based on border margin size and type.
 
@@ -99,13 +101,13 @@ class PlacerMixin(MapUtilsMixin):
         all_array_space_types = list(set_from_matrix(self.get_array_from_value_type(value_type)))
 
         for space_type in all_array_space_types:
-            self.add_borders(value_type, space_type, border_type, border_margin)
+            self.add_borders(value_type, space_type, border_type, border_margin, player_id=player_id)
         
         return
 
     # ----------------------- HELPER METHODS --------------------------
 
-    def _check_placement(self, obj_space, point, obj_type, margin = 0, width = -1, height = -1):
+    def _check_placement(self, obj_space, point, obj_type, margin, width = -1, height = -1):
         """
         Checks if the given point is a valid placement for an object.
 
@@ -129,7 +131,7 @@ class PlacerMixin(MapUtilsMixin):
         
         return True
 
-    def _place(self, value_type, point, obj_type, margin):
+    def _place(self, value_type, point, obj_type, player_id, margin):
         """
         Places a single object. Assumes placement has already been verified.
 
@@ -146,15 +148,15 @@ class PlacerMixin(MapUtilsMixin):
         for i in range(-margin, eff_size):
             for j in range(-margin, eff_size):
                 if 0<=i<obj_size and 0<=j<obj_size:
-                    self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type)
+                    self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type, player_id)
                 else:
-                    self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, value_type)
+                    self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, value_type, player_id)
         
-        self.set_point(x+obj_size//2, y+obj_size//2, obj_type, value_type)
+        self.set_point(x+obj_size//2, y+obj_size//2, obj_type, value_type, player_id)
 
         return
             
-    def _check_and_place(self, value_type, array_space_type, obj_type, margin):
+    def _check_and_place(self, value_type, array_space_type, player_id, obj_type, margin):
         """
         Finds an open space and then places an object.
 
@@ -173,11 +175,15 @@ class PlacerMixin(MapUtilsMixin):
 
         for (x,y) in sorted(points, key = lambda _: random.random()):
             if self._check_placement(value_type, points, (x,y), obj_type, margin=margin):
-                self._place(self, value_type, (x,y), obj_type=obj_type, margin=margin)
+                self._place(self, value_type, (x,y), player_id, obj_type=obj_type, margin=margin)
                 return True
         
         return False
 
+
+    """
+    DEPRECATED
+    """
     def _distance_to_edge(self, points, point):
         """
         Finds distance to edge blocks
@@ -206,11 +212,10 @@ class PlacerMixin(MapUtilsMixin):
         """
         x, y = point
 
-        for dist in range(1,border_margin+1):
-            for i in range(-dist,dist+1):
-                for j in range(-dist,dist+1):
-                    if not (x+i,y+j) in points:
-                        return True
+        for i in range(-border_margin,border_margin+1):
+            for j in range(-(abs(i)-border_margin),(abs(i)-border_margin)+1):
+                if abs(i)+abs(j)<border_margin and not (x+i,y+j) in points:
+                    return True
 
         return False
 
