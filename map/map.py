@@ -1,7 +1,7 @@
 from common.constants.constants import DEFAULT_EMPTY_VALUE
 from units.wallgenerators.voronoi import generate_voronoi_cells
 from common.enums.enum import ValueType
-from units.placers.buildingplacer import PlacerMixin
+from units.placers.objectplacer import PlacerMixin
 from map.map_utils import MapUtilsMixin
 from visualizer.visualizer import VisualizerMixin
 from AoE2ScenarioParser.datasets.players import PlayerId
@@ -86,3 +86,6 @@ class Map(PlacerMixin, VisualizerMixin):
 
         self.terrain_array = deepcopy(self.zone_array)
         self.terrain_dict = self._create_dict(self.terrain_array)
+
+        self.decor_array = deepcopy(self.zone_array)
+        self.decor_dict = self._create_dict(self.decor_array)

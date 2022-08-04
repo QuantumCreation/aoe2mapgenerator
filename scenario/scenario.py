@@ -7,7 +7,7 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from common.enums.enum import ValueType
-
+from common.enums.enum import ObjectRotation
 from common.constants.constants import BASE_SCENE_DIR, X_SHIFT, Y_SHIFT
 
 import random
@@ -50,11 +50,13 @@ class Scenario():
             player: Player id of the unit.
         """
         unit_manager = self.scenario.unit_manager
-
+        print(unit_const._name_)
+        print((ObjectRotation(unit_const._name_).value))
         rotation = 0
         for i, (x,y) in enumerate(points):
             # Adds a random rotation to each unit
-            rotation = int(random.random()*50)
+            
+            rotation = random.random()*(ObjectRotation(unit_const._name_).value)
 
             if ObjectSize(unit_const._name_).value%2 == 0:
                 unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y,rotation=rotation)
@@ -91,21 +93,19 @@ class Scenario():
             
             points = d[(aoe2_object, player_id)]
 
-            if value_type == ValueType.TERRAIN:
-                if isinstance(aoe2_object, TerrainId):
+            if isinstance(aoe2_object, TerrainId):
                     self.write_terrain(points, aoe2_object)
-            elif value_type == ValueType.UNIT:
-                if isinstance(aoe2_object, BuildingInfo) or isinstance(aoe2_object, UnitInfo):
-                    self.write_units(points, aoe2_object, player_id)
-                elif isinstance(aoe2_object, OtherInfo):
-                    self.write_units(points, aoe2_object, player_id)
+            if isinstance(aoe2_object, BuildingInfo) or isinstance(aoe2_object, UnitInfo) or isinstance(aoe2_object, OtherInfo):
+                self.write_units(points, aoe2_object, player_id)
 
     def write_map(self):
         """
         TODO
         """
-        self.write_any_type(ValueType.TERRAIN)
         self.write_any_type(ValueType.UNIT)
+        self.write_any_type(ValueType.TERRAIN)
+        self.write_any_type(ValueType.DECOR)
+
 
     def change_map_size(self, map_size):
         """
