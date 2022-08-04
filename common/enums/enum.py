@@ -22,6 +22,9 @@ class ObjectSize(Enum):
     BARRACKS = 3
     ARCHERY_RANGE = 3
     STABLE = 3
+    TOWN_CENTER = 4
+    FARM = 3
+    MILL = 2
 
     @classmethod
     def _missing_(cls, name):

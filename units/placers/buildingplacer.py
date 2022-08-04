@@ -2,7 +2,7 @@
 import random
 from re import A
 from site import abs_paths
-from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
+from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
 from map.map_utils import MapUtilsMixin
 from utils.utils import set_from_matrix
 from common.enums.enum import ObjectSize
@@ -13,7 +13,7 @@ class PlacerMixin(MapUtilsMixin):
     TODO
     """
 
-    def place_all(self, value_type, array_space_type, obj_type = DEFAULT_OBJECT_TYPE, player_id = DEFAULT_PLAYER, margin = 0, total = 1):
+    def place_all(self, value_type, array_space_type, obj_types = DEFAULT_OBJECT_TYPES, player_id = DEFAULT_PLAYER, margin = 0, total = 1):
         """
         Places n number of objects randomly.
 
@@ -24,16 +24,37 @@ class PlacerMixin(MapUtilsMixin):
             margin: Area around the object to be placed.
             total: Total number of objects to place.
         """
+        if type(obj_types) != list:
+            obj_types = [obj_types]
+        
+        if len(obj_types) == 0:
+            return
+        
+        obj_counter = 0
+        obj_type = obj_types[obj_counter]
 
         for i in range(total):
+
             if not self._check_and_place(value_type, array_space_type, obj_type, player_id, margin):
                 return
+
+            obj_counter = min(len(obj_types)-1, obj_counter+1)
+            obj_type = obj_types[obj_counter]
         
         return
 
-    def place_group(self, value_type, array_space_type, obj_type = DEFAULT_OBJECT_TYPE, player_id = DEFAULT_PLAYER, margin = 0, group_size = 1, clumping = 1):
+    def place_group(self, value_type, array_space_type, obj_types = DEFAULT_OBJECT_TYPES, player_id = DEFAULT_PLAYER, margin = 0, group_size = 1, clumping = 1):
         """
-        TODO
+        Places a single group of units on a specific array space.
+
+        Args:
+            value_type: The map type.
+            array_space_type: Array space id to get points for.
+            obj_type: The type of object to be placed.
+            player_id: Id of the object to be placed.
+            margin: Margin between each object and any other object.
+            group_size: Number of members per group.
+            clumping: How clumped the group members are. 0 is totally clumped. Higher numbers spread members out.
         """
         dictionary = self.get_dictionary_from_value_type(value_type)
 
@@ -44,7 +65,15 @@ class PlacerMixin(MapUtilsMixin):
 
         points_list = list(points)
         (xrand, yrand) = points_list[int(random.random()*len(points))]
+        
+        if type(obj_types) != list:
+            obj_types = [obj_types]
 
+        if len(obj_types) == 0:
+            return
+        
+        obj_counter = 0
+        obj_type = obj_types[obj_counter]
         placed = 0
         for (x,y) in sorted(points_list, key = lambda a: ((a[0]-xrand)**2 + (a[1]-yrand)**2 + random.random()*((clumping)**2))):
 
@@ -53,16 +82,26 @@ class PlacerMixin(MapUtilsMixin):
 
             if self._check_placement(points, (x,y), obj_type, margin=margin):
                 self._place(value_type, (x,y), obj_type, player_id, margin)
+                
                 placed += 1
+                obj_counter = min(len(obj_types)-1, obj_counter+1)
+                obj_type = obj_types[obj_counter]
 
         return
 
-    def place_groups(self, value_type, array_space_type, obj_type = DEFAULT_OBJECT_TYPE, player_id = DEFAULT_PLAYER, margin = 0, group_size = 1, groups = 1, clumping = 1):
+    def place_groups(self, value_type, array_space_type, obj_types = DEFAULT_OBJECT_TYPES, player_id = DEFAULT_PLAYER, margin = 0, group_size = 1, groups = 1, clumping = 1):
         """
         TODO
         """
+
+        if type(obj_types) != list:
+            obj_types = [obj_types]
+
+        if len(obj_types) == 0:
+            return
+        
         for i in range(groups):
-            self.place_group(value_type, array_space_type, obj_type, player_id, margin, group_size, clumping)
+            self.place_group(value_type, array_space_type, obj_types, player_id, margin, group_size, clumping)
 
     def add_borders(self, value_type, array_space_type, border_type, border_margin, player_id = DEFAULT_PLAYER):
         """
@@ -88,7 +127,7 @@ class PlacerMixin(MapUtilsMixin):
         
         return
     
-    # SOMETHING LEADS TO MASSIVE PROBLEMS HERE
+    # SOMETHING LEADS TO MASSIVE PROBLEMS HERE. IDK WHAT LOL.
     def add_borders_all(self, value_type, border_type, border_margin, player_id = DEFAULT_PLAYER):
         """
         Adds borders to a cell based on border margin size and type.
