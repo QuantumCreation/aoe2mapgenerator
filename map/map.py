@@ -4,7 +4,7 @@ from common.enums.enum import ValueType
 from units.placers.buildingplacer import PlacerMixin
 from map.map_utils import MapUtilsMixin
 from visualizer.visualizer import VisualizerMixin
-
+from copy import deepcopy
 
 class Map(PlacerMixin, VisualizerMixin):
 
@@ -79,5 +79,5 @@ class Map(PlacerMixin, VisualizerMixin):
         self.zone_array = generate_voronoi_cells(self.size, interpoint_distance)
         self.zone_dict = self._create_dict(self.zone_array)
 
-        self.object_array = self.zone_array.copy()
+        self.object_array = deepcopy(self.zone_array)
         self.object_dict = self._create_dict(self.object_array)

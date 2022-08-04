@@ -52,7 +52,7 @@ class VisualizerMixin(MapUtilsMixin):
 
         for i in range(len(mat)):
             for j in range(len(mat[0])):
-                if include_zones and type(mat[i][j]) == int and mat[i][j] < 0:
+                if not include_zones and type(mat[i][j]) == int and mat[i][j] < 0:
                     mat[i][j] = 0
 
         values = unique_value_list(mat)
@@ -64,7 +64,6 @@ class VisualizerMixin(MapUtilsMixin):
 
         ax.hlines(y=np.arange(0, len(mat))+0.5, xmin=np.full(len(mat), 0)-0.5, xmax=np.full(len(mat), len(mat))-0.5, color="black")
         ax.vlines(x=np.arange(0, len(mat))+0.5, ymin=np.full(len(mat), 0)-0.5, ymax=np.full(len(mat), len(mat))-0.5, color="black")
-
 
         ax.matshow(mat)
 
@@ -95,9 +94,6 @@ class VisualizerMixin(MapUtilsMixin):
                     mat[i][j] = object_matrix[i][j]
         
         
-
-        
-        print(values)
         values = list(values)
         remap = dict(zip(values,range(len(values))))
 

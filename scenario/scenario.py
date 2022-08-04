@@ -6,99 +6,117 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
+from common.enums.enum import ValueType
 
 from common.constants.constants import BASE_SCENE_DIR, X_SHIFT, Y_SHIFT
 
-from units.placers.buildingplacer import get_valid_points
 import random
 import numpy as np
 from common.enums.enum import ObjectSize
 import os
+from map.map import Map
+from enum import Enum
 
-
-
-def make_scenario(file_name):
-    """
-    Creates a scenario with the given name.
-
-    Args:
-        file_name: Name of the file.
-    """
-    file_path = os.path.join(BASE_SCENE_DIR, file_name)
-
-    return AoE2DEScenario.from_file(file_path)
-
-def write_units(scenario, points: set, unit_const, player: int, rotation = -1):
-    """
-    Takes a scenario and a list of points to create units is the corresponding positions.
-
-    Args:
-        scenario: Scenario object to place units.
-        points: Point positions to place objects.
-        unit_const: AOE2 constant representing unit.
-        player: Player id of the unit.
-    """
-    unit_manager = scenario.unit_manager
-
-    rotation = 0
-    for i, (x,y) in enumerate(points):
-        rotation = int(random.random()*50)
-
-        if ObjectSize(unit_const._name_).value%2 == 0:
-            unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y,rotation=rotation)
-        else:
-            unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x+X_SHIFT,y=y+Y_SHIFT,rotation=rotation)
-
-    return scenario
-
-def write_terrain(scenario, points, terrain_const: TerrainId):
+class Scenario():
     """
     TODO
     """
-    map_manager = scenario.map_manager
+    def __init__(self, file_name, map):
+        """
+        TODO
+        """
+        self.scenario = self.get_scenario(file_name)
+        self.map = map
 
-    for i, (x,y) in enumerate(points):
-        tile = map_manager.get_tile(x, y)
-        tile.terrain_id = terrain_const.value
+    def get_scenario(file_name):
+        """
+        Creates a scenario with the given name.
 
-    return scenario
+        Args:
+            file_name: Name of the file.
+        """
+        file_path = os.path.join(BASE_SCENE_DIR, file_name)
 
-def write_multiple(self, scenario, player: int):
-    """
-    TODO
-    """
-    # HAS TO BE CHANGED
-    for k in map.object_dict:
-        points = map.object_dict[k]
+        return AoE2DEScenario.from_file(file_path)
 
-        if type(k) == int:
-            continue
-    
-        if k in BuildingInfo or k in UnitInfo:
-            write_units(scenario, points, k, player)
-        elif k in OtherInfo:
-            write_units(scenario, points, k, PlayerId.GAIA)
-        elif k in TerrainId:
-            write_terrain(scenario, points, k)
-    
-    return scenario
+    def write_units(self, points: set, unit_const, player: int, rotation = -1):
+        """
+        Takes a scenario and a list of points to create units in the corresponding positions.
 
-def write_map(scenario, map_size):
-    """
-    Changes the map size.
+        Args:
+            scenario: Scenario object to place units.
+            points: Point positions to place objects.
+            unit_const: AOE2 constant representing unit.
+            player: Player id of the unit.
+        """
+        unit_manager = self.scenario.unit_manager
 
-    Args:
-        scenario: Scenario object to place units.
-        map_size: Size of the map.
-    """
-    map_manager = scenario.map_manager
+        rotation = 0
+        for i, (x,y) in enumerate(points):
+            # Adds a random rotation to each unit
+            rotation = int(random.random()*50)
 
-    map_manager.map_size = map_size
+            if ObjectSize(unit_const._name_).value%2 == 0:
+                unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y,rotation=rotation)
+            else:
+                unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x+X_SHIFT,y=y+Y_SHIFT,rotation=rotation)
 
-    return scenario
+    def write_terrain(self, points, terrain_const: TerrainId):
+        """
+        Takes a scenario and a list of points to create units in the corresponding positions.
 
-def save_file(scenario, output_name):
-    """
-    Saves the scenario to the given output file name.
-    """
-    scenario.write_to_file(os.path.join(BASE_SCENE_DIR, output_name))
+        Args:
+            points: Point positions to place objects.
+            terrain_const: AOE2 constant representing unit.
+        """
+        map_manager = self.scenario.map_manager
+
+        for i, (x,y) in enumerate(points):
+            tile = map_manager.get_tile(x, y)
+            tile.terrain_id = terrain_const.value
+
+    def write_any_type(self, value_type, player: int = None):
+        """
+        TODO
+        """
+        # HAS TO BE CHANGED
+        d = self.map.get_dictionary_from_value_type(value_type)
+
+        for k in d:
+            points = d[k]
+
+            if not isinstance(k, Enum):
+                continue
+            
+            if isinstance(value_type, ValueType.TERRAIN) and isinstance(k, TerrainId):
+                self.write_terrain(points, k)
+            elif isinstance(value_type, ValueType.UNIT):
+                if isinstance(k, BuildingInfo) or isinstance(k, UnitInfo):
+                    self.write_units(points, k, player)
+                elif isinstance(k, OtherInfo):
+                    self.write_units(points, k, PlayerId.GAIA)
+
+    def write_map(self, map):
+        """
+        TODO
+        """
+        self.write_any_type(ValueType.TERRAIN)
+        self.write_any_type(ValueType.UNIT)
+
+    def change_map_size(self, map_size):
+        """
+        Changes the map size.
+
+        Args:
+            scenario: Scenario object to place units.
+            map_size: Size of the map.
+        """
+        map_manager = self.scenario.map_manager
+
+        map_manager.map_size = map_size
+
+    def save_file(self, output_name):
+        """
+        Saves the scenario to the given output file name.
+        """
+        self.scenario.write_to_file(os.path.join(BASE_SCENE_DIR, output_name))

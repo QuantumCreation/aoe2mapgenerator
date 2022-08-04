@@ -19,7 +19,9 @@ class ObjectSize(Enum):
     CASTLE = 4
     HOUSE = 2
     ROAD_FUNGUS = 1
-    
+    BARRACKS = 3
+    ARCHERY_RANGE = 3
+    STABLE = 3
 
     @classmethod
     def _missing_(cls, name):

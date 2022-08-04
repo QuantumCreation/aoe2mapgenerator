@@ -1,7 +1,7 @@
 
 import random
 from re import A
-from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE
+from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPE, GHOST_OBJECT_MARGIN
 from map.map_utils import MapUtilsMixin
 from utils.utils import set_from_matrix
 from common.enums.enum import ObjectSize
@@ -37,6 +37,8 @@ class PlacerMixin(MapUtilsMixin):
 
         if array_space_type in dictionary:
             points = dictionary[array_space_type]
+        else:
+            return 
 
         points_list = list(points)
         (xrand, yrand) = points_list[int(random.random()*len(points))]
@@ -47,7 +49,7 @@ class PlacerMixin(MapUtilsMixin):
             if placed >= group_size:
                 return
 
-            if self._check_placement(value_type, points, (x,y), margin=margin):
+            if self._check_placement(points, (x,y), obj_type, margin=margin):
                 self._place(value_type, (x,y), obj_type=obj_type, margin=margin)
                 placed += 1
 
@@ -74,6 +76,8 @@ class PlacerMixin(MapUtilsMixin):
 
         if array_space_type in dictionary:
             points = dictionary[array_space_type].copy()
+        else:
+            return
 
         for point in points:
             if self._is_on_border(points, point, border_margin):
@@ -101,7 +105,7 @@ class PlacerMixin(MapUtilsMixin):
 
     # ----------------------- HELPER METHODS --------------------------
 
-    def _check_placement(self, value_type, obj_space, point, object_type, margin = 0, width = -1, height = -1):
+    def _check_placement(self, obj_space, point, obj_type, margin = 0, width = -1, height = -1):
         """
         Checks if the given point is a valid placement for an object.
 
@@ -113,7 +117,7 @@ class PlacerMixin(MapUtilsMixin):
             height: TBD
         """
         # SOMETHING NEEDS TO BE CHANGED HERE
-        obj_size = ObjectSize[object_type._name_]
+        obj_size = ObjectSize(obj_type._name_).value
         eff_size = obj_size + margin
 
         x, y = point
@@ -135,13 +139,16 @@ class PlacerMixin(MapUtilsMixin):
             obj_type: The type of object to be placed.
             margin: Area around the object to be placed.
         """
-        obj_size = ObjectSize[obj_type._name_]
+        obj_size = ObjectSize(obj_type._name_).value
         eff_size = obj_size + margin
         x, y = point
 
         for i in range(-margin, eff_size):
             for j in range(-margin, eff_size):
-                self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type)
+                if 0<=i<obj_size and 0<=j<obj_size:
+                    self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type)
+                else:
+                    self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, value_type)
         
         self.set_point(x+obj_size//2, y+obj_size//2, obj_type, value_type)
 
@@ -161,6 +168,8 @@ class PlacerMixin(MapUtilsMixin):
 
         if array_space_type in dictionary:
             points = dictionary[array_space_type]
+        else:
+            return False
 
         for (x,y) in sorted(points, key = lambda _: random.random()):
             if self._check_placement(value_type, points, (x,y), obj_type, margin=margin):
