@@ -56,6 +56,7 @@ class Scenario():
             
             rotation = random.random()*(ObjectRotation(unit_const._name_).value)
 
+            # GATE PLACEMENT IS STILL WRONG. ALSO IDK WHY.
             if ObjectSize(unit_const._name_).value%2 == 0:
                 unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y,rotation=rotation)
             elif any(gate_type.value[2]==unit_const._name_ for gate_type in GateTypes):
@@ -96,7 +97,7 @@ class Scenario():
             points = d[(aoe2_object, player_id)]
 
             if isinstance(aoe2_object, TerrainId):
-                    self.write_terrain(points, aoe2_object)
+                self.write_terrain(points, aoe2_object)
             if isinstance(aoe2_object, BuildingInfo) or isinstance(aoe2_object, UnitInfo) or isinstance(aoe2_object, OtherInfo):
                 self.write_units(points, aoe2_object, player_id)
 

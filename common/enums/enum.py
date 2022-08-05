@@ -100,8 +100,18 @@ class GateTypes(Enum):
     """
     Enum to match gate types with their different versions.
     """
-    
 
-    FORTIFIED_GATE = add_endings('FORTIFIED_GATE')
+    FORTIFIED_GATE = add_endings("FORTIFIED_GATE")
+    CITY_GATE = add_endings("CITY_GATE")
 
-    
+class TemplateTypes(Enum):
+    """
+    Enum representing the different types of templates.
+
+    Information:
+        Dynamic templates actively find open locations to place objects.
+        Static templates are rectangular sets of objects that are placed
+        as a single chunk.
+    """
+    DYNAMIC = 0
+    STATIC = 1

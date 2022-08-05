@@ -257,24 +257,25 @@ class PlacerMixin(MapUtilsMixin):
         """
         
 
-        if height >=  1 and width >= 1:
-            eff_width = width + margin
-            eff_height = height + margin
-        else:
+        if height <= 0 or width <= 0:
             obj_size = ObjectSize(obj_type._name_).value
-            eff_width = obj_size + margin
-            eff_height = obj_size + margin
+            width = obj_size
+            height = obj_size
+
+        eff_width = width + margin
+        eff_height = height + margin
         
         x, y = point
 
+
         for i in range(-margin, eff_width):
             for j in range(-margin, eff_height):
-                if 0<=i<obj_size and 0<=j<obj_size:
+                if 0<=i<width and 0<=j<height:
                     self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type, player_id)
                 elif ghost_margin:
                     self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, value_type, player_id)
         
-        self.set_point(x+obj_size//2, y+obj_size//2, obj_type, value_type, player_id)
+        self.set_point(x+width//2, y+height//2, obj_type, value_type, player_id)
 
         return
             
@@ -442,14 +443,14 @@ class PlacerMixin(MapUtilsMixin):
         for (x,y) in sorted(points_list, key = lambda a: ((a[0]-point[0])**2 + (a[1]-point[1])**2)):
             obj_type = None
 
-            if self._check_placement(points, (x,y), obj_type, margin = 0, width = 4, height = 1):
-                obj_type = BuildingInfo[gate_type.value[3]]
-                self._place(value_type, (x,y), obj_type, player_id, margin=0, ghost_margin=0)
-                return
-
             if self._check_placement(points, (x,y), obj_type, margin = 0, width = 1, height = 4):
                 obj_type = BuildingInfo[gate_type.value[2]]
-                self._place(value_type, (x,y), obj_type, player_id, margin=0, ghost_margin=0)
+                self._place(value_type, (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 1, height = 4)
+                return
+
+            if self._check_placement(points, (x,y), obj_type, margin = 0, width = 4, height = 1):
+                obj_type = BuildingInfo[gate_type.value[3]]
+                self._place(value_type, (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 4, height = 1)
                 return
         return
 

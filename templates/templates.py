@@ -1,9 +1,8 @@
+from common.enums.enum import TemplateTypes
 
 
 
-
-
-class AbstractTemplateMixin():
+class TemplateMixin():
     """
     TODO
     """
@@ -31,3 +30,13 @@ class AbstractTemplateMixin():
         TODO
         """
 
+class AbstractTemplate():
+    """
+    TODO
+    """
+
+    def __init__(self, size = 1):
+        """
+        TODO
+        """
+        self.template
