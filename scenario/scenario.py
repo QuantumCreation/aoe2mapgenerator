@@ -6,8 +6,7 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from common.enums.enum import ValueType
-from common.enums.enum import ObjectRotation
+from common.enums.enum import ObjectRotation, ValueType, GateTypes
 from common.constants.constants import BASE_SCENE_DIR, X_SHIFT, Y_SHIFT
 
 import random
@@ -49,9 +48,8 @@ class Scenario():
             unit_const: AOE2 constant representing unit.
             player: Player id of the unit.
         """
+        # HOUSE ROTATION STILL DOES NOT WORK. IDK WHY
         unit_manager = self.scenario.unit_manager
-        print(unit_const._name_)
-        print((ObjectRotation(unit_const._name_).value))
         rotation = 0
         for i, (x,y) in enumerate(points):
             # Adds a random rotation to each unit
@@ -60,6 +58,10 @@ class Scenario():
 
             if ObjectSize(unit_const._name_).value%2 == 0:
                 unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y,rotation=rotation)
+            elif any(gate_type.value[2]==unit_const._name_ for gate_type in GateTypes):
+                unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x+X_SHIFT,y=y,rotation=rotation)
+            elif any(gate_type.value[3]==unit_const._name_ for gate_type in GateTypes):
+                unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y+Y_SHIFT,rotation=rotation)
             else:
                 unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x+X_SHIFT,y=y+Y_SHIFT,rotation=rotation)
 

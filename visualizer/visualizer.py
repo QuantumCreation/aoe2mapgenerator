@@ -37,6 +37,9 @@ class VisualizerMixin(MapUtilsMixin):
         
         fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
 
+        # Transposes the matrix
+        mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
+
         ax.matshow(mat)
 
     def visualize_mat(self, value_type: ValueType, include_zones = False):
@@ -65,6 +68,8 @@ class VisualizerMixin(MapUtilsMixin):
         ax.hlines(y=np.arange(0, len(mat))+0.5, xmin=np.full(len(mat), 0)-0.5, xmax=np.full(len(mat), len(mat))-0.5, color="black")
         ax.vlines(x=np.arange(0, len(mat))+0.5, ymin=np.full(len(mat), 0)-0.5, ymax=np.full(len(mat), len(mat))-0.5, color="black")
 
+        # Transposes the matrix
+        mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
 
         ax.matshow(mat)
 
@@ -105,6 +110,8 @@ class VisualizerMixin(MapUtilsMixin):
         ax.hlines(y=np.arange(0, len(mat))+0.5, xmin=np.full(len(mat), 0)-0.5, xmax=np.full(len(mat), len(mat))-0.5, color="black")
         ax.vlines(x=np.arange(0, len(mat))+0.5, ymin=np.full(len(mat), 0)-0.5, ymax=np.full(len(mat), len(mat))-0.5, color="black")
 
+        # Transposes the matrix
+        mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
 
         ax.matshow(mat)
 

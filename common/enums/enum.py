@@ -1,6 +1,17 @@
 from enum import Enum
 import numpy as np
 
+
+
+# Endings for different gate types. This is ugly at the moment. Should probably be improved later on.
+def add_endings(gate_name):
+        """
+        TODO
+        """
+        endings = ['WEST_TO_EAST','NORTH_TO_SOUTH','NORTHWEST_TO_SOUTHEAST','SOUTHWEST_TO_NORTHEAST']
+        return tuple((f'{gate_name}_{ending}' for ending in endings))
+
+
 class ValueType(Enum):
     """
     Enum defining the what type a certain value is.
@@ -30,6 +41,7 @@ class ObjectSize(Enum):
     TOWN_CENTER = 4
     FARM = 3
     MILL = 2
+    BURNED_BUILDING = 3
 
     # MISC
     ROMAN_RUINS = 2
@@ -58,6 +70,7 @@ class ObjectRotation(Enum):
     DEFAULT_OBJECT_ROTATION = 2*np.pi
     TREE = 42
     HOUSE = 3
+    BURNED_BUILDING = 12
 
     @classmethod
     def _missing_(cls, name):
@@ -73,4 +86,22 @@ class TemplateSize(Enum):
     Enum defining the size of a given template.
     """
 
+class Directions(Enum):
+    """
+    Enum of different directions.
+    """
+    # I DONT THINK THESE ACTUALLY MATCH WHATS GOING ON IN AOE2
+    NORTH = (0,1)
+    SOUTH = (0,-1)
+    EAST = (1,0)
+    WEST = (-1,0)
 
+class GateTypes(Enum):
+    """
+    Enum to match gate types with their different versions.
+    """
+    
+
+    FORTIFIED_GATE = add_endings('FORTIFIED_GATE')
+
+    
