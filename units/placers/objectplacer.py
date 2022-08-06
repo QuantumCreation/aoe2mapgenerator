@@ -4,6 +4,7 @@ from re import A
 from site import abs_paths
 from telnetlib import GA
 from typing import Union
+from numpy import place
 
 from pandas import array
 from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
@@ -14,61 +15,26 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from copy import deepcopy
 
+
+
 class PlacerMixin(MapUtilsMixin):
     """
     TODO
     """
 
-    def place_all(
+    # By default the object is placed in the first value from the value_type list.
+    def _place_group(
         self, 
-        value_type: ValueType, 
-        array_space_type: Union[int, tuple], 
+        value_types: list[ValueType], 
+        array_space_types: list[Union[int, tuple]], 
         obj_types: list = DEFAULT_OBJECT_TYPES, 
         player_id: PlayerId = DEFAULT_PLAYER,
-        margin: int = 0, 
-        total: int = 1,
-        ghost_margin: bool = True
-        ):
-        """
-        Places n number of objects randomly.
-
-        Args:
-            map: Map object with the corresponding array and set of points.
-            array_space_type: Array space id to get points for.
-            obj_type: The type of object to be placed.
-            margin: Area around the object to be placed.
-            total: Total number of objects to place.
-            ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
-        """
-        if type(obj_types) != list:
-            obj_types = [obj_types]
-        
-        if len(obj_types) == 0:
-            return
-        
-        obj_counter = 0
-        obj_type = obj_types[obj_counter]
-
-        for i in range(total):
-
-            if not self._check_and_place(value_type, array_space_type, obj_type, player_id, margin, ghost_margin):
-                return
-
-            obj_counter = min(len(obj_types)-1, obj_counter+1)
-            obj_type = obj_types[obj_counter]
-        
-        return
-
-    def place_group(
-        self, 
-        value_type: ValueType, 
-        array_space_type: Union[int, tuple], 
-        obj_types: list = DEFAULT_OBJECT_TYPES, 
-        player_id: PlayerId = DEFAULT_PLAYER, 
-        margin: int = 0, 
-        group_size: int = 1, 
+        group_size: int = 1,
         clumping: int = 1,
+        margin: int = 0, 
+        start_point: tuple = (-1,-1),
         ghost_margin: bool = True,
+        place_on_n_maps: int = 1,
         ):
         """
         Places a single group of units on a specific array space.
@@ -82,33 +48,30 @@ class PlacerMixin(MapUtilsMixin):
             group_size: Number of members per group.
             clumping: How clumped the group members are. 0 is totally clumped. Higher numbers spread members out.
             ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
+            place_on_n_maps: Places group on the first n maps corresponding to the value types.
         """
-        dictionary = self.get_dictionary_from_value_type(value_type)
-
-        if array_space_type in dictionary:
-            points = dictionary[array_space_type]
-        else:
-            return 
-
-        points_list = list(points)
-        (xrand, yrand) = points_list[int(random.random()*len(points))]
+        # Finds the smallest dict so that when looking for spots to place objects, we
+        # minimize the total number of points looked at.
         
-        if type(obj_types) != list:
-            obj_types = [obj_types]
+        smallest_dict_index, smallest_dict = self._get_dict_with_min_members(value_types, array_space_types)
+        points_list = list(smallest_dict[array_space_types[smallest_dict_index]])
 
-        if len(obj_types) == 0:
-            return
+        if type(start_point) != tuple or start_point[0] < 0 or start_point[1] < 0:
+            start_point = points_list[int(random.random()*len(points_list))]
         
         obj_counter = 0
         obj_type = obj_types[obj_counter]
         placed = 0
-        for (x,y) in sorted(points_list, key = lambda a: ((a[0]-xrand)**2 + (a[1]-yrand)**2 + random.random()*((clumping)**2))):
+
+        # List of values we look through is based off of our smallest dict points, optimizing performance.
+        for (x,y) in sorted(points_list, key = lambda point: ((point[0]-start_point[0])**2 + (point[1]-start_point[1])**2 + random.random()*((clumping)**2))):
 
             if placed >= group_size:
                 return
-
-            if self._check_placement(points, (x,y), obj_type, margin=margin):
-                self._place(value_type, (x,y), obj_type, player_id, margin, ghost_margin)
+            
+            if self._check_placement(value_types, array_space_types, (x,y), obj_type, margin):
+                # Only places values on the the first n maps
+                self._place(value_types[:place_on_n_maps], (x,y), obj_type, player_id, margin, ghost_margin)
                 
                 placed += 1
                 obj_counter = min(len(obj_types)-1, obj_counter+1)
@@ -118,15 +81,17 @@ class PlacerMixin(MapUtilsMixin):
 
     def place_groups(
         self, 
-        value_type: ValueType, 
-        array_space_type: Union[int, tuple], 
+        value_types: list[ValueType], 
+        array_space_types: list[Union[int, tuple]], 
         obj_types = DEFAULT_OBJECT_TYPES, 
-        player_id: PlayerId = DEFAULT_PLAYER, 
-        margin: int = 0, 
-        group_size: int = 1, 
-        groups: int = 1, 
-        clumping: int = 1,
+        player_id: PlayerId = DEFAULT_PLAYER,
+        groups: int = 1,
+        group_size: int = 1,
+        clumping: int = 0, 
+        margin: int = 0,
+        start_point: tuple = (-1,-1),
         ghost_margin: bool = True,
+        place_on_n_maps: int = 1,
         ):
         """
         Places multiple groups of objects.
@@ -143,21 +108,58 @@ class PlacerMixin(MapUtilsMixin):
             ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
         """
 
+        # Checks the value types are valid and converts to a list if needed.
+        if type(value_types) != list:
+            value_types = [value_types]
+
+        if len(value_types) == 0:
+            return
+
+        # Checks the array space types are valid and converts to a list if needed.
+        if type(array_space_types) != list:
+            array_space_types = [array_space_types]
+
+        if len(array_space_types) == 0:
+            return
+
+        # Checks the object types are valid and converts to a list if needed.
         if type(obj_types) != list:
             obj_types = [obj_types]
 
         if len(obj_types) == 0:
             return
         
-        for i in range(groups):
-            self.place_group(value_type, array_space_type, obj_types, player_id, margin, group_size, clumping, ghost_margin)
+        if len(value_types) != len(array_space_types):
+            raise ValueError("Length of value types list and array space types not equal.")
 
+
+        # Checks that each map value type actually includes the correct array space type, otherwise stop.
+        for value_type, array_space_type in zip(value_types, array_space_types):
+            if array_space_type not in self.get_dictionary_from_value_type(value_type):
+                return
+                print(f"The {value_type} array does not contain any value with {array_space_type}.")
+                
+        for i in range(groups):
+            self._place_group(
+                value_types = value_types, 
+                array_space_types = array_space_types, 
+                obj_types = obj_types, 
+                player_id = player_id,
+                group_size = group_size,
+                clumping = clumping,  
+                margin = margin,
+                start_point=start_point,
+                ghost_margin = ghost_margin, 
+                place_on_n_maps = place_on_n_maps,
+                )
+
+    # Multiple map type functionality still seems a bit weird to me. May refactor later.
     def add_borders(
         self, 
-        value_type: ValueType, 
+        value_types: list[ValueType], 
         array_space_type: Union[int, tuple], 
         border_type,
-        border_margin: int, 
+        margin: int, 
         player_id: PlayerId = DEFAULT_PLAYER
         ):
         """
@@ -165,53 +167,71 @@ class PlacerMixin(MapUtilsMixin):
 
         Args:
             array: Array of the complete map space.
+            value_type: The map type.
             array_space_type: Array space id to get points for.
             border_type: Type of border to place.
-            border_margin: Type of margin to place.
+            margin: Type of margin to place.
             player_id: Id of the objects being placed.
         """
-        dictionary = self.get_dictionary_from_value_type(value_type)
+        # Checks the value types are valid and converts to a list if needed.
+        if type(value_types) != list:
+            value_types = [value_types]
 
-        if array_space_type in dictionary:
-            points = dictionary[array_space_type].copy()
-        else:
+        if len(value_types) == 0:
+            return
+        
+        dictionary = self.get_dictionary_from_value_type(value_types[0])
+
+        if array_space_type not in dictionary:
             return
 
-        for point in points:
-            if self._is_on_border(points, point, border_margin):
-                x, y = point
-                self.set_point(x,y,border_type, value_type, player_id)
+        points = dictionary[array_space_type].copy()
+
+        # Uses only the first value type and array space to find where to place points. May change later.
+        # Still places the points in every space.
+        for value_type in value_types:
+            for point in points:
+                if self._is_on_border(points, point, margin):
+                    x, y = point
+                    self.set_point(x,y,border_type, value_type, player_id)
         
         return
     
-    # SOMETHING LEADS TO MASSIVE PROBLEMS HERE. IDK WHAT LOL.
+    # SOMETHING SOMETIMES LEADS TO MASSIVE PERFORMANCE PROBLEMS HERE. IDK WHAT LOL.
     def add_borders_all(
         self, 
-        value_type: ValueType, 
+        value_types: list[ValueType],
         border_type, 
-        border_margin: int, 
+        margin: int = 1, 
         player_id: PlayerId = DEFAULT_PLAYER
         ):
         """
         Adds borders to a cell based on border margin size and type.
 
         Args:
-            array: Array of the complete map space.
-            array_space_type: Array space id to get points for.
+            value_type: The map type.
             border_type: Type of border to place.
-            border_margin: Type of margin to place.
+            margin: Type of margin to place.
             player_id: Id of the objects being placed.
         """
-        all_array_space_types = list(set_from_matrix(self.get_array_from_value_type(value_type)))
+        all_array_space_types = list(set_from_matrix(self.get_array_from_value_type(value_types[0])))
 
         for space_type in all_array_space_types:
-            self.add_borders(value_type, space_type, border_type, border_margin, player_id=player_id)
+            self.add_borders(value_types, space_type, border_type, margin, player_id=player_id)
         
         return
 
-    # ----------------------- HELPER METHODS --------------------------
+    # ---------------------------- HELPER METHODS ----------------------------------
 
-    def _check_placement(self, obj_space, point, obj_type = None, margin = 0, width = -1, height = -1):
+    def _check_placement(  
+        self,
+        value_types: list[ValueType], 
+        array_space_types: list[Union[int, tuple]], 
+        point: tuple,
+        obj_type = None, 
+        margin: int = 0,
+        width: int = -1,
+        height: int = -1):
         """
         Checks if the given point is a valid placement for an object.
 
@@ -223,41 +243,56 @@ class PlacerMixin(MapUtilsMixin):
             width: TBD
             height: TBD
         """
-        # SOMETHING NEEDS TO BE CHANGED HERE
-        
 
-        if height >=  1 and width >= 1:
-            eff_width = width + margin
-            eff_height = height + margin
-        else:
+        if height <= 0 or width <= 0:
             if obj_type is None:
                 return False
             obj_size = ObjectSize(obj_type._name_).value
-            eff_width = obj_size + margin
-            eff_height = obj_size + margin
+            width = obj_size
+            height = obj_size
+
+        eff_width = width + margin
+        eff_height = height + margin
 
         x, y = point
+        for value_type, array_space_type in zip(value_types, array_space_types):
+            obj_space = self.get_dictionary_from_value_type(value_type)[array_space_type]
 
-        for i in range(-margin, eff_width):
-            for j in range(-margin, eff_height):
-                if (x+i,y+j) not in obj_space:
-                    return False
+            for i in range(-margin, eff_width):
+                for j in range(-margin, eff_height):
+                    if (x+i, y+j) not in obj_space:
+                        return False
         
         return True
 
-    def _place(self, value_type, point, obj_type, player_id, margin, ghost_margin, height = -1, width = -1):
+    def _place(
+        self, 
+        value_types: ValueType, 
+        point: tuple, 
+        obj_type, 
+        player_id: PlayerId, 
+        margin: int, 
+        ghost_margin: bool, 
+        height: int = -1, 
+        width: int = -1):
         """
         Places a single object. Assumes placement has already been verified.
 
         Args:
-            map: Map object with the corresponding array and set of points.
+            value_type: The map type.
             point: Point to place base of object.
             obj_type: The type of object to be placed.
+            player_id: Id of the player for the given object.
             margin: Area around the object to be placed.
+            ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
+            height: Height of a given object.
+            width: Width of a given object.
         """
         
 
         if height <= 0 or width <= 0:
+            if obj_type is None:
+                return False
             obj_size = ObjectSize(obj_type._name_).value
             width = obj_size
             height = obj_size
@@ -267,49 +302,41 @@ class PlacerMixin(MapUtilsMixin):
         
         x, y = point
 
-
-        for i in range(-margin, eff_width):
-            for j in range(-margin, eff_height):
-                if 0<=i<width and 0<=j<height:
-                    self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type, player_id)
-                elif ghost_margin:
-                    self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, value_type, player_id)
+        for value_type in value_types:
+            # IDK but this if statement may speed things up a little bit. NEEDS TESTING.
+            if width > 1 or height > 1 or margin > 0:
+                for i in range(-margin, eff_width):
+                    for j in range(-margin, eff_height):
+                        if 0<=i<width and 0<=j<height:
+                            self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type, player_id)
+                        elif ghost_margin:
+                            self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, value_type, player_id)
         
-        self.set_point(x+width//2, y+height//2, obj_type, value_type, player_id)
+            self.set_point(x+width//2, y+height//2, obj_type, value_type, player_id)
 
         return
-            
-    def _check_and_place(self, value_type, array_space_type, player_id, obj_type, margin, ghost_margin):
+
+    def _is_on_border(self, points, point, margin):
         """
-        Finds an open space and then places an object.
+        Checks if given point is on a border
 
         Args:
-            map: Map object with the corresponding array and set of points.
-            array_space_type: Array space id to get points for.
-            player_id: Id of the objects being placed.
-            obj_type: The type of object to be placed.
-            margin: Area around the object to be placed.
+            points: Set of all points in space.
+            point: single point to find distance for.
+            margin: Number of squares to fill in along the edge.
         """
-        dictionary = self.get_dictionary_from_value_type(value_type)
+        x, y = point
 
-        if array_space_type in dictionary:
-            points = dictionary[array_space_type]
-        else:
-            return False
+        for i in range(-margin,margin+1):
+            for j in range(-abs(abs(i)-margin),abs(abs(i)-margin)+1):
+                if not (x+i,y+j) in points:
+                    return True
 
-        for (x,y) in sorted(points, key = lambda _: random.random()):
-            if self._check_placement(value_type, points, (x,y), obj_type, margin=margin):
-                self._place(self, value_type, (x,y), player_id, obj_type, margin, ghost_margin)
-                return True
-        
         return False
 
-    """
-    DEPRECATED
-    """
     def _distance_to_edge(self, points, point):
         """
-        Finds distance to edge blocks
+        Finds distance to edge blocks.
 
         Args:
             points: Set of all points in space.
@@ -325,77 +352,96 @@ class PlacerMixin(MapUtilsMixin):
 
         return 100
 
-    def _is_on_border(self, points, point, border_margin):
+    # ----------------------------- GATE PLACEMENT ----------------------------------
+
+    def place_gate_on_four_sides(
+        self, 
+        value_types: list[ValueType], 
+        array_space_types: list[Union[int, tuple]], 
+        gate_type: GateTypes, 
+        player_id: PlayerId = DEFAULT_PLAYER,
+        place_on_n_maps: int = 1,
+        ):
         """
-        Checks if given point is on a border
+        Takes the average location of points in the given array space, and places gates on four sides.
 
         Args:
-            points: Set of all points in space.
-            point: single point to find distance for.
-            border_margin: Number of squares to fill in along the edge.
-        """
-        x, y = point
-
-        for i in range(-border_margin,border_margin+1):
-            for j in range(-abs(abs(i)-border_margin),abs(abs(i)-border_margin)+1):
-                if not (x+i,y+j) in points:
-                    return True
-
-        return False
-
-    """
-    DEPRECATED
-    """
-    def _get_valid_points(self, array, array_space_type):
-        """
-        Retruns a set of points with a matching space type.
-
-        Args:
-            array: Array of the complete map space.
+            value_type: The map type.
             array_space_type: Array space id to get points for.
+            gate_type: Type of the gate being placed
+            playerId: Id of the objects being placed.
         """
-        possible = set()
+        # ALL OF THESE CHECKS SHOULD PROBABLY BE ABSTRACTED AWAY ELSEWHERE
+        # Checks the value types are valid and converts to a list if needed.
+        if type(value_types) != list:
+            value_types = [value_types]
 
-        for i in range(len(array)):
-            for j in range(len(array[0])):
-                if array[i][j] == array_space_type:
-                    possible.add((i,j))
-        
-        return possible
-    
+        if len(value_types) == 0:
+            return
 
-    # ------------------------------- GATE PLACEMENT -------------------
+        # Checks the array space types are valid and converts to a list if needed.
+        if type(array_space_types) != list:
+            array_space_types = [array_space_types]
 
-
-    def place_gate_on_four_sides(self, value_type, array_space_type, gate_type, player_id = DEFAULT_PLAYER):
-        """
-        TODO
-        """
-        dictionary = self.get_dictionary_from_value_type(value_type)
-
-        if not array_space_type in dictionary:
+        if len(array_space_types) == 0:
             return
         
-        totx = 0
-        toty = 0
-        length = len(dictionary[array_space_type])
+        if len(value_types) != len(array_space_types):
+            raise ValueError("Length of value types list and array space types not equal.")
 
-        for i, (x,y) in enumerate(dictionary[array_space_type]):
-            totx += x
-            toty += y
+
+        # Checks that each map value type actually includes the correct array space type, otherwise stop.
+        for value_type, array_space_type in zip(value_types, array_space_types):
+            if array_space_type not in self.get_dictionary_from_value_type(value_type):
+                return
+                print(f"The {value_type} array does not contain any value with {array_space_type}.")
         
-        avg_point = (totx//length, toty//length)
+        avg_point = self._get_average_point_position(value_types, array_space_types)
 
         for direction in [direction.value for direction in Directions]:
-            point = self._get_first_point_in_given_direction(value_type, array_space_type, avg_point, direction)
+            point = self._get_first_point_in_given_direction(value_types, array_space_types, avg_point, direction)
 
             if point is None:
                 continue
 
-            self._place_gate_closest_to_point(value_type, array_space_type, gate_type, point, player_id)
+            self._place_gate_closest_to_point(value_types, array_space_types, gate_type, point, player_id, place_on_n_maps)
 
+    # --------------------------- GATE HELPER METHODS ---------------------------------
 
-    def _get_first_point_in_given_direction(self, value_type: ValueType, array_space_type, starting_point, direction: Directions):
+    def _get_average_point_position(self, value_types, array_space_types):
+        """
+        TODO
+        """
+        total_points = 0
+        totx = 0
+        toty = 0
+
+        smallest_dict_index, smallest_dict = self._get_dict_with_min_members(value_types, array_space_types)
+
+        for point in smallest_dict[array_space_types[smallest_dict_index]]:
+            if self._check_placement(value_types, array_space_types, point, None,0,width=1,height=1):
+                total_points += 1
+                totx += point[0]
+                toty += point[1]
+
+        return (totx//total_points, toty//total_points)
+    
+    def _get_dict_with_min_members(self, value_types, array_spave_types):
+        """
+        TODO
+        """
+        list_of_dictionary_tuples = ((i, self.get_dictionary_from_value_type(value_type)) for i, value_type in enumerate(value_types))
+        smallest_dict_index, smallest_dict = min(list_of_dictionary_tuples, key = lambda tuple: len(tuple[1]))
+
+        return smallest_dict_index, smallest_dict
+
+    def _get_first_point_in_given_direction(
+        self, 
+        value_types: list[ValueType], 
+        array_space_types,
+        starting_point: tuple,
+        direction: Directions
+        ):
         """
         Finds the first point in the matching array space type with the given direction.
 
@@ -407,51 +453,51 @@ class PlacerMixin(MapUtilsMixin):
         """
         point = starting_point
 
-        dictionary = self.get_dictionary_from_value_type(value_type)
-
-        if array_space_type in dictionary:
-            points = dictionary[array_space_type]
-        else:
-            return
+        smallest_dict_index, smallest_dict = self._get_dict_with_min_members(value_types, array_space_types)
+        points = smallest_dict[array_space_types[smallest_dict_index]]
 
         # NOTE THIS CAN BE OPTIMIZED BY STARTING AT THE GIVEN POINT AND NOT GOING BEYOND MAP BOUNDARIES
         # IT CURRENTLY RUNS THE FULL LENGTH OF THE MAP NO MATTER WHAT.
         for i in range(self.size):
 
             if point in points:
-                return point
+                if self._check_placement(value_types, array_space_types,point,None,0,width=1,height=1):
+                    return point
 
             next_point = tuple(map(sum, zip(point, direction)))
             point = next_point
         
         return None
 
-
-    def _place_gate_closest_to_point(self, value_type, array_space_type, gate_type, point, player_id):
+    # Maybe this and the other place method could be joined or simplified somehow.
+    def _place_gate_closest_to_point(
+        self, 
+        value_types: ValueType, 
+        array_space_types, 
+        gate_type: GateTypes, 
+        starting_point, 
+        player_id: PlayerId,
+        place_on_n_maps: int = 1,
+        ):
         """
         TODO
         """
-        dictionary = self.get_dictionary_from_value_type(value_type)
+        smallest_dict_index, smallest_dict = self._get_dict_with_min_members(value_types, array_space_types)
+        points_list = smallest_dict[array_space_types[smallest_dict_index]]
 
-        points_list = list(dictionary[array_space_type])
-
-        if array_space_type in dictionary:
-            points = dictionary[array_space_type]
-        else:
-            return
-
-        for (x,y) in sorted(points_list, key = lambda a: ((a[0]-point[0])**2 + (a[1]-point[1])**2)):
+        for (x,y) in sorted(points_list, key = lambda point: ((point[0]-starting_point[0])**2 + (point[1]-starting_point[1])**2)):
             obj_type = None
 
-            if self._check_placement(points, (x,y), obj_type, margin = 0, width = 1, height = 4):
+            if self._check_placement(value_types, array_space_types, (x,y), obj_type, margin = 0, width = 1, height = 4):
                 obj_type = BuildingInfo[gate_type.value[2]]
-                self._place(value_type, (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 1, height = 4)
+                self._place(value_types[:place_on_n_maps], (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 1, height = 4)
                 return
 
-            if self._check_placement(points, (x,y), obj_type, margin = 0, width = 4, height = 1):
+            if self._check_placement(value_types, array_space_types, (x,y), obj_type, margin = 0, width = 4, height = 1):
                 obj_type = BuildingInfo[gate_type.value[3]]
-                self._place(value_type, (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 4, height = 1)
+                self._place(value_types[:place_on_n_maps], (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 4, height = 1)
                 return
+        
         return
 
 

@@ -53,10 +53,9 @@ class Scenario():
         rotation = 0
         for i, (x,y) in enumerate(points):
             # Adds a random rotation to each unit
-            
             rotation = random.random()*(ObjectRotation(unit_const._name_).value)
 
-            # GATE PLACEMENT IS STILL WRONG. ALSO IDK WHY.
+            # WANKY JANKY CODING. WANT TO IMPROVE.
             if ObjectSize(unit_const._name_).value%2 == 0:
                 unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x,y=y,rotation=rotation)
             elif any(gate_type.value[2]==unit_const._name_ for gate_type in GateTypes):

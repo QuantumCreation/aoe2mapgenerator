@@ -27,6 +27,7 @@ class ObjectSize(Enum):
     """
     Enum defining the size of the given object.
     """
+
     # DEFAULT
     DEFAULT_OBJECT_SIZE = 1
 
@@ -69,6 +70,7 @@ class ObjectRotation(Enum):
     BASIC = 0
     DEFAULT_OBJECT_ROTATION = 2*np.pi
     TREE = 42
+    # HOUSE ROTATION STILL NOT WORKING! AHSDFHASGHHASDHFAHSDHFAHSDF
     HOUSE = 3
     BURNED_BUILDING = 12
 
@@ -90,7 +92,8 @@ class Directions(Enum):
     """
     Enum of different directions.
     """
-    # I DONT THINK THESE ACTUALLY MATCH WHATS GOING ON IN AOE2
+
+    # I DONT THINK THESE ACTUALLY MATCH WHATS GOING ON IN AOE2. I PICKED THEM RANDOMLY.
     NORTH = (0,1)
     SOUTH = (0,-1)
     EAST = (1,0)
@@ -113,5 +116,7 @@ class TemplateTypes(Enum):
         Static templates are rectangular sets of objects that are placed
         as a single chunk.
     """
+
     DYNAMIC = 0
     STATIC = 1
+    MIXED = 2

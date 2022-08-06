@@ -7,8 +7,16 @@ from utils.utils import set_from_matrix
 from common.enums.enum import ObjectSize
 from AoE2ScenarioParser.datasets.players import PlayerId
 from objectplacer import PlacerMixin
+from templates.templates import AbstractTemplate
+
 
 class TemplatePlacerMixin(PlacerMixin):
     """
     TODO
     """
+
+    def place_template(self, template: AbstractTemplate):
+        """
+        TODO
+        """
+        
