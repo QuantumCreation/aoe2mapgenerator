@@ -80,7 +80,7 @@ class ObjectRotation(Enum):
     BASIC = 0
     DEFAULT_OBJECT_ROTATION = 2*np.pi
     TREE = 42
-    # HOUSE ROTATION STILL NOT WORKING! AHSDFHASGHHASDHFAHSDHFAHSDF
+    # HOUSE ROTATION STILL NOT WORKING! AHSDFHASGHHASDHFAHSDHFAHSDF!?!?!?!
     HOUSE = 3
     BURNED_BUILDING = 12
 
@@ -120,7 +120,8 @@ class GateTypes(Enum):
     """
     Enum to match gate types with their different versions.
     """
-
+    PALISADE_GATE = add_endings("PALISADE_GATE")
+    SEA_GATE = add_endings("SEA_GATE")
     FORTIFIED_GATE = add_endings("FORTIFIED_GATE")
     CITY_GATE = add_endings("CITY_GATE")
 
@@ -151,3 +152,25 @@ class TemplateTypes(Enum):
             return cls._member_map_[name]
         except:
             return cls.DYNAMIC
+
+class YamlReplacementKeywords(Enum):
+    """
+    Enum of the yaml keywords that get replaced with python varibles.
+    """
+
+    # ARRAY SPACE REPLACEMENT VARIABLES
+    UNIT_A = "$UNIT_A"
+    TERRAIN_A = "$TERRAIN_A"
+    ZONE_A = "$ZONE_A"
+    DECOR_A = "$DECOR_A"
+    ELEVATION_A = "$ELEVATION_A"
+
+    # VALUE TYPE REPLACEMENT VARIABLES
+    UNIT_V = "$UNIT_V"
+    TERRAIN_V = "$TERRAIN_V"
+    ZONE_V = "$ZONE_V"
+    DECOR_V = "$DECOR_V"
+    ELEVATION_V = "$ELEVATION_V"
+
+
+
