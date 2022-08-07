@@ -23,6 +23,14 @@ class ValueType(Enum):
     ZONE = 3
     ELEVATION = 4
 
+    @classmethod
+    def _missing_(cls, name):
+        try:
+            return cls._member_map_[name]
+        except:
+            return cls.UNIT
+
+
 class ObjectSize(Enum):
     """
     Enum defining the size of the given object.
@@ -43,6 +51,8 @@ class ObjectSize(Enum):
     FARM = 3
     MILL = 2
     BURNED_BUILDING = 3
+    DONJON = 2
+    FORTRESS = 4
 
     # MISC
     ROMAN_RUINS = 2
@@ -99,6 +109,13 @@ class Directions(Enum):
     EAST = (1,0)
     WEST = (-1,0)
 
+    @classmethod
+    def _missing_(cls, name):
+        try:
+            return cls._member_map_[name]
+        except:
+            return cls.NORTH
+
 class GateTypes(Enum):
     """
     Enum to match gate types with their different versions.
@@ -106,6 +123,13 @@ class GateTypes(Enum):
 
     FORTIFIED_GATE = add_endings("FORTIFIED_GATE")
     CITY_GATE = add_endings("CITY_GATE")
+
+    @classmethod
+    def _missing_(cls, name):
+        try:
+            return cls._member_map_[name]
+        except:
+            return cls.FORTIFIED_GATE
 
 class TemplateTypes(Enum):
     """
@@ -120,3 +144,10 @@ class TemplateTypes(Enum):
     DYNAMIC = 0
     STATIC = 1
     MIXED = 2
+
+    @classmethod
+    def _missing_(cls, name):
+        try:
+            return cls._member_map_[name]
+        except:
+            return cls.DYNAMIC

@@ -2,7 +2,7 @@ from common.enums.enum import TemplateTypes
 from abc import ABC, abstractmethod
 # from units.placers.templateplacer import 
 
-class AbstractTemplate():
+class AbstractBaseTemplate():
     """
     TODO
     """
@@ -18,47 +18,41 @@ class AbstractTemplate():
     # Currently doesn't differentiate walkable and unwalkable terrain.
     # Workaround is to place unwalkable terrain into the units map so that
     # You do not accidently place anything on top of it.
+
+    @abstractmethod
+    def initial_map_setup(self):
+        """
+        TODO
+        """
+    
     @abstractmethod
     def terrain_placement(self):
         """
         TODO
         """
-    
+
     @abstractmethod
     def object_placement(self):
         """ 
         TODO
         """
 
-class TemplateHandler():
+    def list_place_template_commands(self):
+        """
+        TODO
+        """
+        self.initial_map_setup()
+        self.terrain_placement()
+        self.object_placement()
+    
+
+class AbstractTemplate(AbstractBaseTemplate):
     """
     TODO
     """
-
-    # UNSURE HOW THIS SHOULD WORK
-    def __init__(self):
-        """
-        TODO
-        """
-
-    def place_template(self, template: AbstractTemplate):
-        """
-        TODO
-        """
     
-    # ------------------- HELPER METHODS --------------------
-
-    def _check_placement(self):
+    def __init__(self, other_templates: dict[str, AbstractBaseTemplate]):
         """
         TODO
         """
-
-    def _place(self):
-        """
-        TODO
-        """
-    
-    def _check_and_place(self):
-        """
-        TODO
-        """
+        self.other_templates = other_templates

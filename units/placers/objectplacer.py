@@ -3,8 +3,8 @@ import random
 from re import A
 from site import abs_paths
 from telnetlib import GA
-from typing import Union
-from numpy import place
+from typing import Union, Callable
+import numpy as np
 
 from pandas import array
 from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
@@ -31,6 +31,7 @@ class PlacerMixin(MapUtilsMixin):
         player_id: PlayerId = DEFAULT_PLAYER,
         group_size: int = 1,
         clumping: int = 1,
+        clumping_func: Callable = None,
         margin: int = 0, 
         start_point: tuple = (-1,-1),
         ghost_margin: bool = True,
@@ -50,9 +51,18 @@ class PlacerMixin(MapUtilsMixin):
             ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
             place_on_n_maps: Places group on the first n maps corresponding to the value types.
         """
+        def default_clumping_func(p1, p2, clumping):
+            """
+            TODO
+            """
+            distance = sum(((a-b)**2 for a, b in zip(p1, p2)))
+            return (distance)+random.random()*(clumping)**2
+        
+        if clumping_func is None:
+            clumping_func = default_clumping_func
+
         # Finds the smallest dict so that when looking for spots to place objects, we
         # minimize the total number of points looked at.
-        
         smallest_dict_index, smallest_dict = self._get_dict_with_min_members(value_types, array_space_types)
         points_list = list(smallest_dict[array_space_types[smallest_dict_index]])
 
@@ -64,7 +74,7 @@ class PlacerMixin(MapUtilsMixin):
         placed = 0
 
         # List of values we look through is based off of our smallest dict points, optimizing performance.
-        for (x,y) in sorted(points_list, key = lambda point: ((point[0]-start_point[0])**2 + (point[1]-start_point[1])**2 + random.random()*((clumping)**2))):
+        for (x,y) in sorted(points_list, key = lambda point: clumping_func(start_point, point,)):
 
             if placed >= group_size:
                 return
@@ -77,6 +87,8 @@ class PlacerMixin(MapUtilsMixin):
                 obj_counter = min(len(obj_types)-1, obj_counter+1)
                 obj_type = obj_types[obj_counter]
 
+
+
         return
 
     def place_groups(
@@ -87,7 +99,8 @@ class PlacerMixin(MapUtilsMixin):
         player_id: PlayerId = DEFAULT_PLAYER,
         groups: int = 1,
         group_size: int = 1,
-        clumping: int = 0, 
+        clumping: int = 0,
+        clumping_func: Callable = None, 
         margin: int = 0,
         start_point: tuple = (-1,-1),
         ghost_margin: bool = True,
@@ -147,13 +160,14 @@ class PlacerMixin(MapUtilsMixin):
                 player_id = player_id,
                 group_size = group_size,
                 clumping = clumping,  
+                clumping_func = clumping_func,
                 margin = margin,
                 start_point=start_point,
                 ghost_margin = ghost_margin, 
                 place_on_n_maps = place_on_n_maps,
                 )
 
-    # Multiple map type functionality still seems a bit weird to me. May refactor later.
+    # Multiple map type Callableality still seems a bit weird to me. May refactor later.
     def add_borders(
         self, 
         value_types: list[ValueType], 

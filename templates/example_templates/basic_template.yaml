@@ -1,0 +1,41 @@
+template_name: Basic Template
+template_description: Basic template
+template_type: DYNAMIC
+size: 100
+command_list:
+  - command:
+      name: place_groups
+      parameters:
+        value_types:
+          - UNIT
+          - TERRAIN
+        array_space_types:
+          - -1
+          - -1
+        player_id: DEFAULT
+        groups: 1
+        group_size: 1
+        clumping: 0
+        clumping_func: null
+        margin: 0
+        start_point: (-1,-1)
+        ghost_margin: True
+        place_on_n_maps: 1
+  - command:
+    name: place_groups
+    parameters:
+      value_types:
+        - UNIT
+        - TERRAIN
+      array_space_types:
+        - -1
+        - -1
+      player_id: DEFAULT
+      groups: 1
+      group_size: 1
+      clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: (-1,-1)
+      ghost_margin: True
+      place_on_n_maps: 1

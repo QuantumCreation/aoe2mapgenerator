@@ -2,14 +2,18 @@ from common.constants.constants import DEFAULT_EMPTY_VALUE
 from units.wallgenerators.voronoi import generate_voronoi_cells
 from common.enums.enum import ValueType
 from units.placers.objectplacer import PlacerMixin
+from units.placers.templateplacer import TemplatePlacerMixin
 from map.map_utils import MapUtilsMixin
 from visualizer.visualizer import VisualizerMixin
 from AoE2ScenarioParser.datasets.players import PlayerId
 from copy import deepcopy
 
-class Map(PlacerMixin, VisualizerMixin):
+class Map(TemplatePlacerMixin, VisualizerMixin):
+    """
+    TODO
+    """
 
-    def __init__(self, size: int = 256):
+    def __init__(self, size: int = 100):
         """
         Initializes map object for internal map representation.
 
@@ -28,7 +32,7 @@ class Map(PlacerMixin, VisualizerMixin):
         self.elevation_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
         self.elevation_dict = self._create_dict(self.elevation_array)
 
-    def _create_dict(self, array: list[list[object]]) -> dict:
+    def _create_dict(self, array: list[list[object]]):
         """
         Creates a set representation from the array.
         """
@@ -74,6 +78,7 @@ class Map(PlacerMixin, VisualizerMixin):
         else:
             d[a[x][y]] = {(x,y)}
 
+    # THIS PROBOBLY BELONGS SOMEWHERE ELSE
     def voronoi(self, interpoint_distance):
         """
         Generates a voronoi cell map.

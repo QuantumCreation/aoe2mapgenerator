@@ -6,6 +6,7 @@ Universal constants.
 """
 
 BASE_SCENE_DIR = r"C:\Users\josep\Games\Age of Empires 2 DE\76561198242754748\resources\_common\scenario"
+BASE_TEMPLATE_DIR = r"C:\Users\josep\OneDrive\Documents\GitHub\AOE2_Map_Generator\templates\example_templates"
 
 GHOST_OBJECT_DISPLACEMENT = 999
 GHOST_OBJECT_MARGIN = 998
