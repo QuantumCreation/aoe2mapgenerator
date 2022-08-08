@@ -1,0 +1,28 @@
+template_name: Bonus Template
+template_description: Template that creates a monastery with monks
+template_type: DYNAMIC
+required_inputs: [UNIT, ZONE]
+size: 100
+command_list:
+# NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
+
+  - command_name: place_groups
+    parameters:
+      value_type_list: 
+        - UNIT
+        - ZONE
+      array_space_type_list: 
+        - $UNIT_A
+        - $ZONE_A
+      obj_type_list: 
+        - MONASTERY
+        - MONK
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 7
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1

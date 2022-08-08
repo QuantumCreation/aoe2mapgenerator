@@ -175,5 +175,8 @@ class YamlReplacementKeywords(Enum):
     # PLAYER ID
     PLAYER_ID = "$PLAYER_ID"
 
+    # GATE TYPES
+    GATE_TYPE = "$GATE_TYPE"
+
 
 

@@ -4,6 +4,7 @@ from re import A
 from site import abs_paths
 from telnetlib import GA
 from typing import Union, Callable
+from xml.dom import ValidationErr
 import numpy as np
 
 from pandas import array
@@ -120,21 +121,21 @@ class PlacerMixin(MapUtilsMixin):
             value_type_list = [value_type_list]
 
         if len(value_type_list) == 0:
-            return
+            raise ValueError("Value type list \'{value_type_list}\' has no entries.")
 
         # Checks the array space types are valid and converts to a list if needed.
         if type(array_space_type_list) != list:
             array_space_type_list = [array_space_type_list]
 
         if len(array_space_type_list) == 0:
-            return
+            raise ValueError("Array space type list \'{array_space_type_list}\' has no entries.")
 
         # Checks the object types are valid and converts to a list if needed.
         if type(obj_type_list) != list:
             obj_type_list = [obj_type_list]
 
         if len(obj_type_list) == 0:
-            return
+            raise ValueError("Object type list \'{obj_type_list}\' has no entiries.")
         
         if len(value_type_list) != len(array_space_type_list):
             raise ValueError("Length of value types list and array space types not equal.")
@@ -143,8 +144,8 @@ class PlacerMixin(MapUtilsMixin):
         # Checks that each map value type actually includes the correct array space type, otherwise stop.
         for value_type, array_space_type in zip(value_type_list, array_space_type_list):
             if array_space_type not in self.get_dictionary_from_value_type(value_type):
-                return
-                print(f"The {value_type} array does not contain any value with {array_space_type}.")
+                raise ValueError(f"The value {array_space_type} is not present in the {value_type} map.")
+                
                 
         for i in range(groups):
             self._place_group(
@@ -165,9 +166,9 @@ class PlacerMixin(MapUtilsMixin):
     def add_borders(
         self, 
         value_type_list: list[ValueType], 
-        array_space_type: Union[int, tuple], 
-        border_type,
-        margin: int, 
+        array_space_type_list: Union[int, tuple], 
+        obj_type,
+        margin: int = 1, 
         player_id: PlayerId = DEFAULT_PLAYER,
         ):
         """
@@ -190,10 +191,13 @@ class PlacerMixin(MapUtilsMixin):
         
         dictionary = self.get_dictionary_from_value_type(value_type_list[0])
 
-        if array_space_type not in dictionary:
+        if type(array_space_type_list) != list:
+            array_space_type_list = [array_space_type_list]
+        
+        if array_space_type_list[0] not in dictionary:
             return
 
-        points = dictionary[array_space_type].copy()
+        points = dictionary[array_space_type_list[0]].copy()
 
         # Uses only the first value type and array space to find where to place points. May change later.
         # Still places the points in every space.
@@ -201,7 +205,7 @@ class PlacerMixin(MapUtilsMixin):
             for point in points:
                 if self._is_on_border(points, point, margin):
                     x, y = point
-                    self.set_point(x,y,border_type, value_type, player_id)
+                    self.set_point(x,y,obj_type, value_type, player_id)
         
         return
     
@@ -398,14 +402,15 @@ class PlacerMixin(MapUtilsMixin):
             value_type_list = [value_type_list]
 
         if len(value_type_list) == 0:
-            return
+            raise ValueError("Value type list \'{value_type_list}\' has no entries.")
+
 
         # Checks the array space types are valid and converts to a list if needed.
         if type(array_space_type_list) != list:
             array_space_type_list = [array_space_type_list]
 
         if len(array_space_type_list) == 0:
-            return
+            raise ValueError("Array space type list \'{array_space_type_list}\' has no entries.")
         
         if len(value_type_list) != len(array_space_type_list):
             raise ValueError("Length of value types list and array space types not equal.")
@@ -414,8 +419,7 @@ class PlacerMixin(MapUtilsMixin):
         # Checks that each map value type actually includes the correct array space type, otherwise stop.
         for value_type, array_space_type in zip(value_type_list, array_space_type_list):
             if array_space_type not in self.get_dictionary_from_value_type(value_type):
-                return
-                print(f"The {value_type} array does not contain any value with {array_space_type}.")
+                raise ValueError(f"The value {array_space_type} is not present in the {value_type} map.")
         
         avg_point = self._get_average_point_position(value_type_list, array_space_type_list)
 
@@ -447,7 +451,8 @@ class PlacerMixin(MapUtilsMixin):
 
         return (totx//total_points, toty//total_points)
     
-    def _get_dict_with_min_members(self, value_type_list, array_spave_types):
+    # Pretty sure this doesn't do what it says at all. I"M ALMOST CERTAIN THIS IS ENTIRELY USELESS.
+    def _get_dict_with_min_members(self, value_type_list, array_space_type_list):
         """
         TODO
         """
