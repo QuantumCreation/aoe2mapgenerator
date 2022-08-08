@@ -1,8 +1,5 @@
 
 
-
-
-
 def terrain():
     """
     TODO

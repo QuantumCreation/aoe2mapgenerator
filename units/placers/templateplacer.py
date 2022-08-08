@@ -18,13 +18,33 @@ from typing import Union
 from yaml import load, UnsafeLoader
 import os
 from common.enums.enum import YamlReplacementKeywords
+from time import time
+from copy import deepcopy
 
 # May replace or add separate support for json
 # For now, yaml is the easiest
 class TemplatePlacerMixin(PlacerMixin):
     """
-    TODO
+    Handles placing templates.
     """
+
+    def load_yaml(self, template_file_name: str):
+        """
+        TODO
+        """
+        if template_file_name in self.template_names:
+            print("DEEPCOPY")
+            return deepcopy(self.template_names[template_file_name])
+        else:
+            print("YAML LOADED")
+            with open(os.path.join(BASE_TEMPLATE_DIR, template_file_name), 'r') as f:
+                yaml = load(f, Loader = UnsafeLoader)
+                self.template_names[template_file_name] = deepcopy(yaml)
+                return yaml
+
+    # Loading yaml files seems inefficient, look for better ways.
+    # Maybe consider preloading the yaml so that new calls of the same
+    # template doesn't repeat the loading process.
     def place_template(
         self,
         template_file_name: str,
@@ -34,22 +54,39 @@ class TemplatePlacerMixin(PlacerMixin):
         player_id: PlayerId = DEFAULT_PLAYER,
         ):
         """
-        TODO
-        """
-        with open(os.path.join(BASE_TEMPLATE_DIR, template_file_name), 'r') as f:
-            template = load(f, Loader = UnsafeLoader)
-            self.validate_input(template, value_type_list)
+        Places a template object.
 
-            for command in template['command_list']:
-                function = getattr(self, command['command_name'])
-                self.convert_yaml_command_to_python_data_types(
-                    command = command['parameters'],
-                    value_type_list = value_type_list,
-                    array_space_type_list = array_space_type_list,
-                    obj_type_list = obj_type_list,
-                    player_id = player_id,
-                    )
-                function(**command['parameters'])
+        Args:
+            template_file_name: Name of the template file to load.
+            ...
+        """
+        start = time()
+        template = self.load_yaml(template_file_name)
+        end = time()
+        print(f"Time to load yaml: {end-start}")
+
+        self.validate_input(template, value_type_list)
+        
+        total_conversion = 0
+        total_function_call = 0
+        for command in template['command_list']:
+            start = time()
+            function = getattr(self, command['command_name'])
+            self.convert_yaml_command_to_python_data_types(
+                command = command['parameters'],
+                value_type_list = value_type_list,
+                array_space_type_list = array_space_type_list,
+                obj_type_list = obj_type_list,
+                player_id = player_id,
+                )
+            end = time()
+            total_conversion += end-start
+            start = time()
+            function(**command['parameters'])
+            end = time()
+            total_function_call += end-start
+        print(f"Time to convert yaml to python: {total_conversion}")
+        print(f"Time to run python functions: {total_function_call}")
     
     # Would a dataclass somehow be useful here? Maybe include separate YAML format verifier.
     # Also, this ugly sonofabitch function needs some work. We'll shall attend to his needs soon.
@@ -63,44 +100,48 @@ class TemplatePlacerMixin(PlacerMixin):
         ):
         """
         Takes the yaml input and turns it into python objects.
-        """
 
-        if value_type_list is not None:
-            command['value_type_list'] = value_type_list
-        else:
-            command['value_type_list'] = [ValueType(value) for value in command['value_type_list']]
+        Args:
+            ...
+        """
+        dictionary = self.create_dictionary_mapping(
+            value_type_list,
+            array_space_type_list,
+            obj_type_list,
+            player_id,
+            )
         
-        if array_space_type_list is not None:
-            command['array_space_type_list'] = array_space_type_list
-        else:
-            command['array_space_type_list'] = [
+        command['value_type_list'] = [
+            dictionary[value] if value in dictionary 
+            else ValueType(value) 
+            for value in command['value_type_list']]
+        
+        # This is bad
+        
+        command['array_space_type_list'] = [
+                dictionary[value] if type(value) == str and value in dictionary
+                else
                 (
                 self.string_to_aoe2_enum_type(value[0]),
-                PlayerId[value[1]]
-                ) 
-                if type(value) == list else int(value) 
+                DEFAULT_PLAYER if value[1] is None else PlayerId[value[1]]
+                )
+                if len(value) == 2 else value
                 for value in command['array_space_type_list']
             ]
-        
-        if obj_type_list is not None:
-            command['obj_type_list'] = obj_type_list
-        else:
-            command['obj_type_list'] = [
-                self.string_to_aoe2_enum_type(value)
-                for value in command['obj_type_list']
-            ]
 
-        if player_id is not None:
-            if command['player_id'] == YamlReplacementKeywords.PLAYER_ID.value:
-                command['player_id'] = player_id
-            else:
-                command['player_id'] = DEFAULT_PLAYER
-        else:
-            try:
-                command['player_id'] = PlayerId(command['player_id'])
-            except:
-                command['player_id'] = DEFAULT_PLAYER
-        
+        command['obj_type_list'] = [
+            dictionary[value] if value in dictionary
+            else self.string_to_aoe2_enum_type(value)
+            for value in command['obj_type_list']
+        ]
+
+        command['player_id'] = (
+            dictionary[command['player_id']] if command['player_id'] in dictionary 
+            else (PlayerId(command['player_id']) if command['player_id'] is not None
+                else DEFAULT_PLAYER
+                )
+            )
+
         # IDK LOL
         command['clumping_func'] = command['clumping_func']
         command['start_point'] = tuple(command['start_point'])
@@ -109,7 +150,10 @@ class TemplatePlacerMixin(PlacerMixin):
     # Do error handling later
     def string_to_aoe2_enum_type(self, text, default_value = None, return_default = False):
         """
-        TODO
+        Converts a string to an age of empires enum type.
+
+        Args:
+
         """
         AOE2_enums = [PlayerId, UnitInfo, BuildingInfo, OtherInfo, TerrainId]
 
@@ -132,20 +176,37 @@ class TemplatePlacerMixin(PlacerMixin):
         player_id: PlayerId = DEFAULT_PLAYER,
         ):
         """
-        TODO
+        Creates a dictionary mapping from placeholder vars to python objects.
+
+        Args:
+
         """
         default_dict = {}
 
-        # String formatted should probably be optimized/ made pretty.
+        # String formatted should probably be optimized/made pretty/use enum. SEE ENUMS.
         for value_type in value_type_list:
-            default_dict[f"${value_type}"]
+            default_dict[f"${value_type._name_}_V"] = value_type
+        
+        for i, array_space_type in enumerate(array_space_type_list):
+            default_dict[f"${value_type_list[i]._name_}_A"] = array_space_type
+        
+        # OBJ LIST NOT YET SUPPORTED
+
+        if player_id is not None:
+            default_dict[YamlReplacementKeywords.PLAYER_ID.value] = player_id
+
+        return default_dict
 
     def validate_input(self,
         template,
         value_type_list,
         ):
         """
-        TODO
+        Validates the input to the placement function.
+
+        Args:
+            template: Loaded yaml template.
+            value_type_list: 
         """
         required_inputs = [ValueType[text] for text in template['required_inputs']]
 

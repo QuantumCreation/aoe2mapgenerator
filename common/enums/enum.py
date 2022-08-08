@@ -172,5 +172,8 @@ class YamlReplacementKeywords(Enum):
     DECOR_V = "$DECOR_V"
     ELEVATION_V = "$ELEVATION_V"
 
+    # PLAYER ID
+    PLAYER_ID = "$PLAYER_ID"
+
 
 

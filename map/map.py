@@ -20,6 +20,8 @@ class Map(TemplatePlacerMixin, VisualizerMixin):
         Args:
             size: Size of the map.
         """
+        # TEMPLATE NAMES, MULTIPLE INHERITANCE, init, AAHGHG
+        self.template_names = {}
         self.size = size
         self.object_array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
         self.object_dict = self._create_dict(self.object_array)

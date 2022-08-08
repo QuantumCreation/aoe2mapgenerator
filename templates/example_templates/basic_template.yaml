@@ -214,7 +214,7 @@ command_list:
       array_space_type_list: 
         - $UNIT_A
       obj_type_list: 
-        - GRASS_PATCH
+        - GRASS_PATCH_GREEN
       player_id: null
       groups: 1
       group_size: 5
@@ -379,26 +379,7 @@ command_list:
         - $UNIT_A
       obj_type_list: 
         - BARRACKS
-        - MEN_AT_ARMS
-      player_id: $PLAYER_ID
-      groups: 2
-      group_size: 14
-      clumping: 10
-      clumping_func: null
-      margin: 0
-      start_point: [-1,-1]
-      ghost_margin: True
-      place_on_n_maps: 1
-
-  - command_name: place_groups
-    parameters:
-      value_type_list: 
-        - UNIT
-      array_space_type_list: 
-        - $UNIT_A
-      obj_type_list: 
-        - BARRACKS
-        - MEN_AT_ARMS
+        - MAN_AT_ARMS
       player_id: $PLAYER_ID
       groups: 2
       group_size: 14

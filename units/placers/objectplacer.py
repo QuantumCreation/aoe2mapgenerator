@@ -51,15 +51,9 @@ class PlacerMixin(MapUtilsMixin):
             ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
             place_on_n_maps: Places group on the first n maps corresponding to the value types.
         """
-        def default_clumping_func(p1, p2, clumping):
-            """
-            TODO
-            """
-            distance = sum(((a-b)**2 for a, b in zip(p1, p2)))
-            return (distance)+random.random()*(clumping)**2
         
         if clumping_func is None:
-            clumping_func = default_clumping_func
+            clumping_func = self.default_clumping_func
 
         # Finds the smallest dict so that when looking for spots to place objects, we
         # minimize the total number of points looked at.
@@ -74,8 +68,8 @@ class PlacerMixin(MapUtilsMixin):
         placed = 0
 
         # List of values we look through is based off of our smallest dict points, optimizing performance.
-        for (x,y) in sorted(points_list, key = lambda point: clumping_func(start_point, point, clumping)):
-
+        # THIS IS THE MOST COMPUTATIONAL EXPENSIVE PART OF THIS ENTIRE PROGRAM.
+        for (x,y) in sorted(points_list, key = lambda point: clumping_func(point, start_point, clumping)) if group_size>1 else points_list:
             if placed >= group_size:
                 return
             
@@ -174,7 +168,7 @@ class PlacerMixin(MapUtilsMixin):
         array_space_type: Union[int, tuple], 
         border_type,
         margin: int, 
-        player_id: PlayerId = DEFAULT_PLAYER
+        player_id: PlayerId = DEFAULT_PLAYER,
         ):
         """
         Adds borders to a cell based on border margin size and type.
@@ -211,7 +205,7 @@ class PlacerMixin(MapUtilsMixin):
         
         return
     
-    # SOMETHING SOMETIMES LEADS TO MASSIVE PERFORMANCE PROBLEMS HERE. IDK WHAT LOL.
+    # SOMETHING SOMETIMES LEADS TO MASSIVE PERFORMANCE PROBLEMS HERE. IDK WHY LOL.
     def add_borders_all(
         self, 
         value_type_list: list[ValueType],
@@ -365,7 +359,20 @@ class PlacerMixin(MapUtilsMixin):
                         return dist
 
         return 100
+    # ---------------------------- SORTING FUNCTIONS ----------------------------
 
+    def default_clumping_func(self, p1, p2, clumping):
+            """
+            Default clumping function.
+
+            Args:
+                p1: First point.
+                p2: Second point.
+                clumping: Factor to determine how clumped placed objects in a group are.
+            """
+            distance = (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
+            return (distance)+random.random()*(clumping)**2
+    
     # ----------------------------- GATE PLACEMENT ----------------------------------
 
     def place_gate_on_four_sides(
