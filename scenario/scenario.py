@@ -20,6 +20,7 @@ class Scenario():
     """
     TODO
     """
+
     def __init__(self, file_name, map):
         """
         TODO
@@ -78,7 +79,6 @@ class Scenario():
         for i, (x,y) in enumerate(points):
             tile = map_manager.get_tile(x, y)
             tile.terrain_id = terrain_const.value
-
 
     def write_any_type(self, value_type):
         """

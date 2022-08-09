@@ -69,10 +69,6 @@ class TemplatePlacerMixin(PlacerMixin):
         for command in template['command_list']:
             start = time()
             function = getattr(self, command['command_name'])
-            print(function)
-            print(command['command_name'])
-            print(command['parameters'])
-
             self._validate_user_kwarg_input(function, **command['parameters'])
   
             self._convert_yaml_command_to_python_data_types(
@@ -184,6 +180,7 @@ class TemplatePlacerMixin(PlacerMixin):
         default_dict = {}
 
         # String formatted should probably be optimized/made pretty/use enum. SEE ENUMS.
+        # IS THIS EVEN NECESSARY? WE WILL ALWAYS GET THE SAME MAPPING. WHY HAVE AN EXTRA VARIABLE FOR THIS?
         if 'value_type_list' in kwargs:
             for value_type in kwargs['value_type_list']:
                 default_dict[f"${value_type._name_}_V"] = value_type

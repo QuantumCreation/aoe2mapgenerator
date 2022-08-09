@@ -53,6 +53,7 @@ class ObjectSize(Enum):
     BURNED_BUILDING = 3
     DONJON = 2
     FORTRESS = 4
+    MONASTERY = 3
 
     # MISC
     ROMAN_RUINS = 2
@@ -180,3 +181,11 @@ class YamlReplacementKeywords(Enum):
 
 
 
+class CheckPlacementReturnTypes(Enum):
+    """
+    Return types from the check placement function
+    """
+
+    FAIL = 0
+    SUCCESS = 1
+    SUCCESS_IMPOSSIBLE = 2

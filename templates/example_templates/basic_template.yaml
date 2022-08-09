@@ -8,7 +8,7 @@ command_list:
   - command_name: add_borders
     parameters:
       value_type_list: 
-        - $UNIT_V
+        - UNIT
       array_space_type_list: 
         - $UNIT_A
       obj_type: FORTIFIED_WALL
@@ -18,13 +18,25 @@ command_list:
   - command_name: place_gate_on_four_sides
     parameters:
       value_type_list: 
-        - $UNIT_V
-        - $ZONE_V
+        - UNIT
+        - ZONE
       array_space_type_list: 
         - [FORTIFIED_WALL, $PLAYER_ID]
         - $ZONE_A
       gate_type: FORTIFIED
       player_id: $PLAYER_ID
+
+  # - command_name: add_borders
+  #   parameters:
+  #     value_type_list:
+  #       - TERRAIN
+  #       - UNIT
+  #     array_space_type_list: 
+  #       - $TERRAIN_A
+  #       - $UNIT_A
+  #     obj_type: BEACH
+  #     player_id: null
+  #     margin: 1
 
   - command_name: place_groups
     parameters:
@@ -55,10 +67,10 @@ command_list:
         - [WATER_DEEP, null]
         - $ZONE_A
       obj_type_list: 
-        - WATER_DEEP
+        - SHORE_FISH
       player_id: null
       groups: 1
-      group_size: 100
+      group_size: 3
       clumping: 0
       clumping_func: null
       margin: 0
@@ -83,7 +95,7 @@ command_list:
       start_point: [-1,-1]
       ghost_margin: True
       place_on_n_maps: 1
-  
+
   - command_name: place_groups
     parameters:
       value_type_list: 
@@ -101,7 +113,7 @@ command_list:
       start_point: [-1,-1]
       ghost_margin: True
       place_on_n_maps: 1
-   
+
   - command_name: place_groups
     parameters:
       value_type_list: 
@@ -321,8 +333,26 @@ command_list:
         - FARM
       player_id: $PLAYER_ID
       groups: 1
-      group_size: 4
+      group_size: 5
       clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      value_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT_A
+      obj_type_list: 
+        - VILLAGER_FEMALE
+      player_id: $PLAYER_ID
+      groups: 2
+      group_size: 5
+      clumping: 3
       clumping_func: null
       margin: 0
       start_point: [-1,-1]
@@ -552,33 +582,21 @@ command_list:
       ghost_margin: True
       place_on_n_maps: 1
 
-  - command_name: place_groups
-    parameters:
-      value_type_list: 
-        - UNIT
-      array_space_type_list: 
-        - [ROAD_FUNGUS, null]
-      obj_type_list: 
-        - LEGIONARY
-        - ELITE_CATAPHRACT
-      player_id: $PLAYER_ID
-      groups: 1
-      group_size: 16
-      clumping: 10
-      clumping_func: null
-      margin: 0
-      start_point: [-1,-1]
-      ghost_margin: True
-      place_on_n_maps: 1
-  
-  - command_name: place_template
-    parameters:
-      template_file_name: bonus_template.yaml
-      value_type_list: 
-        - UNIT
-        - ZONE
-      array_space_type_list: 
-        - $UNIT_A
-        - $ZONE_A
-      player_id: $PLAYER_ID
-
+  # - command_name: place_groups
+  #   parameters:
+  #     value_type_list: 
+  #       - UNIT
+  #     array_space_type_list: 
+  #       - [ROAD_FUNGUS, null]
+  #     obj_type_list: 
+  #       - LEGIONARY
+  #       - ELITE_CATAPHRACT
+  #     player_id: $PLAYER_ID
+  #     groups: 1
+  #     group_size: 16
+  #     clumping: 10
+  #     clumping_func: null
+  #     margin: 0
+  #     start_point: [-1,-1]
+  #     ghost_margin: True
+  #     place_on_n_maps: 1

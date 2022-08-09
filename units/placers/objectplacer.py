@@ -11,7 +11,7 @@ from pandas import array
 from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
 from map.map_utils import MapUtilsMixin
 from utils.utils import set_from_matrix
-from common.enums.enum import ObjectSize, Directions, ValueType, GateTypes
+from common.enums.enum import ObjectSize, Directions, ValueType, GateTypes, CheckPlacementReturnTypes
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from copy import deepcopy
@@ -74,13 +74,19 @@ class PlacerMixin(MapUtilsMixin):
             if placed >= group_size:
                 return
             
-            if self._check_placement(value_type_list, array_space_type_list, (x,y), obj_type, margin):
+            response = self._check_placement(value_type_list, array_space_type_list, (x,y), obj_type, margin)
+
+            if response == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
+                return
+    
+            if response == CheckPlacementReturnTypes.SUCCESS:
                 # Only places values on the the first n maps
                 self._place(value_type_list[:place_on_n_maps], (x,y), obj_type, player_id, margin, ghost_margin)
                 
                 placed += 1
                 obj_counter = min(len(obj_type_list)-1, obj_counter+1)
                 obj_type = obj_type_list[obj_counter]
+            
 
 
 
@@ -268,14 +274,17 @@ class PlacerMixin(MapUtilsMixin):
 
         x, y = point
         for value_type, array_space_type in zip(value_type_list, array_space_type_list):
-            obj_space = self.get_dictionary_from_value_type(value_type)[array_space_type]
-
+            try:
+                obj_space = self.get_dictionary_from_value_type(value_type)[array_space_type]
+            except:
+                return CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE
+            
             for i in range(-margin, eff_width):
                 for j in range(-margin, eff_height):
                     if (x+i, y+j) not in obj_space:
-                        return False
+                        return CheckPlacementReturnTypes.FAIL
         
-        return True
+        return CheckPlacementReturnTypes.SUCCESS
 
     def _place(
         self, 
@@ -435,7 +444,7 @@ class PlacerMixin(MapUtilsMixin):
 
     def _get_average_point_position(self, value_type_list, array_space_type_list):
         """
-        TODO
+        Gets the location of the average point from the given value type and array space lists.
         """
         total_points = 0
         totx = 0
@@ -454,7 +463,7 @@ class PlacerMixin(MapUtilsMixin):
     # Pretty sure this doesn't do what it says at all. I"M ALMOST CERTAIN THIS IS ENTIRELY USELESS.
     def _get_dict_with_min_members(self, value_type_list, array_space_type_list):
         """
-        TODO
+        Gets the dict with the minimum members from the given value type list and array space type list.
         """
         list_of_dictionary_tuples = ((i, self.get_dictionary_from_value_type(value_type)) for i, value_type in enumerate(value_type_list))
         smallest_dict_index, smallest_dict = min(list_of_dictionary_tuples, key = lambda tuple: len(tuple[1]))
@@ -506,7 +515,7 @@ class PlacerMixin(MapUtilsMixin):
         place_on_n_maps: int = 1,
         ):
         """
-        TODO
+        Places a gate as close as possible to the starting point.
         """
         smallest_dict_index, smallest_dict = self._get_dict_with_min_members(value_type_list, array_space_type_list)
         points_list = smallest_dict[array_space_type_list[smallest_dict_index]]
