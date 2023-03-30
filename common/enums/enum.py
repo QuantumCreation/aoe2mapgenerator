@@ -80,7 +80,13 @@ class ObjectRotation(Enum):
 
     BASIC = 0
     DEFAULT_OBJECT_ROTATION = 2*np.pi
-    TREE = 42
+
+    # TREES and BUSHES
+    TREE_DEFAULT = 42
+    TREE_SNOW_PINE = 26
+    BUSH_DEFAULT = 4
+    FORAGE_BUSH = 4
+    
     # HOUSE ROTATION STILL NOT WORKING! AHSDFHASGHHASDHFAHSDHFAHSDF!?!?!?!
     HOUSE = 3
     BURNED_BUILDING = 12
@@ -91,7 +97,7 @@ class ObjectRotation(Enum):
             return cls._member_map_[name]
         except:
             if "TREE" in name:
-                return cls.TREE
+                return cls.TREE_DEFAULT
             return cls.DEFAULT_OBJECT_ROTATION
 
 class TemplateSize(Enum):
@@ -160,18 +166,11 @@ class YamlReplacementKeywords(Enum):
     """
 
     # ARRAY SPACE REPLACEMENT VARIABLES
-    UNIT_A = "$UNIT_A"
-    TERRAIN_A = "$TERRAIN_A"
-    ZONE_A = "$ZONE_A"
-    DECOR_A = "$DECOR_A"
-    ELEVATION_A = "$ELEVATION_A"
-
-    # VALUE TYPE REPLACEMENT VARIABLES
-    UNIT_V = "$UNIT_V"
-    TERRAIN_V = "$TERRAIN_V"
-    ZONE_V = "$ZONE_V"
-    DECOR_V = "$DECOR_V"
-    ELEVATION_V = "$ELEVATION_V"
+    UNIT = "$UNIT"
+    TERRAIN = "$TERRAIN"
+    ZONE = "$ZONE"
+    DECOR = "$DECOR"
+    ELEVATION = "$ELEVATION"
 
     # PLAYER ID
     PLAYER_ID = "$PLAYER_ID"

@@ -47,7 +47,7 @@ class VisualizerMixin(MapUtilsMixin):
         Visualizes a matrix.
 
         Args:
-            mat: Matrix to visualize
+            value_type: Type of value to visualize.
         """
         fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
 

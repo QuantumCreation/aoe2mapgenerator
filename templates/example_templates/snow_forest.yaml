@@ -9,10 +9,12 @@ command_list:
     parameters:
       value_type_list: 
         - TERRAIN
+        - UNIT
         - ZONE
       array_space_type_list: 
-        - $TERRAIN_A
-        - $ZONE_A
+        - $TERRAIN
+        - $UNIT
+        - $ZONE
       obj_type_list: 
         - SNOW
       player_id: null
@@ -24,41 +26,23 @@ command_list:
       start_point: [-1,-1]
       ghost_margin: False
       place_on_n_maps: 1
-  
-  - command_name: place_groups
-    parameters:
-      value_type_list: 
-        - TERRAIN
-        - ZONE
-      array_space_type_list: 
-        - [SNOW, null]
-        - $ZONE_A
-      obj_type_list: 
-        - MONASTERY
-        - MONK
-      player_id: $PLAYER_ID
-      groups: 1
-      group_size: 13
-      clumping: 10
-      clumping_func: null
-      margin: 0
-      start_point: [-1,-1]
-      ghost_margin: False
-      place_on_n_maps: 1
 
   - command_name: place_groups
     parameters:
       value_type_list: 
+        - UNIT
         - TERRAIN
         - ZONE
       array_space_type_list: 
+        - $UNIT
         - [SNOW, null]
-        - $ZONE_A
+        - $ZONE
       obj_type_list: 
         - TREE_SNOW_PINE
       player_id: null
       groups: 1
-      group_size: 250
+      group_size: null
+      group_density: 10
       clumping: 999
       clumping_func: null
       margin: 0
@@ -72,15 +56,38 @@ command_list:
         - UNIT
         - TERRAIN
         - ZONE
-      array_space_type_list:
-        - $UNIT_A
+      array_space_type_list: 
+        - $UNIT
         - [SNOW, null]
-        - $ZONE_A
+        - $ZONE
+      obj_type_list:
+        - TREE_SNOW_PINE
+      player_id: null
+      groups: null
+      groups_density: 2
+      group_size: null
+      group_density: 10
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      value_type_list: 
+        - UNIT
+        - TERRAIN
+      array_space_type_list:
+        - $UNIT
+        - [SNOW, null]
       obj_type_list: 
         - BUSH_C
       player_id: null
       groups: 1
       group_size: 50
+      group_density: 1
       clumping: 999
       clumping_func: null
       margin: 0

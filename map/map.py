@@ -1,5 +1,5 @@
 from common.constants.constants import DEFAULT_EMPTY_VALUE
-from units.wallgenerators.voronoi import generate_voronoi_cells
+from units.wallgenerators.voronoi import VoronoiGeneratorMixin
 from common.enums.enum import ValueType
 from units.placers.objectplacer import PlacerMixin
 from units.placers.templateplacer import TemplatePlacerMixin
@@ -8,7 +8,7 @@ from visualizer.visualizer import VisualizerMixin
 from AoE2ScenarioParser.datasets.players import PlayerId
 from copy import deepcopy
 
-class Map(TemplatePlacerMixin, VisualizerMixin):
+class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin):
     """
     TODO
     """
@@ -85,7 +85,7 @@ class Map(TemplatePlacerMixin, VisualizerMixin):
         """
         Generates a voronoi cell map.
         """
-        self.zone_array = generate_voronoi_cells(self.size, interpoint_distance)
+        self.zone_array = VoronoiGenerator.generate_voronoi_cells(self.size, interpoint_distance)
         self.zone_dict = self._create_dict(self.zone_array)
 
         self.object_array = deepcopy(self.zone_array)

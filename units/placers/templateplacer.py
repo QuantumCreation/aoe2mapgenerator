@@ -31,13 +31,17 @@ class TemplatePlacerMixin(PlacerMixin):
 
     def load_yaml(self, template_file_name: str):
         """
-        TODO
+        Loads yaml file form the template file name. 
+
+        Information:
+        Saves loaded yaml file so future calls are faster.
+
+        Args:
+            template_file_name: Name of the template file.
         """
         if template_file_name in self.template_names:
-            print("DEEPCOPY")
             return deepcopy(self.template_names[template_file_name])
         else:
-            print("YAML LOADED")
             with open(os.path.join(BASE_TEMPLATE_DIR, template_file_name), 'r') as f:
                 yaml = load(f, Loader = UnsafeLoader)
                 self.template_names[template_file_name] = deepcopy(yaml)
@@ -55,40 +59,40 @@ class TemplatePlacerMixin(PlacerMixin):
 
         Args:
             template_file_name: Name of the template file to load.
-            ...
+            kwargs: Key word arguments corresponding to various placer variables.
         """
-        start = time()
+        # start = time()
         template = self.load_yaml(template_file_name)
-        end = time()
-        print(f"Time to load yaml: {end-start}")
+        # end = time()
+        # print(f"Time to load yaml: {end-start}")
 
         self._validate_user_included_required_yaml_fields(template, kwargs['value_type_list'])
         
         total_conversion = 0
         total_function_call = 0
         for command in template['command_list']:
-            start = time()
+            # start = time()
             function = getattr(self, command['command_name'])
             self._validate_user_kwarg_input(function, **command['parameters'])
   
             self._convert_yaml_command_to_python_data_types(
-                command = command['parameters'],
+                parameters = command['parameters'],
                 **kwargs
                 )
-            end = time()
-            total_conversion += end-start
+            # end = time()
+            # total_conversion += end-start
             start = time()
             function(**command['parameters'])
             end = time()
             total_function_call += end-start
-        print(f"Time to convert yaml to python: {total_conversion}")
+        # print(f"Time to convert yaml to python: {total_conversion}")
         print(f"Time to run python functions: {total_function_call}")
     
     # Would a dataclass somehow be useful here? Maybe include separate YAML format verifier.
     # Also, this ugly sonofabitch function needs some work. We'll shall attend to his needs soon.
     def _convert_yaml_command_to_python_data_types(
         self, 
-        command,
+        parameters,
         **kwargs,
         ):
         """
@@ -99,51 +103,51 @@ class TemplatePlacerMixin(PlacerMixin):
         """
         dictionary = self._create_dictionary_mapping(**kwargs)
         # STUFF
-        if 'value_type_list' in command:
-            command['value_type_list'] = [
+        if 'value_type_list' in parameters:
+            parameters['value_type_list'] = [
                 dictionary[value] if value in dictionary 
                 else ValueType(value) 
-                for value in command['value_type_list']]
+                for value in parameters['value_type_list']]
             
         # Maybe have the function handle the entire list to limit function calls?
-        if 'array_space_type_list' in command:
-            command['array_space_type_list'] = [
+        if 'array_space_type_list' in parameters:
+            parameters['array_space_type_list'] = [
                     self.convert_array_space_type(value, dictionary)
-                    for value in command['array_space_type_list']
+                    for value in parameters['array_space_type_list']
                 ]
 
-        if 'obj_type_list' in command:
-            command['obj_type_list'] = [
+        if 'obj_type_list' in parameters:
+            parameters['obj_type_list'] = [
                 dictionary[value] if value in dictionary
                 else self.string_to_aoe2_enum_type(value)
-                for value in command['obj_type_list']
+                for value in parameters['obj_type_list']
             ]
 
         # GOD THIS TOOK SO LONG TO FIND. MAYBE CONVERT ADD BORDERS TO AN OBJECT TYPE LIST AS WELL.
-        if 'obj_type' in command:
-            command['obj_type'] = (
-                dictionary[command['obj_type']] if command['obj_type'] in dictionary
-                else self.string_to_aoe2_enum_type(command['obj_type'])
+        if 'obj_type' in parameters:
+            parameters['obj_type'] = (
+                dictionary[parameters['obj_type']] if parameters['obj_type'] in dictionary
+                else self.string_to_aoe2_enum_type(parameters['obj_type'])
             )
             
 
-        if 'player_id' in command:
-            command['player_id'] = (
-                dictionary[command['player_id']] if command['player_id'] in dictionary 
-                else (PlayerId(command['player_id']) if command['player_id'] is not None
+        if 'player_id' in parameters:
+            parameters['player_id'] = (
+                dictionary[parameters['player_id']] if parameters['player_id'] in dictionary 
+                else (PlayerId(parameters['player_id']) if parameters['player_id'] is not None
                     else DEFAULT_PLAYER
                     )
                 )
 
-        if 'gate_type' in command:
-            command['gate_type'] = GateTypes(command['gate_type'])
+        if 'gate_type' in parameters:
+            parameters['gate_type'] = GateTypes(parameters['gate_type'])
 
         # IDK LOL
-        if 'clumping_func' in command:
-            command['clumping_func'] = command['clumping_func']
+        if 'clumping_func' in parameters:
+            parameters['clumping_func'] = parameters['clumping_func']
         
-        if 'start_point' in command:
-            command['start_point'] = tuple(command['start_point'])
+        if 'start_point' in parameters:
+            parameters['start_point'] = tuple(parameters['start_point'])
 
     
     # Do error handling later
@@ -152,7 +156,9 @@ class TemplatePlacerMixin(PlacerMixin):
         Converts a string to an age of empires enum type.
 
         Args:
-
+            text: Input corresponding to an enum type.
+            default_value: Value to default to.
+            return_default: Boolean declaring whether or not to use a default.
         """
         AOE2_enums = [PlayerId, UnitInfo, BuildingInfo, OtherInfo, TerrainId]
 
@@ -172,7 +178,7 @@ class TemplatePlacerMixin(PlacerMixin):
         **kwargs,
         ):
         """
-        Creates a dictionary mapping from placeholder vars to python objects.
+        Creates a dictionary mapping from placeholder variables to python objects.
 
         Args:
 
@@ -188,7 +194,7 @@ class TemplatePlacerMixin(PlacerMixin):
         if 'array_space_type_list' in kwargs:
             value_type_list = kwargs['value_type_list']
             for i, array_space_type in enumerate(kwargs['array_space_type_list']):
-                default_dict[f"${value_type_list[i]._name_}_A"] = array_space_type
+                default_dict[f"${value_type_list[i]._name_}"] = array_space_type
 
         # OBJ LIST NOT YET SUPPORTED
 
@@ -224,7 +230,7 @@ class TemplatePlacerMixin(PlacerMixin):
     # Could also check that required args 100% included. I'll deal with this laters. Bro.
     def _validate_user_kwarg_input(self, function, **kwargs):
         """
-        Validates tat the key word arguments received match the keywords of the function.
+        Validates that the key word arguments received match the keywords of the function.
 
         Args:
             function: A function object.
@@ -239,20 +245,25 @@ class TemplatePlacerMixin(PlacerMixin):
         if len(required_args) > 0 and required_args[0] == 'self':
             required_args.remove('self')
 
-        # If the function accepts keyword arguments, we don't know what acceptable args are, hence skip.
-        if arg_spec.varkw is None:
-            for key_word_arg in kwargs:
-                if key_word_arg not in acceptable_args:
-                    raise ValueError(f"The key word argument \'{key_word_arg}\' for the function \'{function.__name__}\' was invalid.")
-
         for arg in required_args:
             if arg not in kwargs:
                 closest_match = max(kwargs, key = lambda key_word_arg: SequenceMatcher(None,arg.lower(),key_word_arg.lower()).ratio())
 
                 raise ValueError(
-                    f"The required key word argument \'{arg}\' was not included.\n"
+                    f"The required key word argument \'{arg}\' was not included. "
                     f"You wrote \'{closest_match}\', did you mean \'{arg}\'?"
                 )
+
+        # If the function accepts keyword arguments, we don't know what acceptable args are, hence skip.
+        if arg_spec.varkw is None:
+            for key_word_arg in kwargs:
+                if key_word_arg not in acceptable_args:
+                    closest_match = max(acceptable_args, key = lambda acc_arg: SequenceMatcher(None,key_word_arg.lower(),acc_arg.lower()).ratio())
+
+                    raise ValueError(
+                        f"The key word argument \'{key_word_arg}\' for the function \'{function.__name__}\' was invalid. "
+                        f"You wrote \'{key_word_arg}\', did you mean \'{closest_match}\'?"
+                        )
 
 # -------------------------------- Conversion Functions ------------------------------
 

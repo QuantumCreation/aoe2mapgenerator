@@ -82,7 +82,7 @@ class Scenario():
 
     def write_any_type(self, value_type):
         """
-        TODO
+        
         """
         # HAS TO BE CHANGED
         d = self.map.get_dictionary_from_value_type(value_type)

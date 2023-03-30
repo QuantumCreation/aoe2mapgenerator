@@ -1,0 +1,28 @@
+template_name: Fortress
+template_description: Creates barracks with troops training
+template_type: STATIC
+required_inputs: [UNIT, ZONE]
+size: 100
+command_list:
+# NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
+  - command_name: place_groups
+    parameters:
+      value_type_list: 
+        - TERRAIN
+        - UNIT
+        - ZONE
+      array_space_type_list: 
+        - $TERRAIN
+        - $UNIT
+        - $ZONE
+      obj_type_list: 
+        - SNOW
+      player_id: null
+      groups: 1
+      group_size: 9999
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
