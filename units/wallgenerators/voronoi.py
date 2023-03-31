@@ -2,13 +2,16 @@ from re import I
 import numpy as np
 from typing import Union, Callable
 import functools
+from AoE2ScenarioParser.datasets.players import PlayerId
+from map.map_utils import MapUtilsMixin
 
-class VoronoiGeneratorMixin():
+class VoronoiGeneratorMixin(MapUtilsMixin):
     """
     TODO
     """
+    global_zone_counter = 0
 
-    def generate_voronoi_cells(self, size, interpoint_distance):
+    def generate_voronoi_cells(self, size, interpoint_distance, array = None):
         """
         Generates an array of voronoi shapes, with numbers starting from -1 and going down.
 
@@ -16,17 +19,22 @@ class VoronoiGeneratorMixin():
             size: Size of an nxn array.
             interpoint_distance: Minimum distance between points.
         """
-        # Initialize the array with zeros.
-        array = [[0 for i in range(size)] for j in range(size)]
+        if array is None:
+            # Initialize the array with zeros.
+            array = [[0 for i in range(size)] for j in range(size)]
 
-        # Generate a Poisson-distributed set of points.
-        points = self._generate_poisson_voronoi_point_distribution(size, interpoint_distance)
+            # Generate a Poisson-distributed set of points.
+            points = self._generate_poisson_voronoi_point_distribution(size, interpoint_distance)
+        else:
+            # Generate a Poisson-distributed set of points.
+            points = self._generate_poisson_voronoi_point_distribution(len(array), interpoint_distance)
 
         # Assign each point in the array to a Voronoi cell.
         self._assign_voronoi_cell_numbers(array, points)
 
         # Grow the Voronoi cells until they can no longer expand.
         total = -1
+
         while total != 0:
             total = 0
             new_points = []
@@ -35,52 +43,8 @@ class VoronoiGeneratorMixin():
             
             total += len(new_points)
             points = new_points
-
-        # Return the Voronoi diagram as an array.
-        return array
-
-    def generate_voronoi_cells2(
-            self,
-            size, 
-            interpoint_distance,
-            array_space_type_list: Union[int, tuple],
-            ):
-        """
-        Generates an array of voronoi shapes, with numbers starting from -1 and going down.
-
-        Args:
-            size: Size of an nxn array.
-            interpoint_distance: Minimum distance between points.
-            array_space_type_list: List of space types to be used in the array.
-        """
-
-
-        # Generate a Poisson-distributed set of points.
-        points = self._generate_poisson_voronoi_point_distribution(size, interpoint_distance)
-
-        sets = [(set(points)), self.get_dictionary_from_value_type(array_space_type_list)]
         
-
-        functools.reduce(lambda a, b: a & b, sets)
-
-
-        # Assign each point in the array to a Voronoi cell.
-        self._assign_voronoi_cell_numbers(array, points)
-
-        # Grow the Voronoi cells until they can no longer expand.
-        total = -1
-        while total != 0:
-            total = 0
-            new_points = []
-            for (x, y) in points:
-                new_points.extend(self._voronoi_grow_single(array, (x, y), point_type=array[x][y]))
-            
-            total += len(new_points)
-            points = new_points
-
-        # Return the Voronoi diagram as an array.
         return array
-
 
     # ------------------------- HELPER METHODS ----------------------------------
 
@@ -98,7 +62,11 @@ class VoronoiGeneratorMixin():
         
         return points
 
-    def _assign_voronoi_cell_numbers(self, array, points):
+    def _assign_voronoi_cell_numbers(
+            self,
+            array,
+            points,
+            ):
         """
         Assigns a point value to each point.
 
@@ -106,11 +74,12 @@ class VoronoiGeneratorMixin():
             array: Array representing the total space.
             points: Points used to create the Voronoi texture.
         """
-
         for i, (x,y) in enumerate(points):
             if self._valid(array,x,y):
-                array[x][y] = -(i+1)
+                array[x][y] = -(i+1)-self.global_zone_counter
         
+        self.global_zone_counter += len(points)
+    
         return array
 
     def _valid(self, array, x, y):

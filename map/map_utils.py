@@ -1,4 +1,6 @@
 from common.enums.enum import ValueType
+from typing import Union
+from AoE2ScenarioParser.datasets.players import PlayerId
 
 class MapUtilsMixin():
     """
@@ -47,3 +49,32 @@ class MapUtilsMixin():
             return self.elevation_array
         
         raise ValueError("Retrieving array from value type failed.")
+
+    def set_point(self, x, y, new_value, value_type: Union[ValueType, int], player_id : PlayerId = PlayerId.GAIA):
+        """
+        Takes an x and y coordinate and updates both the array and set representation.
+
+        Args:
+            x: X coordinate.
+            y: Y coordinate.
+            new_value: Value to set the point to.
+        """
+        # Retrieve correct dictionary and array.
+        d = self.get_dictionary_from_value_type(value_type)
+        a = self.get_array_from_value_type(value_type)
+        
+        # Remove element from the dictionary.
+        d[a[x][y]].remove((x,y))
+
+        # Remove entire dictionary entry if there are not elements left.
+        if len(d[a[x][y]]) == 0:
+            d.pop(a[x][y], None)
+
+        # Assign new value to the array.
+        a[x][y] = (new_value, player_id)
+
+        # Add the value to the dictionary.
+        if (new_value, player_id) in d:
+            d[a[x][y]].add((x,y))
+        else:
+            d[a[x][y]] = {(x,y)}
