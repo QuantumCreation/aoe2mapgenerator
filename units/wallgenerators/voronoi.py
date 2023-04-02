@@ -11,7 +11,12 @@ class VoronoiGeneratorMixin(MapUtilsMixin):
     """
     global_zone_counter = 0
 
-    def generate_voronoi_cells(self, size, interpoint_distance, array = None):
+    def generate_voronoi_cells(
+            self, 
+            size: int, 
+            interpoint_distance: int,
+            array = None
+            ):
         """
         Generates an array of voronoi shapes, with numbers starting from -1 and going down.
 

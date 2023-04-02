@@ -11,7 +11,7 @@ from pandas import array
 from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
 from map.map_utils import MapUtilsMixin
 from utils.utils import set_from_matrix
-from common.enums.enum import ObjectSize, Directions, ValueType, GateTypes, CheckPlacementReturnTypes
+from common.enums.enum import ObjectSize, Directions, MapLayerType, GateTypes, CheckPlacementReturnTypes
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from copy import deepcopy
@@ -23,10 +23,10 @@ class PlacerMixin(MapUtilsMixin):
     TODO
     """
 
-    # By default the object is placed in the first value from the value_type list.
+    # By default the object is placed in the first value from the map_layer_type list.
     def _place_group(
         self, 
-        value_type_list: list[ValueType], 
+        map_layer_type_list: list[MapLayerType], 
         array_space_type_list: list[Union[int, tuple]], 
         obj_type_list: list = DEFAULT_OBJECT_TYPES, 
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -43,7 +43,7 @@ class PlacerMixin(MapUtilsMixin):
         Places a single group of units on a specific array space.
 
         Args:
-            value_types (list[ValueType]): The list of map types.
+            map_layer_types (list[MapLayerType]): The list of map types.
             array_space_ids (list[Union[int, tuple]]): The list of array space ids to get points for.
             object_types (list, optional): The list of object types to be placed. Defaults to DEFAULT_OBJECT_TYPES.
             player_id (PlayerId, optional): The id of the object to be placed. Defaults to DEFAULT_PLAYER.
@@ -61,7 +61,7 @@ class PlacerMixin(MapUtilsMixin):
             clumping_func = self.default_clumping_func
 
         # Get the intersection of the specified value types and array spaces
-        points_list = list(self._get_intersection_of_spaces(value_type_list, array_space_type_list))
+        points_list = list(self._get_intersection_of_spaces(map_layer_type_list, array_space_type_list))
         
         # Adjust group size based on density if specified
         if group_density is not None:
@@ -89,14 +89,14 @@ class PlacerMixin(MapUtilsMixin):
             if placed >= group_size:
                 return
             
-            status = self._check_placement(value_type_list, array_space_type_list, (x,y), obj_type, margin)
+            status = self._check_placement(map_layer_type_list, array_space_type_list, (x,y), obj_type, margin)
 
             if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
                 return
     
             if status == CheckPlacementReturnTypes.SUCCESS:
                 # Place the object on the first n maps
-                self._place(value_type_list[:place_on_n_maps], (x,y), obj_type, player_id, margin, ghost_margin)
+                self._place(map_layer_type_list[:place_on_n_maps], (x,y), obj_type, player_id, margin, ghost_margin)
                 
                 placed += 1
                 obj_counter = min(len(obj_type_list)-1, obj_counter+1)
@@ -106,7 +106,7 @@ class PlacerMixin(MapUtilsMixin):
 
     def place_groups(
         self, 
-        value_type_list: list[ValueType], 
+        map_layer_type_list: list[MapLayerType], 
         array_space_type_list: list[Union[int, tuple]], 
         obj_type_list = DEFAULT_OBJECT_TYPES, 
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -125,7 +125,7 @@ class PlacerMixin(MapUtilsMixin):
         Places multiple groups of objects.
 
         Args:
-            value_type: The map type.
+            map_layer_type: The map type.
             array_space_type: Array space id to get points for.
             obj_type: The type of object to be placed.
             player_id: Id of the object to be placed.
@@ -137,11 +137,11 @@ class PlacerMixin(MapUtilsMixin):
         """
 
         # Checks the value types are valid and converts to a list if needed.
-        if type(value_type_list) != list:
-            value_type_list = [value_type_list]
+        if type(map_layer_type_list) != list:
+            map_layer_type_list = [map_layer_type_list]
 
-        if len(value_type_list) == 0:
-            raise ValueError("Value type list \'{value_type_list}\' has no entries.")
+        if len(map_layer_type_list) == 0:
+            raise ValueError("Value type list \'{map_layer_type_list}\' has no entries.")
 
         # Checks the array space types are valid and converts to a list if needed.
         if type(array_space_type_list) != list:
@@ -157,21 +157,21 @@ class PlacerMixin(MapUtilsMixin):
         if len(obj_type_list) == 0:
             raise ValueError("Object type list \'{obj_type_list}\' has no entiries.")
         
-        if len(value_type_list) != len(array_space_type_list):
+        if len(map_layer_type_list) != len(array_space_type_list):
             raise ValueError("Length of value types list and array space types not equal.")
 
 
         # Checks that each map value type actually includes the correct array space type, otherwise stop.
-        for value_type, array_space_type in zip(value_type_list, array_space_type_list):
-            if array_space_type not in self.get_dictionary_from_value_type(value_type):
-                raise ValueError(f"The value {array_space_type} is not present in the {value_type} map.")
+        for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
+            if array_space_type not in self.get_dictionary_from_map_layer_type(map_layer_type):
+                raise ValueError(f"The value {array_space_type} is not present in the {map_layer_type} map.")
                 
         if groups_density is not None:
-            groups = groups_density*len(self._get_intersection_of_spaces(value_type_list,array_space_type_list))//2000
+            groups = groups_density*len(self._get_intersection_of_spaces(map_layer_type_list,array_space_type_list))//2000
 
         for i in range(groups):
             self._place_group(
-                value_type_list=value_type_list, 
+                map_layer_type_list=map_layer_type_list, 
                 array_space_type_list=array_space_type_list, 
                 obj_type_list=obj_type_list, 
                 player_id=player_id,
@@ -188,7 +188,7 @@ class PlacerMixin(MapUtilsMixin):
     # Multiple map type Callableality still seems a bit weird to me. May refactor later.
     def add_borders(
         self, 
-        value_type_list: list[ValueType], 
+        map_layer_type_list: list[MapLayerType], 
         array_space_type_list: Union[int, tuple], 
         obj_type,
         margin: int = 1, 
@@ -200,39 +200,39 @@ class PlacerMixin(MapUtilsMixin):
 
         Args:
             array: Array of the complete map space.
-            value_type: The map type.
+            map_layer_type: The map type.
             array_space_type: Array space id to get points for.
             border_type: Type of border to place.
             margin: Type of margin to place.
             player_id: Id of the objects being placed.
         """
         # Checks the value types are valid and converts to a list if needed.
-        if type(value_type_list) != list:
-            value_type_list = [value_type_list]
+        if type(map_layer_type_list) != list:
+            map_layer_type_list = [map_layer_type_list]
 
-        if len(value_type_list) == 0:
+        if len(map_layer_type_list) == 0:
             raise ValueError("No elements in value type list.")
 
         if type(array_space_type_list) != list:
             array_space_type_list = [array_space_type_list]
 
-        points = self._get_intersection_of_spaces(value_type_list, array_space_type_list).copy()
+        points = self._get_intersection_of_spaces(map_layer_type_list, array_space_type_list).copy()
  
         # Uses only the first value type and array space to find where to place points. May change later.
         # Still places the points in every space.
 
         for point in points:
             if self._is_on_border(points, point, margin):
-                for value_type in value_type_list[:place_on_n_maps]:
+                for map_layer_type in map_layer_type_list[:place_on_n_maps]:
                     x, y = point
-                    self.set_point(x,y,obj_type, value_type, player_id)
+                    self.set_point(x,y,obj_type, map_layer_type, player_id)
            
         return
     
     # SOMETHING SOMETIMES LEADS TO MASSIVE PERFORMANCE PROBLEMS HERE. IDK WHY LOL.
     def add_borders_all(
         self, 
-        value_type_list: list[ValueType],
+        map_layer_type_list: list[MapLayerType],
         border_type, 
         margin: int = 1, 
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -242,16 +242,16 @@ class PlacerMixin(MapUtilsMixin):
         Adds borders to a cell based on border margin size and type.
 
         Args:
-            value_type: The map type.
+            map_layer_type: The map type.
             border_type: Type of border to place.
             margin: Type of margin to place.
             player_id: Id of the objects being placed.
         """
-        all_array_space_type_list = list(set_from_matrix(self.get_array_from_value_type(value_type_list[0])))
+        all_array_space_type_list = list(set_from_matrix(self.get_array_from_map_layer_type(map_layer_type_list[0])))
 
         for space_type in all_array_space_type_list:
             self.add_borders(
-                value_type_list, 
+                map_layer_type_list, 
                 space_type, 
                 border_type, 
                 margin, 
@@ -265,7 +265,7 @@ class PlacerMixin(MapUtilsMixin):
 
     def _check_placement(  
         self,
-        value_type_list: list[ValueType], 
+        map_layer_type_list: list[MapLayerType], 
         array_space_type_list: list[Union[int, tuple]], 
         point: tuple,
         obj_type = None, 
@@ -295,9 +295,9 @@ class PlacerMixin(MapUtilsMixin):
         eff_height = height + margin
 
         x, y = point
-        for value_type, array_space_type in zip(value_type_list, array_space_type_list):
+        for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
             try:
-                obj_space = self.get_dictionary_from_value_type(value_type)[array_space_type]
+                obj_space = self.get_dictionary_from_map_layer_type(map_layer_type)[array_space_type]
             except:
                 return CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE
             
@@ -310,7 +310,7 @@ class PlacerMixin(MapUtilsMixin):
 
     def _place(
         self, 
-        value_type_list: ValueType, 
+        map_layer_type_list: MapLayerType, 
         point: tuple, 
         obj_type, 
         player_id: PlayerId, 
@@ -322,7 +322,7 @@ class PlacerMixin(MapUtilsMixin):
         Places a single object. Assumes placement has already been verified.
 
         Args:
-            value_type: The map type.
+            map_layer_type: The map type.
             point: Point to place base of object.
             obj_type: The type of object to be placed.
             player_id: Id of the player for the given object.
@@ -345,17 +345,17 @@ class PlacerMixin(MapUtilsMixin):
         
         x, y = point
 
-        for value_type in value_type_list:
+        for map_layer_type in map_layer_type_list:
             # IDK but this if statement may speed things up a little bit. NEEDS TESTING.
             if width > 1 or height > 1 or margin > 0:
                 for i in range(-margin, eff_width):
                     for j in range(-margin, eff_height):
                         if 0<=i<width and 0<=j<height:
-                            self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, value_type, player_id)
+                            self.set_point(x+i,y+j,GHOST_OBJECT_DISPLACEMENT, map_layer_type, player_id)
                         elif ghost_margin:
-                            self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, value_type, player_id)
+                            self.set_point(x+i,y+j,GHOST_OBJECT_MARGIN, map_layer_type, player_id)
         
-            self.set_point(x+width//2, y+height//2, obj_type, value_type, player_id)
+            self.set_point(x+width//2, y+height//2, obj_type, map_layer_type, player_id)
 
         return
 
@@ -377,21 +377,26 @@ class PlacerMixin(MapUtilsMixin):
 
         return False
     
-    def _get_set_with_min_members(self, value_type_list, array_space_type_list):
+    def _get_set_with_min_members(self, map_layer_type_list, array_space_type_list):
         """
         Gets the dict with the minimum members from the given value type list and array space type list.
         """
-        all_sets = (self.get_dictionary_from_value_type(value_type)[array_space_type] for value_type, array_space_type in zip(value_type_list, array_space_type_list))
+        all_sets = (self.get_dictionary_from_map_layer_type(map_layer_type)[array_space_type] for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list))
         min_set = min(all_sets, key = lambda s: len(s))
 
         return min_set
 
-    def _get_intersection_of_spaces(self, value_type_list, array_space_type_list):
+    def _get_intersection_of_spaces(self, map_layer_type_list, array_space_type_list):
         """
         Gets the union of the different spaces.
         """
-        sets = [self.get_dictionary_from_value_type(value_type)[array_space_type] 
-            for value_type, array_space_type in zip(value_type_list, array_space_type_list)]
+        # sets = []
+
+        # for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
+        #     sets.append(self.get_dictionary_from_map_layer_type(map_layer_type)[array_space_type])
+
+        sets = [self.get_dictionary_from_map_layer_type(map_layer_type)[array_space_type] 
+            for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list)]
 
         return functools.reduce(lambda a, b: a & b, sets)
 
@@ -439,7 +444,7 @@ class PlacerMixin(MapUtilsMixin):
 
     def place_gate_on_four_sides(
         self, 
-        value_type_list: list[ValueType], 
+        map_layer_type_list: list[MapLayerType], 
         array_space_type_list: list[Union[int, tuple]], 
         gate_type: GateTypes, 
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -449,18 +454,18 @@ class PlacerMixin(MapUtilsMixin):
         Takes the average location of points in the given array space, and places gates on four sides.
 
         Args:
-            value_type: The map type.
+            map_layer_type: The map type.
             array_space_type: Array space id to get points for.
             gate_type: Type of the gate being placed
             playerId: Id of the objects being placed.
         """
         # ALL OF THESE CHECKS SHOULD PROBABLY BE ABSTRACTED AWAY ELSEWHERE
         # Checks the value types are valid and converts to a list if needed.
-        if type(value_type_list) != list:
-            value_type_list = [value_type_list]
+        if type(map_layer_type_list) != list:
+            map_layer_type_list = [map_layer_type_list]
 
-        if len(value_type_list) == 0:
-            raise ValueError("Value type list \'{value_type_list}\' has no entries.")
+        if len(map_layer_type_list) == 0:
+            raise ValueError("Value type list \'{map_layer_type_list}\' has no entries.")
 
 
         # Checks the array space types are valid and converts to a list if needed.
@@ -470,29 +475,29 @@ class PlacerMixin(MapUtilsMixin):
         if len(array_space_type_list) == 0:
             raise ValueError("Array space type list \'{array_space_type_list}\' has no entries.")
         
-        if len(value_type_list) != len(array_space_type_list):
+        if len(map_layer_type_list) != len(array_space_type_list):
             raise ValueError("Length of value types list and array space types not equal.")
 
 
         # Checks that each map value type actually includes the correct array space type, otherwise stop.
-        for value_type, array_space_type in zip(value_type_list, array_space_type_list):
-            if array_space_type not in self.get_dictionary_from_value_type(value_type):
-                print(f"The value {array_space_type} is not present in the {value_type} map.")
+        for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
+            if array_space_type not in self.get_dictionary_from_map_layer_type(map_layer_type):
+                print(f"The value {array_space_type} is not present in the {map_layer_type} map.")
                 return
         
-        avg_point = self._get_average_point_position(value_type_list, array_space_type_list)
+        avg_point = self._get_average_point_position(map_layer_type_list, array_space_type_list)
 
         for direction in [direction.value for direction in Directions]:
-            point = self._get_first_point_in_given_direction(value_type_list, array_space_type_list, avg_point, direction)
+            point = self._get_first_point_in_given_direction(map_layer_type_list, array_space_type_list, avg_point, direction)
 
             if point is None:
                 continue
 
-            self._place_gate_closest_to_point(value_type_list, array_space_type_list, gate_type, point, player_id, place_on_n_maps)
+            self._place_gate_closest_to_point(map_layer_type_list, array_space_type_list, gate_type, point, player_id, place_on_n_maps)
 
     # --------------------------- GATE HELPER METHODS ---------------------------------
 
-    def _get_average_point_position(self, value_type_list, array_space_type_list):
+    def _get_average_point_position(self, map_layer_type_list, array_space_type_list):
         """
         Gets the location of the average point from the given value type and array space lists.
         """
@@ -500,10 +505,10 @@ class PlacerMixin(MapUtilsMixin):
         totx = 0
         toty = 0
 
-        smallest_set = self._get_set_with_min_members(value_type_list, array_space_type_list)
+        smallest_set = self._get_set_with_min_members(map_layer_type_list, array_space_type_list)
 
         for point in smallest_set:
-            status = self._check_placement(value_type_list, array_space_type_list, point, None,0,width=1,height=1)
+            status = self._check_placement(map_layer_type_list, array_space_type_list, point, None,0,width=1,height=1)
 
             if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
                 return (0,0)
@@ -517,7 +522,7 @@ class PlacerMixin(MapUtilsMixin):
     
     def _get_first_point_in_given_direction(
         self, 
-        value_type_list: list[ValueType], 
+        map_layer_type_list: list[MapLayerType], 
         array_space_type_list,
         starting_point: tuple,
         direction: Directions
@@ -526,14 +531,14 @@ class PlacerMixin(MapUtilsMixin):
         Finds the first point in the matching array space type with the given direction.
 
         Args:
-            value_type: The map type.
+            map_layer_type: The map type.
             array_space_type: Array space id to get points for.
             starting_point: Point to start searching from.
             direciton: Direction to search in.
         """
         point = starting_point
 
-        smallest_set = self._get_set_with_min_members(value_type_list, array_space_type_list)
+        smallest_set = self._get_set_with_min_members(map_layer_type_list, array_space_type_list)
         points = smallest_set
 
         # NOTE THIS CAN BE OPTIMIZED BY STARTING AT THE GIVEN POINT AND NOT GOING BEYOND MAP BOUNDARIES
@@ -541,7 +546,7 @@ class PlacerMixin(MapUtilsMixin):
         for i in range(self.size):
 
             if point in points:
-                status = self._check_placement(value_type_list, array_space_type_list,point,None,0,width=1,height=1)
+                status = self._check_placement(map_layer_type_list, array_space_type_list,point,None,0,width=1,height=1)
 
                 if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
                     return None
@@ -557,7 +562,7 @@ class PlacerMixin(MapUtilsMixin):
     # Maybe this and the other place method could be joined or simplified somehow.
     def _place_gate_closest_to_point(
         self, 
-        value_type_list: ValueType, 
+        map_layer_type_list: MapLayerType, 
         array_space_type_list, 
         gate_type: GateTypes, 
         starting_point, 
@@ -567,28 +572,28 @@ class PlacerMixin(MapUtilsMixin):
         """
         Places a gate as close as possible to the starting point.
         """
-        points_set = self._get_intersection_of_spaces(value_type_list,array_space_type_list)
+        points_set = self._get_intersection_of_spaces(map_layer_type_list, array_space_type_list)
 
         for (x,y) in sorted(points_set, key = lambda point: ((point[0]-starting_point[0])**2 + (point[1]-starting_point[1])**2)):
 
-            status = self._check_placement(value_type_list, array_space_type_list, (x,y), margin = 0, width = 1, height = 4)
+            status = self._check_placement(map_layer_type_list, array_space_type_list, (x,y), margin = 0, width = 1, height = 4)
 
             if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
                 return
 
             if status == CheckPlacementReturnTypes.SUCCESS:
                 obj_type = BuildingInfo[gate_type.value[2]]
-                self._place(value_type_list[:place_on_n_maps], (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 1, height = 4)
+                self._place(map_layer_type_list[:place_on_n_maps], (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 1, height = 4)
                 return
 
-            status = self._check_placement(value_type_list, array_space_type_list, (x,y), margin = 0, width = 4, height = 1)
+            status = self._check_placement(map_layer_type_list, array_space_type_list, (x,y), margin = 0, width = 4, height = 1)
 
             if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
                 return
 
             if status == CheckPlacementReturnTypes.SUCCESS:
                 obj_type = BuildingInfo[gate_type.value[3]]
-                self._place(value_type_list[:place_on_n_maps], (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 4, height = 1)
+                self._place(map_layer_type_list[:place_on_n_maps], (x,y), obj_type, player_id, margin=0, ghost_margin=0, width = 4, height = 1)
                 return
         
         return

@@ -7,7 +7,7 @@ command_list:
 # NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - TERRAIN
         - UNIT
         - ZONE
@@ -29,7 +29,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
         - TERRAIN
         - ZONE
@@ -52,7 +52,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
         - TERRAIN
         - ZONE
@@ -76,7 +76,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
         - TERRAIN
       array_space_type_list:

@@ -12,7 +12,7 @@ def add_endings(gate_name):
         return tuple((f'{gate_name}_{ending}' for ending in endings))
 
 
-class ValueType(Enum):
+class MapLayerType(Enum):
     """
     Enum defining the what type a certain value is.
     """

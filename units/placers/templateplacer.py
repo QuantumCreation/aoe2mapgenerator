@@ -4,7 +4,7 @@ from re import A
 from site import abs_paths
 from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
 from utils.utils import set_from_matrix
-from common.enums.enum import ObjectSize, ValueType, GateTypes
+from common.enums.enum import ObjectSize, MapLayerType, GateTypes
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
@@ -66,7 +66,7 @@ class TemplatePlacerMixin(PlacerMixin):
         # end = time()
         # print(f"Time to load yaml: {end-start}")
 
-        self._validate_user_included_required_yaml_fields(template, kwargs['value_type_list'])
+        self._validate_user_included_required_yaml_fields(template, kwargs['map_layer_type_list'])
         
         total_conversion = 0
         total_function_call = 0
@@ -103,11 +103,11 @@ class TemplatePlacerMixin(PlacerMixin):
         """
         dictionary = self._create_dictionary_mapping(**kwargs)
         # STUFF
-        if 'value_type_list' in parameters:
-            parameters['value_type_list'] = [
+        if 'map_layer_type_list' in parameters:
+            parameters['map_layer_type_list'] = [
                 dictionary[value] if value in dictionary 
-                else ValueType(value) 
-                for value in parameters['value_type_list']]
+                else MapLayerType(value) 
+                for value in parameters['map_layer_type_list']]
             
         # Maybe have the function handle the entire list to limit function calls?
         if 'array_space_type_list' in parameters:
@@ -187,14 +187,14 @@ class TemplatePlacerMixin(PlacerMixin):
 
         # String formatted should probably be optimized/made pretty/use enum. SEE ENUMS.
         # IS THIS EVEN NECESSARY? WE WILL ALWAYS GET THE SAME MAPPING. WHY HAVE AN EXTRA VARIABLE FOR THIS?
-        if 'value_type_list' in kwargs:
-            for value_type in kwargs['value_type_list']:
-                default_dict[f"${value_type._name_}_V"] = value_type
+        if 'map_layer_type_list' in kwargs:
+            for map_layer_type in kwargs['map_layer_type_list']:
+                default_dict[f"${map_layer_type._name_}_V"] = map_layer_type
 
         if 'array_space_type_list' in kwargs:
-            value_type_list = kwargs['value_type_list']
+            map_layer_type_list = kwargs['map_layer_type_list']
             for i, array_space_type in enumerate(kwargs['array_space_type_list']):
-                default_dict[f"${value_type_list[i]._name_}"] = array_space_type
+                default_dict[f"${map_layer_type_list[i]._name_}"] = array_space_type
 
         # OBJ LIST NOT YET SUPPORTED
 
@@ -210,19 +210,19 @@ class TemplatePlacerMixin(PlacerMixin):
     # Maybe add more fields later and organize better
     def _validate_user_included_required_yaml_fields(self,
         template,
-        value_type_list,
+        map_layer_type_list,
         ):
         """
         Validates the input to the placement function.
 
         Args:
             template: Loaded yaml template.
-            value_type_list: 
+            map_layer_type_list: 
         """
-        required_inputs = [ValueType[text] for text in template['required_inputs']]
+        required_inputs = [MapLayerType[text] for text in template['required_inputs']]
 
         for input in required_inputs:
-            if input not in value_type_list:
+            if input not in map_layer_type_list:
                 raise ValueError(f"The template requires the {input} field.")
 
         return True

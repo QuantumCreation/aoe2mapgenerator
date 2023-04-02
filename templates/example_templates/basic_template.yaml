@@ -7,7 +7,7 @@ command_list:
 # NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
   - command_name: add_borders
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -17,7 +17,7 @@ command_list:
 
   - command_name: place_gate_on_four_sides
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
         - ZONE
       array_space_type_list: 
@@ -28,7 +28,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
         - TERRAIN
       array_space_type_list: 
@@ -48,7 +48,7 @@ command_list:
   
   - command_name: add_borders
     parameters:
-      value_type_list:
+      map_layer_type_list:
         - TERRAIN
         - ZONE
       array_space_type_list: 
@@ -60,7 +60,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
         - ZONE
       array_space_type_list: 
@@ -80,7 +80,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -100,7 +100,7 @@ command_list:
   
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -118,7 +118,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -136,7 +136,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -154,7 +154,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -172,7 +172,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -190,7 +190,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -208,7 +208,7 @@ command_list:
   # DEAL WITH DECOR AND UNIT MAPS
   - command_name: place_groups
     parameters:
-      value_type_list:
+      map_layer_type_list:
         - DECOR
         - UNIT
       array_space_type_list:
@@ -228,7 +228,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list:
+      map_layer_type_list:
         - DECOR
         - UNIT
       array_space_type_list:
@@ -248,7 +248,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list:
+      map_layer_type_list:
         - DECOR
         - UNIT
       array_space_type_list: 
@@ -268,7 +268,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list:
+      map_layer_type_list:
         - DECOR
         - UNIT
       array_space_type_list:
@@ -288,7 +288,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - DECOR
         - UNIT
       array_space_type_list: 
@@ -308,7 +308,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -327,7 +327,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -345,7 +345,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -364,7 +364,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -382,7 +382,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -400,7 +400,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -419,7 +419,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -437,7 +437,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -456,7 +456,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -475,7 +475,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -493,7 +493,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -512,7 +512,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -531,7 +531,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -550,7 +550,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - $UNIT
@@ -569,7 +569,7 @@ command_list:
 
   - command_name: place_groups
     parameters:
-      value_type_list: 
+      map_layer_type_list: 
         - UNIT
       array_space_type_list: 
         - [ROAD_FUNGUS, null]

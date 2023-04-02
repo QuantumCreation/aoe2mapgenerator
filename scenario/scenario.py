@@ -6,7 +6,7 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from common.enums.enum import ObjectRotation, ValueType, GateTypes
+from common.enums.enum import ObjectRotation, MapLayerType, GateTypes
 from common.constants.constants import BASE_SCENE_DIR, X_SHIFT, Y_SHIFT
 
 import random
@@ -80,12 +80,12 @@ class Scenario():
             tile = map_manager.get_tile(x, y)
             tile.terrain_id = terrain_const.value
 
-    def write_any_type(self, value_type):
+    def write_any_type(self, map_layer_type):
         """
         
         """
         # HAS TO BE CHANGED
-        d = self.map.get_dictionary_from_value_type(value_type)
+        d = self.map.get_dictionary_from_map_layer_type(map_layer_type)
 
         for key in d:
             if type(key) == tuple:
@@ -104,9 +104,9 @@ class Scenario():
         """
         TODO
         """
-        self.write_any_type(ValueType.UNIT)
-        self.write_any_type(ValueType.TERRAIN)
-        self.write_any_type(ValueType.DECOR)
+        self.write_any_type(MapLayerType.UNIT)
+        self.write_any_type(MapLayerType.TERRAIN)
+        self.write_any_type(MapLayerType.DECOR)
 
 
     def change_map_size(self, map_size):
