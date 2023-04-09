@@ -55,6 +55,10 @@ class ObjectSize(Enum):
     FORTRESS = 4
     MONASTERY = 3
 
+    SNOW_MOUNTAIN_1 = 5
+    SNOW_MOUNTAIN_2 = 5
+    SNOW_MOUNTAIN_3 = 5
+
     # MISC
     ROMAN_RUINS = 2
 

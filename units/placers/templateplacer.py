@@ -42,6 +42,7 @@ class TemplatePlacerMixin(PlacerMixin):
         if template_file_name in self.template_names:
             return deepcopy(self.template_names[template_file_name])
         else:
+            print(f"NEW TEMPLATE LOADED: {template_file_name}")
             with open(os.path.join(BASE_TEMPLATE_DIR, template_file_name), 'r') as f:
                 yaml = load(f, Loader = UnsafeLoader)
                 self.template_names[template_file_name] = deepcopy(yaml)
@@ -70,6 +71,9 @@ class TemplatePlacerMixin(PlacerMixin):
         
         total_conversion = 0
         total_function_call = 0
+
+        calls = []
+
         for command in template['command_list']:
             # start = time()
             function = getattr(self, command['command_name'])
@@ -85,8 +89,12 @@ class TemplatePlacerMixin(PlacerMixin):
             function(**command['parameters'])
             end = time()
             total_function_call += end-start
+
+            calls += [[command['command_name'], command['parameters'], end-start]]
+        if max(calls, key = lambda x: x[2])[2] > 0.5:
+            print(f"Longest call: {max(calls, key = lambda x: x[2])}")
         # print(f"Time to convert yaml to python: {total_conversion}")
-        print(f"Time to run python functions: {total_function_call}")
+        # print(f"Time to run {template_file_name}: {total_function_call}")
     
     # Would a dataclass somehow be useful here? Maybe include separate YAML format verifier.
     # Also, this ugly sonofabitch function needs some work. We'll shall attend to his needs soon.
@@ -171,7 +179,7 @@ class TemplatePlacerMixin(PlacerMixin):
         if return_default:
             return default_value
 
-        raise ValueError("The value \'{text}\' was not found in any existing enum.")
+        raise ValueError(f"The value \'{text}\' was not found in any existing enum.")
     
     def _create_dictionary_mapping(
         self,
@@ -242,6 +250,7 @@ class TemplatePlacerMixin(PlacerMixin):
         acceptable_args = arg_spec.args
         required_args = arg_spec.args[:-(0 if arg_spec.defaults is None else len(arg_spec.defaults))]
 
+        # I THINK SOMETHING IS WRONG HERE. CHECK IF THE REQUIRED ARGS ARE CHECKED CORRECTLY.
         if len(required_args) > 0 and required_args[0] == 'self':
             required_args.remove('self')
 

@@ -17,6 +17,8 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from copy import deepcopy
 import functools
 from time import time
+from collections import deque
+from heapq import nsmallest
 
 class PlacerMixin(MapUtilsMixin):
     """
@@ -61,7 +63,8 @@ class PlacerMixin(MapUtilsMixin):
             clumping_func = self.default_clumping_func
 
         # Get the intersection of the specified value types and array spaces
-        points_list = list(self._get_intersection_of_spaces(map_layer_type_list, array_space_type_list))
+        s = self.get_intersection_of_spaces(map_layer_type_list, array_space_type_list)
+        points_list = list(s)
         
         # Adjust group size based on density if specified
         if group_density is not None:
@@ -74,9 +77,68 @@ class PlacerMixin(MapUtilsMixin):
             
         
         
+        # def bfs(matrix, start, points_list, total_points, clumping = 1):
+        #     """
+        #     Performs a breadth-first search on the matrix starting from the start point.
+            
+        #     Args:
+        #         matrix (list[list]): The matrix to search.
+        #         start (tuple): The starting point.
+        #         points_list (list[tuple]): The list of points to search for.
+        #         total_points (int): The total number of points to search for.
+        #     """
+        #     rows, cols = len(matrix), len(matrix[0])
+        #     visited = set()
+        #     queue = deque([start])
+        #     sorted_list = []
+
+        #     while queue and len(visited)<total_points:
+
+        #         row, col = queue.popleft()
+
+        #         if (row, col) not in visited:
+        #             visited.add((row, col))
+
+        #             if (row, col) in points_list:
+        #                 sorted_list.append((row, col))
+                    
+        #             for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        #                 new_row, new_col = row + dr, col + dc
+        #                 if 0 <= new_row < rows and 0 <= new_col < cols and (new_row, new_col) not in visited:
+        #                     queue.append((new_row, new_col))
+            
+        #     return sorted_list
+        
+        # points_list = bfs(
+        #     self.get_map_layer(map_layer_type_list[0]).array, 
+        #     start_point, 
+        #     points_list, 
+        #     int(1.5*len(points_list)), 
+        #     clumping)
+
+
+        # Start with some size as the default
+        total_size = 1
+        effmargin = (1 + margin) if ghost_margin else margin
+
+        if clumping == -1:
+            total_size = (self.size + 100)**2
+        else:
+            for i in range(len(obj_type_list)):
+                total_size += (ObjectSize(obj_type_list[i]._name_).value + effmargin)**2
+
+            if group_size > len(obj_type_list):
+                total_size += (group_size-len(obj_type_list))*(ObjectSize(obj_type_list[-1]._name_).value + effmargin)**2
+        
+        world_partition_sets = self.get_world_partition(start_point, total_size, clumping)
+        points_list = [list(set.intersection(s, wpset)) for wpset in world_partition_sets]
+        points_list = functools.reduce(lambda acc, lst: acc + lst, points_list)
 
         # Sort the points based on clumping score if group size is in a certain range
         if 1<group_size<len(points_list):
+            # points_list = nsmallest(group_size, 
+            #                         points_list, 
+            #                         key = lambda x: clumping_func(x, start_point, clumping))
             points_list = sorted(points_list, key = lambda point: clumping_func(point, start_point, clumping))
 
 
@@ -164,11 +226,14 @@ class PlacerMixin(MapUtilsMixin):
         # Checks that each map value type actually includes the correct array space type, otherwise stop.
         for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
             if array_space_type not in self.get_dictionary_from_map_layer_type(map_layer_type):
-                raise ValueError(f"The value {array_space_type} is not present in the {map_layer_type} map.")
+                # raise ValueError(f"The value {array_space_type} is not present in the {map_layer_type} map.")
+                print(f"The value {array_space_type} is not present in the {map_layer_type} map.")
+                return
                 
         if groups_density is not None:
-            groups = groups_density*len(self._get_intersection_of_spaces(map_layer_type_list,array_space_type_list))//2000
-
+            groups = groups_density*len(self.get_intersection_of_spaces(map_layer_type_list,array_space_type_list))//2000
+            groups = int(groups)
+        
         for i in range(groups):
             self._place_group(
                 map_layer_type_list=map_layer_type_list, 
@@ -199,12 +264,12 @@ class PlacerMixin(MapUtilsMixin):
         Adds borders to a cell based on border margin size and type.
 
         Args:
-            array: Array of the complete map space.
             map_layer_type: The map type.
             array_space_type: Array space id to get points for.
-            border_type: Type of border to place.
+            obj_type: The type of object to be placed.
             margin: Type of margin to place.
             player_id: Id of the objects being placed.
+            place_on_n_maps: Number of maps to place the objects on.
         """
         # Checks the value types are valid and converts to a list if needed.
         if type(map_layer_type_list) != list:
@@ -216,7 +281,7 @@ class PlacerMixin(MapUtilsMixin):
         if type(array_space_type_list) != list:
             array_space_type_list = [array_space_type_list]
 
-        points = self._get_intersection_of_spaces(map_layer_type_list, array_space_type_list).copy()
+        points = self.get_intersection_of_spaces(map_layer_type_list, array_space_type_list).copy()
  
         # Uses only the first value type and array space to find where to place points. May change later.
         # Still places the points in every space.
@@ -233,6 +298,7 @@ class PlacerMixin(MapUtilsMixin):
     def add_borders_all(
         self, 
         map_layer_type_list: list[MapLayerType],
+        array_space_type_list: Union[int, tuple],
         border_type, 
         margin: int = 1, 
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -247,18 +313,16 @@ class PlacerMixin(MapUtilsMixin):
             margin: Type of margin to place.
             player_id: Id of the objects being placed.
         """
-        all_array_space_type_list = list(set_from_matrix(self.get_array_from_map_layer_type(map_layer_type_list[0])))
 
-        for space_type in all_array_space_type_list:
-            self.add_borders(
+        self.add_borders(
                 map_layer_type_list, 
-                space_type, 
+                array_space_type_list, 
                 border_type, 
                 margin, 
                 player_id=player_id, 
                 place_on_n_maps=place_on_n_maps
                 )
-        
+
         return
 
     # ---------------------------- HELPER METHODS ----------------------------------
@@ -322,7 +386,7 @@ class PlacerMixin(MapUtilsMixin):
         Places a single object. Assumes placement has already been verified.
 
         Args:
-            map_layer_type: The map type.
+            map_layer_type_list: The map type.
             point: Point to place base of object.
             obj_type: The type of object to be placed.
             player_id: Id of the player for the given object.
@@ -347,7 +411,7 @@ class PlacerMixin(MapUtilsMixin):
 
         for map_layer_type in map_layer_type_list:
             # IDK but this if statement may speed things up a little bit. NEEDS TESTING.
-            if width > 1 or height > 1 or margin > 0:
+            if width > 1 or height > 1 or margin > 0 or ghost_margin:
                 for i in range(-margin, eff_width):
                     for j in range(-margin, eff_height):
                         if 0<=i<width and 0<=j<height:
@@ -370,8 +434,8 @@ class PlacerMixin(MapUtilsMixin):
         """
         x, y = point
 
-        for i in range(-margin,margin+1):
-            for j in range(-abs(abs(i)-margin),abs(abs(i)-margin)+1):
+        for i in range(-margin, margin+1):
+            for j in range(-abs(abs(i)-margin), abs(abs(i)-margin)+1):
                 if not (x+i,y+j) in points:
                     return True
 
@@ -385,20 +449,6 @@ class PlacerMixin(MapUtilsMixin):
         min_set = min(all_sets, key = lambda s: len(s))
 
         return min_set
-
-    def _get_intersection_of_spaces(self, map_layer_type_list, array_space_type_list):
-        """
-        Gets the union of the different spaces.
-        """
-        # sets = []
-
-        # for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
-        #     sets.append(self.get_dictionary_from_map_layer_type(map_layer_type)[array_space_type])
-
-        sets = [self.get_dictionary_from_map_layer_type(map_layer_type)[array_space_type] 
-            for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list)]
-
-        return functools.reduce(lambda a, b: a & b, sets)
 
     def _get_random_element_from_list(self, lst):
         """
@@ -437,9 +487,12 @@ class PlacerMixin(MapUtilsMixin):
                 p2: Second point.
                 clumping: Factor to determine how clumped placed objects in a group are.
             """
+            if clumping == -1:
+                clumping = 999
+            
             distance = (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
             return (distance)+random.random()*(clumping)**2
-    
+
     # ----------------------------- GATE PLACEMENT ----------------------------------
 
     def place_gate_on_four_sides(
@@ -491,6 +544,7 @@ class PlacerMixin(MapUtilsMixin):
             point = self._get_first_point_in_given_direction(map_layer_type_list, array_space_type_list, avg_point, direction)
 
             if point is None:
+                print(f"No point found in the {direction} direction.")
                 continue
 
             self._place_gate_closest_to_point(map_layer_type_list, array_space_type_list, gate_type, point, player_id, place_on_n_maps)
@@ -572,7 +626,7 @@ class PlacerMixin(MapUtilsMixin):
         """
         Places a gate as close as possible to the starting point.
         """
-        points_set = self._get_intersection_of_spaces(map_layer_type_list, array_space_type_list)
+        points_set = self.get_intersection_of_spaces(map_layer_type_list, array_space_type_list)
 
         for (x,y) in sorted(points_set, key = lambda point: ((point[0]-starting_point[0])**2 + (point[1]-starting_point[1])**2)):
 

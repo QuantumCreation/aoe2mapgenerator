@@ -81,8 +81,9 @@ class VisualizerMixin(MapUtilsMixin):
             map: Map to visualize
         """
         fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
-        terrain_matrix = deepcopy(self.terrain_array)
-        object_matrix = deepcopy(self.object_array)
+        terrain_matrix = deepcopy(self.get_map_layer(MapLayerType.TERRAIN).array)
+        object_matrix = deepcopy(self.get_map_layer(MapLayerType.UNIT).array)
+
         mat = terrain_matrix
 
         values = set()

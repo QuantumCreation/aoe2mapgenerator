@@ -1,0 +1,21 @@
+template_name: temp
+template_description: None at the moment
+template_type: STATIC
+required_inputs: [UNIT, TERRAIN, ZONE, DECOR]
+size: 100
+command_list:
+
+  - command_name: place_template
+    parameters:
+      template_file_name: oak_forest.yaml
+      map_layer_type_list:
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list:
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      player_id: 1
