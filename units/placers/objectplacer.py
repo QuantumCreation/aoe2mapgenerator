@@ -65,6 +65,8 @@ class PlacerMixin(MapUtilsMixin):
         # Get the intersection of the specified value types and array spaces
         s = self.get_intersection_of_spaces(map_layer_type_list, array_space_type_list)
         points_list = list(s)
+        if len(points_list) == 0:
+            return
         
         # Adjust group size based on density if specified
         if group_density is not None:
@@ -72,50 +74,10 @@ class PlacerMixin(MapUtilsMixin):
 
         # Choose a random start point if none is specified or invalid
         if type(start_point) != tuple or start_point[0] < 0 or start_point[1] < 0:
-
             start_point = points_list[int(random.random()*len(points_list))]
+
             
         
-        
-        # def bfs(matrix, start, points_list, total_points, clumping = 1):
-        #     """
-        #     Performs a breadth-first search on the matrix starting from the start point.
-            
-        #     Args:
-        #         matrix (list[list]): The matrix to search.
-        #         start (tuple): The starting point.
-        #         points_list (list[tuple]): The list of points to search for.
-        #         total_points (int): The total number of points to search for.
-        #     """
-        #     rows, cols = len(matrix), len(matrix[0])
-        #     visited = set()
-        #     queue = deque([start])
-        #     sorted_list = []
-
-        #     while queue and len(visited)<total_points:
-
-        #         row, col = queue.popleft()
-
-        #         if (row, col) not in visited:
-        #             visited.add((row, col))
-
-        #             if (row, col) in points_list:
-        #                 sorted_list.append((row, col))
-                    
-        #             for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-        #                 new_row, new_col = row + dr, col + dc
-        #                 if 0 <= new_row < rows and 0 <= new_col < cols and (new_row, new_col) not in visited:
-        #                     queue.append((new_row, new_col))
-            
-        #     return sorted_list
-        
-        # points_list = bfs(
-        #     self.get_map_layer(map_layer_type_list[0]).array, 
-        #     start_point, 
-        #     points_list, 
-        #     int(1.5*len(points_list)), 
-        #     clumping)
-
 
         # Start with some size as the default
         total_size = 1

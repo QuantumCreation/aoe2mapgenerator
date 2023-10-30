@@ -70,7 +70,7 @@ command_list:
       ghost_margin: True
       place_on_n_maps: 2
 
- 
+  - command_name: place_groups
     parameters:
       map_layer_type_list: 
         - UNIT

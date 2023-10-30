@@ -135,6 +135,9 @@ class MapLayer():
 class WorldPartition():
     """
     Class for the world partition of the map.
+
+    Info:
+        A world partition is a partition of the map into squares in order to speed up the search for points.
     """
 
     def __init__(self, size: int = 100, partition_size: int = 10):
@@ -168,6 +171,7 @@ class WorldPartition():
         distance = min(distance, self.size//self.partition_size)
         distance += clumping//10
         
+        # Gets the sets of points within the distance square of the start point
         sets = [self.world_partition[
                                     (start_point[0]//self.partition_size+i,
                                        start_point[1]//self.partition_size+j)
