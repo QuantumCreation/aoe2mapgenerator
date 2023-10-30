@@ -1,0 +1,336 @@
+template_name: Basic Template
+template_description: Basic template
+template_type: DYNAMIC
+required_inputs: [UNIT, TERRAIN, ZONE, DECOR]
+size: 100
+command_list:
+# NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - WATER_DEEP
+      player_id: null
+      groups: 1
+      group_size: 100
+      clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 2
+  
+  - command_name: add_borders
+    parameters:
+      map_layer_type_list:
+        - TERRAIN
+        - ZONE
+        - UNIT
+        - DECOR
+      array_space_type_list: 
+        - [WATER_DEEP, null]
+        - $ZONE
+        - [WATER_DEEP, null]
+        - $DECOR
+      obj_type: BEACH
+      player_id: null
+      margin: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - ZONE
+        - TERRAIN
+        - DECOR
+      array_space_type_list: 
+        - [WATER_DEEP, null]
+        - $ZONE
+        - $TERRAIN
+        - $DECOR
+      obj_type_list: 
+        - SHORE_FISH
+      player_id: null
+      group_size: 3
+      groups_density: 7
+      clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 2
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - STONE_MINE
+      player_id: null
+      groups: 1
+      group_size: 5
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+  
+  # ADDS VARIOUS UNITS
+ 
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+      obj_type_list: 
+        - TOWN_CENTER
+        - FARM
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 5
+      clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - VILLAGER_FEMALE
+      player_id: $PLAYER_ID
+      groups: 2
+      group_size: 5
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - CASTLE
+        - TEUTONIC_KNIGHT
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 17
+      clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - BURNED_BUILDING
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 1
+      clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - BARRACKS
+        - MAN_AT_ARMS
+      player_id: $PLAYER_ID
+      groups: 2
+      group_size: 14
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - SIEGE_RAM
+      player_id: $PLAYER_ID
+      group_density: 0.5
+      group_size: 2
+      clumping: 2
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - ARCHERY_RANGE
+        - CROSSBOWMAN
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 15
+      clumping: 25
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - STABLE
+        - HUSSAR
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 15
+      clumping: 25
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - HOUSE
+      player_id: $PLAYER_ID
+      groups: 2
+      group_size: 5
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - DONJON
+        - MAN_AT_ARMS
+      player_id: $PLAYER_ID
+      groups: 3
+      group_size: 26
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - FORTRESS
+        - CRUSADER_KNIGHT
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 26
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type_list: 
+        - BOMBARD_TOWER
+        - LONGBOWMAN
+      player_id: $PLAYER_ID
+      groups: 1
+      group_size: 16
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  # - command_name: place_groups
+  #   parameters:
+  #     map_layer_type_list: 
+  #       - UNIT
+  #     array_space_type_list: 
+  #       - [ROAD_FUNGUS, null]
+  #     obj_type_list: 
+  #       - LEGIONARY
+  #       - ELITE_CATAPHRACT
+  #     player_id: $PLAYER_ID
+  #     groups: 1
+  #     group_size: 16
+  #     clumping: 10
+  #     clumping_func: null
+  #     margin: 0
+  #     start_point: [-1,-1]
+  #     ghost_margin: True
+  #     place_on_n_maps: 1

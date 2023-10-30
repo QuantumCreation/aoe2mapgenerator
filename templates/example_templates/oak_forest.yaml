@@ -1,0 +1,356 @@
+template_name: Fortress
+template_description: Creates barracks with troops training
+template_type: STATIC
+required_inputs: [UNIT, ZONE, TERRAIN, DECOR]
+size: 100
+command_list:
+# NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
+
+
+# Trees
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - TREE_OAK_FOREST
+      player_id: null
+      groups: null
+      groups_density: 1
+      group_size: 250
+      group_density: 1
+      clumping: 7
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - TREE_OAK_FOREST
+      player_id: null
+      groups: null
+      groups_density: 2
+      group_size: 50
+      group_density: null
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - TREE_OAK_FOREST
+      player_id: null
+      groups: 3
+      groups_density: 25
+      group_size: 5
+      group_density: null
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+# # Resources
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - GOLD_MINE
+      player_id: null
+      groups: null
+      groups_density: 3
+      group_size: 5
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - STONE_MINE
+      player_id: null
+      group_size: 5
+      groups_density: 2
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - STONE_MINE
+      player_id: null
+      group_size: 5
+      groups_density: 3
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+  
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - FORAGE_BUSH
+      player_id: null
+      group_size: 7
+      groups_density: 3
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+
+# # DECOR
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list:
+        - DECOR
+        - UNIT
+        - TERRAIN
+        - ZONE
+      array_space_type_list:
+        - $DECOR
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+      obj_type_list: 
+        - GRASS_PATCH_GREEN
+      player_id: null
+      groups: 1
+      group_size: 5
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list:
+        - DECOR
+        - UNIT
+        - TERRAIN
+        - ZONE
+      array_space_type_list:
+        - $DECOR
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+      obj_type_list: 
+        - FLOWER_BED
+      player_id: null
+      group_size: 5
+      groups_density: 2
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list:
+        - DECOR
+        - UNIT
+        - TERRAIN
+        - ZONE
+      array_space_type_list: 
+        - $DECOR
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+      obj_type_list: 
+        - FLOWERS_1
+      player_id: null
+      group_size: 4
+      groups_density: 2
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list:
+        - DECOR
+        - UNIT
+        - TERRAIN
+        - ZONE
+      array_space_type_list:
+        - $DECOR
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+      obj_type_list: 
+        - FLOWERS_2
+      player_id: null
+      group_size: 4
+      groups_density: 2
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - DECOR
+        - UNIT
+        - TERRAIN
+        - ZONE
+      array_space_type_list: 
+        - $DECOR
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+      obj_type_list: 
+        - FLOWERS_3
+      player_id: null
+      group_size: 4
+      groups_density: 2
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - DEER
+      player_id: null
+      group_size: 7
+      groups_density: 2
+      clumping: 1
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - $TERRAIN
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - ROMAN_RUINS
+      player_id: null
+      group_size: 3
+      groups_density: 1
+      clumping: -1
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: True
+      place_on_n_maps: 1
+

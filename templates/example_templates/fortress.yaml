@@ -1,0 +1,27 @@
+template_name: Fortress
+template_description: Creates barracks with troops training
+template_type: STATIC
+required_inputs: [UNIT, ZONE]
+size: 100
+command_list:
+# NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
+  - command_name: add_borders
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+      array_space_type_list: 
+        - $UNIT
+      obj_type: FORTIFIED_WALL
+      margin: 1
+      player_id: $PLAYER_ID
+
+  - command_name: place_gate_on_four_sides
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - ZONE
+      array_space_type_list: 
+        - [FORTIFIED_WALL, $PLAYER_ID]
+        - $ZONE
+      gate_type: FORTIFIED
+      player_id: $PLAYER_ID

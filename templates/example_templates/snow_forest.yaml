@@ -1,0 +1,392 @@
+template_name: Bonus Template
+template_description: Template that creates a monastery with monks
+template_type: DYNAMIC
+required_inputs: [UNIT, ZONE, TERRAIN, DECOR]
+size: 100
+command_list:
+# NEED TO FIGURE OUT DETAIL FO VALUE TYPE AND ARRAY SPACE LISTS
+  
+# TERRAIN
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - TERRAIN
+        - UNIT
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $TERRAIN
+        - $UNIT
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - SNOW
+      player_id: null
+      groups: 1
+      group_size: 1000000000000
+      clumping: 0
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - TERRAIN
+        - UNIT
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - [SNOW, null]
+        - $UNIT
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - ICE
+      player_id: null
+      groups: 2
+      group_size: 100
+      clumping: 10
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+# TREES
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - TREE_SNOW_PINE
+      player_id: null
+      group_size: 100
+      groups_density: 1
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+    
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - TREE_SNOW_PINE
+      player_id: null
+      group_size: 15
+      groups_density: 3
+      clumping: 3
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list:
+        - TREE_SNOW_PINE
+      player_id: null
+      group_density: 3
+      clumping: -1
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+# GRASS
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list:
+        - GRASS_PATCH_GREEN
+      player_id: null
+      group_size: 4
+      groups_density: 2
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+  
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list:
+        - GRASS_PATCH_DRY
+      player_id: null
+      group_size: 5
+      groups_density: 2
+      clumping: 5
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+#Creatures
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - DIRE_WOLF
+      player_id: null
+      group_size: 7
+      groups_density: 1
+      clumping: 7
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list: 
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - DEER
+      player_id: null
+      group_size: 7
+      groups_density: 1
+      clumping: 7
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+# BUSHES
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list:
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - BUSH_C
+      player_id: null
+      group_size: 7
+      groups_density: 2
+      clumping: 2
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list:
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - FORAGE_BUSH
+      player_id: null
+      group_size: 5
+      groups_density: 5
+      clumping: 2
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+# MOUNTAINS
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list:
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - SNOW_MOUNTAIN_1
+        - SNOW_MOUNTAIN_2
+        - SNOW_MOUNTAIN_3
+        - TREE_SNOW_PINE
+      player_id: null
+      group_size: 50
+      groups_density: 1
+      clumping: 13
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+  
+# RUINS
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list:
+        - $UNIT
+        - [SNOW, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - TEMPLE_RUIN
+        - TREE_CYPRESS
+      player_id: null
+      group_size: 7
+      groups_density: 0.25
+      clumping: 15
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - TERRAIN
+        - UNIT
+        - ZONE
+        - DECOR
+      array_space_type_list:
+        - [SNOW, null]
+        - $UNIT
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - GRASS_2
+      player_id: null
+      group_size: 1500
+      groups_density: 0.25
+      clumping: 50
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
+  - command_name: place_groups
+    parameters:
+      map_layer_type_list: 
+        - UNIT
+        - TERRAIN
+        - ZONE
+        - DECOR
+      array_space_type_list:
+        - $UNIT
+        - [GRASS_2, null]
+        - $ZONE
+        - $DECOR
+      obj_type_list: 
+        - PAGODA_A
+        - PAGODA_C
+        - PAGODA_C
+        - PAGODA_C
+        - PAGODA_C
+        - PAGODA_C
+        - PAGODA_C
+        - FORAGE_BUSH
+      player_id: null
+      group_size: 15
+      groups: 1
+      clumping: 50
+      clumping_func: null
+      margin: 0
+      start_point: [-1,-1]
+      ghost_margin: False
+      place_on_n_maps: 1
+
