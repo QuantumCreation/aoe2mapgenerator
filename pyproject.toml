@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "aoe2mapgenerator"
+version = "0.1.0"
+description = "Age of Empires II map generator"
+authors = ["QuantumCreation <joseph6433@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+AoE2ScenarioParser = "^0.1.56"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

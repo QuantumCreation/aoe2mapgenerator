@@ -1,0 +1,6 @@
+README.md
+setup.py
+aoe2mapgenerator.egg-info/PKG-INFO
+aoe2mapgenerator.egg-info/SOURCES.txt
+aoe2mapgenerator.egg-info/dependency_links.txt
+aoe2mapgenerator.egg-info/top_level.txt
