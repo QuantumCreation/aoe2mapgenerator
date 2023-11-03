@@ -4,11 +4,11 @@ from matplotlib.pylab import matshow
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
-from common.constants.constants import DEFAULT_EMPTY_VALUE
+from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE
 from copy import deepcopy
-from utils.utils import unique_value_list
-from common.enums.enum import MapLayerType
-from map.map_utils import MapUtilsMixin
+from aoe2mapgenerator.utils.utils import unique_value_list
+from aoe2mapgenerator.common.enums.enum import MapLayerType
+from aoe2mapgenerator.map.map_utils import MapUtilsMixin
 
 class VisualizerMixin(MapUtilsMixin):
     """

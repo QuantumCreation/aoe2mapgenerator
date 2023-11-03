@@ -2,21 +2,21 @@ from dataclasses import dataclass
 import random
 from re import A
 from site import abs_paths
-from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
-from utils.utils import set_from_matrix
-from common.enums.enum import ObjectSize, MapLayerType, GateTypes
+from aoe2mapgenerator.common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
+from aoe2mapgenerator.utils.utils import set_from_matrix
+from aoe2mapgenerator.common.enums.enum import ObjectSize, MapLayerType, GateTypes
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from units.placers.objectplacer import PlacerMixin
-from common.constants.constants import BASE_TEMPLATE_DIR, DEFAULT_PLAYER
+from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
+from aoe2mapgenerator.common.constants.constants import BASE_TEMPLATE_DIR, DEFAULT_PLAYER
 import re
 from typing import Union
 from yaml import load, UnsafeLoader
 import os
-from common.enums.enum import YamlReplacementKeywords
+from aoe2mapgenerator.common.enums.enum import YamlReplacementKeywords
 from time import time
 from copy import deepcopy
 import inspect
@@ -29,7 +29,7 @@ class TemplatePlacerMixin(PlacerMixin):
     Handles placing templates.
     """
 
-    def load_yaml(self, template_file_name: str):
+    def load_yaml(self, template_file_name: str, base_template_dir: str = BASE_TEMPLATE_DIR):
         """
         Loads yaml file form the template file name. 
 
@@ -43,7 +43,7 @@ class TemplatePlacerMixin(PlacerMixin):
             return deepcopy(self.template_names[template_file_name])
         else:
             print(f"NEW TEMPLATE LOADED: {template_file_name}")
-            with open(os.path.join(BASE_TEMPLATE_DIR, template_file_name), 'r') as f:
+            with open(os.path.join(base_template_dir, template_file_name), 'r') as f:
                 yaml = load(f, Loader = UnsafeLoader)
                 self.template_names[template_file_name] = deepcopy(yaml)
                 return yaml
@@ -63,7 +63,10 @@ class TemplatePlacerMixin(PlacerMixin):
             kwargs: Key word arguments corresponding to various placer variables.
         """
         # start = time()
-        template = self.load_yaml(template_file_name)
+        if 'base_template_dir' not in kwargs:
+            kwargs['base_template_dir'] = BASE_TEMPLATE_DIR
+        
+        template = self.load_yaml(template_file_name, kwargs['base_template_dir'])
         # end = time()
         # print(f"Time to load yaml: {end-start}")
 

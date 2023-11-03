@@ -1,4 +1,4 @@
-from common.enums.enum import MapLayerType
+from aoe2mapgenerator.common.enums.enum import MapLayerType
 from typing import Union
 from AoE2ScenarioParser.datasets.players import PlayerId
 import functools

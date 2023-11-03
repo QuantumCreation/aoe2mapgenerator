@@ -8,10 +8,6 @@ from xml.dom import ValidationErr
 import numpy as np
 
 from pandas import array
-from common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
-from map.map_utils import MapUtilsMixin
-from utils.utils import set_from_matrix
-from common.enums.enum import ObjectSize, Directions, MapLayerType, GateTypes, CheckPlacementReturnTypes
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from copy import deepcopy
@@ -19,6 +15,12 @@ import functools
 from time import time
 from collections import deque
 from heapq import nsmallest
+
+from aoe2mapgenerator.map.map_utils import MapUtilsMixin
+from aoe2mapgenerator.utils.utils import set_from_matrix
+from aoe2mapgenerator.common.enums.enum import ObjectSize, Directions, MapLayerType, GateTypes, CheckPlacementReturnTypes
+
+from aoe2mapgenerator.common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
 
 class PlacerMixin(MapUtilsMixin):
     """

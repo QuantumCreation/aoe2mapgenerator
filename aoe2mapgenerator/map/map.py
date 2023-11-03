@@ -1,14 +1,15 @@
-from common.constants.constants import DEFAULT_EMPTY_VALUE
-from units.wallgenerators.voronoi import VoronoiGeneratorMixin
-from common.enums.enum import MapLayerType
-from units.placers.objectplacer import PlacerMixin
-from units.placers.templateplacer import TemplatePlacerMixin
-from map.map_utils import MapUtilsMixin
-from visualizer.visualizer import VisualizerMixin
 from AoE2ScenarioParser.datasets.players import PlayerId
 from copy import deepcopy
 from typing import Union, Callable
 import numpy as np
+
+from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE
+from aoe2mapgenerator.units.wallgenerators.voronoi import VoronoiGeneratorMixin
+from aoe2mapgenerator.common.enums.enum import MapLayerType
+from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
+from aoe2mapgenerator.units.placers.templateplacer import TemplatePlacerMixin
+from aoe2mapgenerator.map.map_utils import MapUtilsMixin
+from aoe2mapgenerator.visualizer.visualizer import VisualizerMixin
 
 class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin, MapUtilsMixin):
     """

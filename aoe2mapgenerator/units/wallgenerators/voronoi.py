@@ -3,8 +3,9 @@ import numpy as np
 from typing import Union, Callable
 import functools
 from AoE2ScenarioParser.datasets.players import PlayerId
-from map.map_utils import MapUtilsMixin
 import random
+
+from aoe2mapgenerator.map.map_utils import MapUtilsMixin
 
 class VoronoiGeneratorMixin(MapUtilsMixin):
     """

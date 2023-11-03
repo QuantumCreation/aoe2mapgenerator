@@ -6,44 +6,39 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from common.enums.enum import ObjectRotation, MapLayerType, GateTypes
-from common.constants.constants import BASE_SCENE_DIR, X_SHIFT, Y_SHIFT
+from aoe2mapgenerator.common.enums.enum import ObjectRotation, MapLayerType, GateTypes
+from aoe2mapgenerator.common.constants.constants import BASE_SCENE_DIR, X_SHIFT, Y_SHIFT, BASE_SCENARIO_NAME
 
 import random
 import numpy as np
-from common.enums.enum import ObjectSize
+from aoe2mapgenerator.common.enums.enum import ObjectSize
 import os
-from map.map import Map
-from enum import Enum
+from aoe2mapgenerator.map.map import Map
 
 class Scenario():
     """
     Handles creating and writing to the AOE2 scenario file.
     """
 
-    def __init__(self, base_file_name: str, map: Map, base_file_path: str = BASE_SCENE_DIR) -> None:
+    def __init__(self, map: Map, base_scenario_full_path: str = os.path.join(BASE_SCENE_DIR, BASE_SCENARIO_NAME)) -> None:
         """
         Creates a scenario with the given name.
 
         Args:
-            base_file_name (str): Name of the base scenario file.
             map (Map): Map object to write to the scenario. 
-            base_file_path (str, optional): Path to the file. Defaults to "".
+            base_scenario_full_path (str, optional): Path to the base scenario file. Defaults to BASE_SCENARIO_FULL_PATH.
         """
-        self.scenario = self.get_scenario(base_file_name, base_file_path)
+        self.scenario = self.get_scenario(base_scenario_full_path)
         self.map = map
 
-    def get_scenario(self, file_name: str, file_path: str) -> AoE2DEScenario:
+    def get_scenario(self, file_full_path: str) -> AoE2DEScenario:
         """
         Loads a scenario from the given file name.
 
         Args:
-            file_name (str): Name of the scenario file.
-            file_path (str, optional): Path to the file. Defaults to "".
+            file_full_path (str): Full path to the scenario file.
         """
-        full_file_path = os.path.join(file_path, file_name)
-
-        return AoE2DEScenario.from_file(full_file_path)
+        return AoE2DEScenario.from_file(file_full_path)
 
     def write_units(self, points: set, unit_const, player: int, rotation: int = -1) -> None:
         """
@@ -130,12 +125,11 @@ class Scenario():
 
         map_manager.map_size = map_size
 
-    def save_file(self, output_name: str, output_path: str = BASE_SCENE_DIR) -> None:
+    def save_file(self, output_file_full_path) -> None:
         """
         Saves the scenario to the given output file name.
 
         Args:
-            output_name (str): Name of the output file.
-            output_path (str, optional): Path to the output file. Defaults to "".
+            output_file_full_path (str): Full path to the output file.
         """
-        self.scenario.write_to_file(os.path.join(output_path, output_name))
+        self.scenario.write_to_file(output_file_full_path)

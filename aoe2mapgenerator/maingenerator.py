@@ -3,7 +3,7 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from common.enums.enum import (
+from aoe2mapgenerator.common.enums.enum import (
     MapLayerType, 
     ObjectSize, 
     GateTypes, 
@@ -12,25 +12,23 @@ from common.enums.enum import (
     YamlReplacementKeywords,
     CheckPlacementReturnTypes
 )
-from map.map import Map
-from scenario.scenario import Scenario
+from aoe2mapgenerator.map.map import Map
+from aoe2mapgenerator.scenario.scenario import Scenario
 import numpy as np
 import random
 from time import time
-from common.constants.constants import DEFAULT_EMPTY_VALUE
-from common.enums.enum import GateTypes
+from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE
 
 
-input_name = "1 vs 7 default.aoe2scenario"
-output_name = "0_BASIC_SCENARIO.aoe2scenario"
-
-
-def main_map_generator(base_scenario_full_path: str, output_file_name:str, output_path: str, **kwargs):
+def main_map_generator(base_scenario_full_path: str, 
+                       output_file_full_path: str,
+                       template_dir: str, 
+                       **kwargs):
     """
     The main function that generates a map.
 
     Args:
-        base_scenario_path (str): Path to the base scenario file.
+        SCENARIO_DIR (str): Path to the base scenario file.
         output_file_name (str): Name of the output file.
         **kwargs: Keyword arguments.
     """
@@ -58,17 +56,18 @@ def main_map_generator(base_scenario_full_path: str, output_file_name:str, outpu
             counter = 1
         
         if random.random() > 0.5:
-            build_city(zone, PlayerId(counter))
+            build_city(zone, PlayerId(counter), map, template_dir)
         else:
-            build_snow_forest(zone, PlayerId(counter))
+            build_snow_forest(zone, PlayerId(counter), map, template_dir)
     
-    scenario = Scenario(input_name, map, output_path)
+    scenario = Scenario(map, base_scenario_full_path)
 
     scenario.change_map_size(map_size)
     scenario.write_map()
-    scenario.save_file(output_name, output_path)
+    scenario.save_file(output_file_full_path)
+    return
 
-def build_snow_forest(zone, player_id):
+def build_snow_forest(zone, player_id, map, base_template_dir):
     """
     Build snow forest in zone
     """
@@ -79,9 +78,10 @@ def build_snow_forest(zone, player_id):
             map_layer_type_list = [MapLayerType.UNIT, MapLayerType.TERRAIN, MapLayerType.ZONE, MapLayerType.DECOR],
             array_space_type_list = [zone, zone, zone, zone],
             player_id = player_id,
+            base_template_dir = base_template_dir
         )
 
-def build_city(zone, player_id):
+def build_city(zone, player_id, map, base_template_dir):
         """
         Build city in zone
         """
@@ -99,6 +99,7 @@ def build_city(zone, player_id):
                 map_layer_type_list = [MapLayerType.UNIT, MapLayerType.TERRAIN, MapLayerType.ZONE, MapLayerType.DECOR],
                 array_space_type_list = [zone, (TerrainId.GRASS_2, PlayerId.GAIA), zone, zone],
                 player_id = player_id,
+                base_template_dir = base_template_dir
             )
 
         map.place_template(
@@ -106,6 +107,7 @@ def build_city(zone, player_id):
                 map_layer_type_list = [MapLayerType.UNIT, MapLayerType.TERRAIN, MapLayerType.ZONE, MapLayerType.DECOR],
                 array_space_type_list = [zone, zone, zone, zone],
                 player_id = player_id,
+                base_template_dir = base_template_dir
             )
         
         map.add_borders(
@@ -132,6 +134,7 @@ def build_city(zone, player_id):
                 'oak_forest.yaml',
                 map_layer_type_list = [MapLayerType.UNIT, MapLayerType.TERRAIN, MapLayerType.ZONE, MapLayerType.DECOR],
                 array_space_type_list = [city_zone, city_zone, city_zone, city_zone],
+                base_template_dir = base_template_dir
             )
 
             map.place_template(
@@ -139,4 +142,5 @@ def build_city(zone, player_id):
                 map_layer_type_list = [MapLayerType.UNIT, MapLayerType.TERRAIN, MapLayerType.ZONE, MapLayerType.DECOR],
                 array_space_type_list = [city_zone, city_zone, city_zone, city_zone],
                 player_id = player_id,
+                base_template_dir = base_template_dir
             )
