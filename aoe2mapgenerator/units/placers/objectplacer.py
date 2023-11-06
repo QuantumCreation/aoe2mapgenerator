@@ -62,7 +62,7 @@ class PlacerMixin(MapUtilsMixin):
         """
         
         if clumping_func is None:
-            clumping_func = self.default_clumping_func
+            clumping_func = self._default_clumping_func
 
         # Get the intersection of the specified value types and array spaces
         s = self.get_intersection_of_spaces(map_layer_type_list, array_space_type_list)
@@ -442,7 +442,7 @@ class PlacerMixin(MapUtilsMixin):
         return 100
     # ---------------------------- SORTING FUNCTIONS ----------------------------
 
-    def default_clumping_func(self, p1, p2, clumping):
+    def _default_clumping_func(self, p1, p2, clumping):
             """
             Default clumping function.
 

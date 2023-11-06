@@ -23,9 +23,12 @@ class VoronoiGeneratorMixin(MapUtilsMixin):
         Generates an array of voronoi shapes, with numbers starting from -1 and going down.
 
         Args:
-            interpoint_distance: Minimum distance between points.
-            map_layer_type_list: List of map layer types to use.
-            array_space_type_list: List of array space types to use.
+            interpoint_distance (int): Minimum distance between points.
+            map_layer_type_list (list): List of map layer types to use.
+            array_space_type_list (list): List of array space types to use.
+        
+        Returns:
+            list: List of the new zones.
         """
 
 

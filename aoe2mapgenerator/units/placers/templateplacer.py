@@ -11,7 +11,7 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
-from aoe2mapgenerator.common.constants.constants import BASE_TEMPLATE_DIR, DEFAULT_PLAYER
+from aoe2mapgenerator.common.constants.constants import TEMPLATE_DIR, DEFAULT_PLAYER
 import re
 from typing import Union
 from yaml import load, UnsafeLoader
@@ -29,7 +29,7 @@ class TemplatePlacerMixin(PlacerMixin):
     Handles placing templates.
     """
 
-    def load_yaml(self, template_file_name: str, base_template_dir: str = BASE_TEMPLATE_DIR):
+    def _load_yaml(self, template_file_name: str, base_template_dir: str = TEMPLATE_DIR) -> dict:
         """
         Loads yaml file form the template file name. 
 
@@ -38,6 +38,14 @@ class TemplatePlacerMixin(PlacerMixin):
 
         Args:
             template_file_name: Name of the template file.
+            base_template_dir: Base directory of the template file.
+        
+        Returns:
+            dict: Loaded yaml file.
+        
+        Example:
+            >>> load_yaml("test.yaml")
+            {'command_list': [{'command_name': 'place_template', 'parameters': {'template_file_name': 'test2.yaml'}}]}
         """
         if template_file_name in self.template_names:
             return deepcopy(self.template_names[template_file_name])
@@ -64,9 +72,9 @@ class TemplatePlacerMixin(PlacerMixin):
         """
         # start = time()
         if 'base_template_dir' not in kwargs:
-            kwargs['base_template_dir'] = BASE_TEMPLATE_DIR
+            kwargs['base_template_dir'] = TEMPLATE_DIR
         
-        template = self.load_yaml(template_file_name, kwargs['base_template_dir'])
+        template = self._load_yaml(template_file_name, kwargs['base_template_dir'])
         # end = time()
         # print(f"Time to load yaml: {end-start}")
 
@@ -123,14 +131,14 @@ class TemplatePlacerMixin(PlacerMixin):
         # Maybe have the function handle the entire list to limit function calls?
         if 'array_space_type_list' in parameters:
             parameters['array_space_type_list'] = [
-                    self.convert_array_space_type(value, dictionary)
+                    self._convert_array_space_type(value, dictionary)
                     for value in parameters['array_space_type_list']
                 ]
 
         if 'obj_type_list' in parameters:
             parameters['obj_type_list'] = [
                 dictionary[value] if value in dictionary
-                else self.string_to_aoe2_enum_type(value)
+                else self._string_to_aoe2_enum_type(value)
                 for value in parameters['obj_type_list']
             ]
 
@@ -138,7 +146,7 @@ class TemplatePlacerMixin(PlacerMixin):
         if 'obj_type' in parameters:
             parameters['obj_type'] = (
                 dictionary[parameters['obj_type']] if parameters['obj_type'] in dictionary
-                else self.string_to_aoe2_enum_type(parameters['obj_type'])
+                else self._string_to_aoe2_enum_type(parameters['obj_type'])
             )
             
 
@@ -162,7 +170,7 @@ class TemplatePlacerMixin(PlacerMixin):
 
     
     # Do error handling later
-    def string_to_aoe2_enum_type(self, text, default_value = None, return_default = False):
+    def _string_to_aoe2_enum_type(self, text, default_value = None, return_default = False):
         """
         Converts a string to an age of empires enum type.
 
@@ -187,7 +195,7 @@ class TemplatePlacerMixin(PlacerMixin):
     def _create_dictionary_mapping(
         self,
         **kwargs,
-        ):
+        ) -> dict:
         """
         Creates a dictionary mapping from placeholder variables to python objects.
 
@@ -220,8 +228,8 @@ class TemplatePlacerMixin(PlacerMixin):
 
     # Maybe add more fields later and organize better
     def _validate_user_included_required_yaml_fields(self,
-        template,
-        map_layer_type_list,
+        template: dict,
+        map_layer_type_list: list,
         ):
         """
         Validates the input to the placement function.
@@ -239,13 +247,13 @@ class TemplatePlacerMixin(PlacerMixin):
         return True
 
     # Could also check that required args 100% included. I'll deal with this laters. Bro.
-    def _validate_user_kwarg_input(self, function, **kwargs):
+    def _validate_user_kwarg_input(self, function, **kwargs) -> None:
         """
         Validates that the key word arguments received match the keywords of the function.
 
         Args:
-            function: A function object.
-            kwargs: The key word arguments received by the user.
+            function (function): The function to validate.
+            kwargs (dict): The key word arguments to validate.
         """
         # Not all of these arguments need to be included, but if an argument not matching these keywords is given.
         # The user has made a mistake.
@@ -279,19 +287,19 @@ class TemplatePlacerMixin(PlacerMixin):
 
 # -------------------------------- Conversion Functions ------------------------------
 
-    def convert_array_space_type(self, array_space_type, dictionary):
+    def _convert_array_space_type(self, array_space_type: list, dictionary: dict) -> None:
         """
         Converts a yaml array space type list into python objects.
 
         Args:
-            array_space_type_list: List of array space objects.
-            dictionary: Dictionary mapping yaml substitution variables to python objects.
+            array_space_type_list (list): List of array space types.
+            dictionary (dict): Dictionary mapping yaml substitution variables to python objects.
         """
 
         if type(array_space_type) == list:
             if len(array_space_type) != 2:
                 raise ValueError(f"Array space types must have a length of 2, not {len(array_space_type)}.")
-            array_space_type[0] = self.string_to_aoe2_enum_type(array_space_type[0])
+            array_space_type[0] = self._string_to_aoe2_enum_type(array_space_type[0])
 
             if array_space_type[1] in dictionary:
                 return (array_space_type[0], dictionary[array_space_type[1]])

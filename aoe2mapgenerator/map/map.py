@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Union, Callable
 import numpy as np
 
-from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE
+from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE, DEFAULT_OBJECT_AND_PLAYER
 from aoe2mapgenerator.units.wallgenerators.voronoi import VoronoiGeneratorMixin
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
@@ -42,6 +42,11 @@ class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin, MapUtilsM
         """
         Gets the corresponding map layer from a map layer type.
         """
+        var = MapLayerType.UNIT
+
+        if not isinstance(map_layer_type, MapLayerType):
+            raise ValueError("Map layer type is not a MapLayerType.")
+        
         if map_layer_type == MapLayerType.ZONE:
             return self.zone_map_layer
         elif map_layer_type == MapLayerType.TERRAIN:
@@ -67,21 +72,32 @@ class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin, MapUtilsM
         layer = self.get_map_layer(map_layer_type)
         layer.set_point(x, y, new_value, player_id)
 
-    # THIS PROBOBLY BELONGS SOMEWHERE ELSE
+    # THIS PROBOBLY BELONGS SOMEWHERE ELSE, Also handle defaults better somehow
     def voronoi(self, 
-                interpoint_distance,
-                map_layer_type_list: list,
-                array_space_type_list: list,
-                ):
+                interpoint_distance: int = 25,
+                map_layer_type_list: list = 
+                [may_layer_type for may_layer_type in MapLayerType],
+                array_space_type_list: list = 
+                [DEFAULT_OBJECT_AND_PLAYER for i in range(5)]
+                ) -> list:
         """
         Generates a voronoi cell map.
+
+        Args:
+            interpoint_distance (int): Minimum distance between points.
+            map_layer_type_list (list): List of map layer types to use.
+            array_space_type_list (list): List of array space types to use.
+        
+        Returns:
+            list: List of unqiue values for each voronoi cell.
         """
-        # Generate voronoi cells.
-        all_new_points = self.generate_voronoi_cells(interpoint_distance,
+        # Generate voronoi cells. Implicitly edits the map.
+        voronoi_zones = self.generate_voronoi_cells(
+                                    interpoint_distance,
                                     map_layer_type_list,
                                     array_space_type_list)
 
-        return all_new_points       
+        return voronoi_zones       
 
 class MapLayer():
     """
@@ -94,7 +110,7 @@ class MapLayer():
         self.size = size
 
         if array == []:
-            self.array = [[DEFAULT_EMPTY_VALUE for i in range(size)] for j in range(size)]
+            self.array = [[(DEFAULT_EMPTY_VALUE, PlayerId.GAIA) for i in range(size)] for j in range(size)]
         else:
             self.array = array
         

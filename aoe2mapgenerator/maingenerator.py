@@ -16,34 +16,32 @@ from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.scenario.scenario import Scenario
 import numpy as np
 import random
-from time import time
 from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE
-
 
 def main_map_generator(base_scenario_full_path: str, 
                        output_file_full_path: str,
-                       template_dir: str, 
+                       template_dir: str,
+                       map_size: int = 200, 
                        **kwargs):
     """
     The main function that generates a map.
 
     Args:
-        SCENARIO_DIR (str): Path to the base scenario file.
-        output_file_name (str): Name of the output file.
+        base_scenario_full_path (str): Full path to the base scenario file.
+        output_file_full_path (str): Full path to the output scenario file.
+        template_dir (str): Full path to the template directory.
         **kwargs: Keyword arguments.
     """
-    map_size = 300
+    # map_size = 300
     map = Map(map_size)
-    new_zones = map.voronoi(75,
-                [MapLayerType.UNIT, MapLayerType.TERRAIN, MapLayerType.ZONE, MapLayerType.DECOR],
-                [DEFAULT_EMPTY_VALUE, DEFAULT_EMPTY_VALUE, DEFAULT_EMPTY_VALUE, DEFAULT_EMPTY_VALUE])
+    new_zones = map.voronoi(75)
     
     keys = list(map.get_map_layer(MapLayerType.UNIT).dict.keys())
 
     for city_zone in keys:
         map.add_borders(
             [MapLayerType.TERRAIN, MapLayerType.UNIT, MapLayerType.ZONE, MapLayerType.DECOR],
-            [city_zone, city_zone, city_zone,city_zone],
+            [city_zone, city_zone, city_zone, city_zone],
             TerrainId.ROAD_FUNGUS,
             margin = 2,
             )
@@ -60,12 +58,26 @@ def main_map_generator(base_scenario_full_path: str,
         else:
             build_snow_forest(zone, PlayerId(counter), map, template_dir)
     
-    scenario = Scenario(map, base_scenario_full_path)
+    return map
 
-    scenario.change_map_size(map_size)
+def save_and_write_map(map: Map, base_scenario_full_path: str, output_file_full_path: str) -> Scenario:
+    """
+    Saves and writes the map to a scenario file.
+    
+    Args:
+        map (Map): Map object to save and write.
+        base_scenario_full_path (str): Full path to the base scenario file.
+        output_file_full_path (str): Full path to the output scenario file.
+    
+    Returns:
+        Scenario: Scenario object.
+    """
+    scenario = Scenario(map, base_scenario_full_path)
+    scenario.change_map_size(map.size)
     scenario.write_map()
     scenario.save_file(output_file_full_path)
-    return
+
+    return scenario
 
 def build_snow_forest(zone, player_id, map, base_template_dir):
     """
