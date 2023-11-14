@@ -11,17 +11,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - TERRAIN
-        - UNIT
-        - ZONE
-        - DECOR
+        - MapLayerType.TERRAIN
+        - MapLayerType.UNIT
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $TERRAIN
         - $UNIT
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - SNOW
+        - TerrainId.SNOW
       player_id: null
       groups: 1
       group_size: 1000000000000
@@ -35,17 +35,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - TERRAIN
-        - UNIT
-        - ZONE
-        - DECOR
+        - MapLayerType.TERRAIN
+        - MapLayerType.UNIT
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $UNIT
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - ICE
+        - TerrainId.ICE
       player_id: null
       groups: 2
       group_size: 100
@@ -61,17 +61,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - TREE_SNOW_PINE
+        - OtherInfo.TREE_SNOW_PINE
       player_id: null
       group_size: 100
       groups_density: 1
@@ -85,17 +85,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - TREE_SNOW_PINE
+        - OtherInfo.TREE_SNOW_PINE
       player_id: null
       group_size: 15
       groups_density: 3
@@ -109,17 +109,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list:
-        - TREE_SNOW_PINE
+        - OtherInfo.TREE_SNOW_PINE
       player_id: null
       group_density: 3
       clumping: -1
@@ -134,17 +134,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list:
-        - GRASS_PATCH_GREEN
+        - OtherInfo.GRASS_PATCH_GREEN
       player_id: null
       group_size: 4
       groups_density: 2
@@ -158,17 +158,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list:
-        - GRASS_PATCH_DRY
+        - OtherInfo.GRASS_PATCH_DRY
       player_id: null
       group_size: 5
       groups_density: 2
@@ -184,17 +184,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - DIRE_WOLF
+        - UnitInfo.DIRE_WOLF
       player_id: null
       group_size: 7
       groups_density: 1
@@ -208,17 +208,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - DEER
+        - UnitInfo.DEER
       player_id: null
       group_size: 7
       groups_density: 1
@@ -234,17 +234,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list:
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - BUSH_C
+        - OtherInfo.BUSH_C
       player_id: null
       group_size: 7
       groups_density: 2
@@ -258,17 +258,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list:
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - FORAGE_BUSH
+        - OtherInfo.FORAGE_BUSH
       player_id: null
       group_size: 5
       groups_density: 5
@@ -284,20 +284,20 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list:
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - SNOW_MOUNTAIN_1
-        - SNOW_MOUNTAIN_2
-        - SNOW_MOUNTAIN_3
-        - TREE_SNOW_PINE
+        - OtherInfo.SNOW_MOUNTAIN_1
+        - OtherInfo.SNOW_MOUNTAIN_2
+        - OtherInfo.SNOW_MOUNTAIN_3
+        - OtherInfo.TREE_SNOW_PINE
       player_id: null
       group_size: 50
       groups_density: 1
@@ -313,18 +313,18 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list:
         - $UNIT
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - TEMPLE_RUIN
-        - TREE_CYPRESS
+        - OtherInfo.TEMPLE_RUIN
+        - OtherInfo.TREE_CYPRESS
       player_id: null
       group_size: 7
       groups_density: 0.25
@@ -338,17 +338,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - TERRAIN
-        - UNIT
-        - ZONE
-        - DECOR
+        - MapLayerType.TERRAIN
+        - MapLayerType.UNIT
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list:
-        - [SNOW, null]
+        - [TerrainId.SNOW, PlayerId.GAIA]
         - $UNIT
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - GRASS_2
+        - TerrainId.GRASS_2
       player_id: null
       group_size: 1500
       groups_density: 0.25
@@ -362,24 +362,24 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list:
         - $UNIT
-        - [GRASS_2, null]
+        - [TerrainId.GRASS_2, PlayerId.GAIA]
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - PAGODA_A
-        - PAGODA_C
-        - PAGODA_C
-        - PAGODA_C
-        - PAGODA_C
-        - PAGODA_C
-        - PAGODA_C
-        - FORAGE_BUSH
+        - OtherInfo.PAGODA_A
+        - OtherInfo.PAGODA_C
+        - OtherInfo.PAGODA_C
+        - OtherInfo.PAGODA_C
+        - OtherInfo.PAGODA_C
+        - OtherInfo.PAGODA_C
+        - OtherInfo.PAGODA_C
+        - OtherInfo.FORAGE_BUSH
       player_id: null
       group_size: 15
       groups: 1

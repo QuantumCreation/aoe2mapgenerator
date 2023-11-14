@@ -19,7 +19,7 @@ class MapUtilsMixin():
             Dictionary mapping the value to the set of points that have that value.
         """
         if not isinstance(map_layer_type, MapLayerType):
-            raise ValueError("Value type is not valid.")
+            raise ValueError(f"The value {map_layer_type} has a type of {type(map_layer_type)} which is not a valid MapLayerType.")
 
         return self.get_map_layer(map_layer_type).dict
     
@@ -67,7 +67,10 @@ class MapUtilsMixin():
             # However, if one of the other array_space_types is not None, then the union will be the union of all the non-None types.
             if array_space_type is None:
                 continue
-
+            
+            if type(array_space_type) == list:
+                array_space_type = tuple(array_space_type)
+            
             if array_space_type not in dictionary:
                 raise ValueError(f"Array space type {array_space_type} is not valid for map layer {map_layer_type}.")
             

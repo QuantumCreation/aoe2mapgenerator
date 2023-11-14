@@ -11,17 +11,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - TREE_OAK_FOREST
+        - OtherInfo.TREE_OAK_FOREST
       player_id: null
       groups: null
       groups_density: 1
@@ -37,17 +37,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - TREE_OAK_FOREST
+        - OtherInfo.TREE_OAK_FOREST
       player_id: null
       groups: null
       groups_density: 2
@@ -63,17 +63,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - TREE_OAK_FOREST
+        - OtherInfo.TREE_OAK_FOREST
       player_id: null
       groups: 3
       groups_density: 25
@@ -90,17 +90,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - GOLD_MINE
+        - OtherInfo.GOLD_MINE
       player_id: null
       groups: null
       groups_density: 3
@@ -115,17 +115,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - STONE_MINE
+        - OtherInfo.STONE_MINE
       player_id: null
       group_size: 5
       groups_density: 2
@@ -139,17 +139,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - STONE_MINE
+        - OtherInfo.STONE_MINE
       player_id: null
       group_size: 5
       groups_density: 3
@@ -163,17 +163,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - FORAGE_BUSH
+        - OtherInfo.FORAGE_BUSH
       player_id: null
       group_size: 7
       groups_density: 3
@@ -189,17 +189,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list:
-        - DECOR
-        - UNIT
-        - TERRAIN
-        - ZONE
+        - MapLayerType.DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
       array_space_type_list:
         - $DECOR
         - $UNIT
         - $TERRAIN
         - $ZONE
       obj_type_list: 
-        - GRASS_PATCH_GREEN
+        - OtherInfo.GRASS_PATCH_GREEN
       player_id: null
       groups: 1
       group_size: 5
@@ -213,17 +213,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list:
-        - DECOR
-        - UNIT
-        - TERRAIN
-        - ZONE
+        - MapLayerType.DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
       array_space_type_list:
         - $DECOR
         - $UNIT
         - $TERRAIN
         - $ZONE
       obj_type_list: 
-        - FLOWER_BED
+        - OtherInfo.FLOWER_BED
       player_id: null
       group_size: 5
       groups_density: 2
@@ -237,17 +237,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list:
-        - DECOR
-        - UNIT
-        - TERRAIN
-        - ZONE
+        - MapLayerType.DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
       array_space_type_list: 
         - $DECOR
         - $UNIT
         - $TERRAIN
         - $ZONE
       obj_type_list: 
-        - FLOWERS_1
+        - OtherInfo.FLOWERS_1
       player_id: null
       group_size: 4
       groups_density: 2
@@ -261,17 +261,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list:
-        - DECOR
-        - UNIT
-        - TERRAIN
-        - ZONE
+        - MapLayerType.DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
       array_space_type_list:
         - $DECOR
         - $UNIT
         - $TERRAIN
         - $ZONE
       obj_type_list: 
-        - FLOWERS_2
+        - OtherInfo.FLOWERS_2
       player_id: null
       group_size: 4
       groups_density: 2
@@ -285,17 +285,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - DECOR
-        - UNIT
-        - TERRAIN
-        - ZONE
+        - MapLayerType.DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
       array_space_type_list: 
         - $DECOR
         - $UNIT
         - $TERRAIN
         - $ZONE
       obj_type_list: 
-        - FLOWERS_3
+        - OtherInfo.FLOWERS_3
       player_id: null
       group_size: 4
       groups_density: 2
@@ -309,17 +309,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - DEER
+        - UnitInfo.DEER
       player_id: null
       group_size: 7
       groups_density: 2
@@ -333,17 +333,17 @@ command_list:
   - command_name: place_groups
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
       obj_type_list: 
-        - ROMAN_RUINS
+        - OtherInfo.ROMAN_RUINS
       player_id: null
       group_size: 3
       groups_density: 1

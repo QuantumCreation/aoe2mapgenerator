@@ -8,16 +8,16 @@ command_list:
   - command_name: add_borders
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE 
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE 
+        - MapLayerType.DECOR
       array_space_type_list: 
         - $UNIT
         - $TERRAIN
         - $ZONE
         - $DECOR
-      obj_type: FORTIFIED_WALL
+      obj_type_list: BuildingInfo.FORTIFIED_WALL
       margin: 1
       player_id: $PLAYER_ID
     return?: True
@@ -25,15 +25,15 @@ command_list:
   - command_name: place_gate_on_four_sides
     parameters:
       map_layer_type_list: 
-        - UNIT
-        - TERRAIN
-        - ZONE 
-        - DECOR
+        - MapLayerType.UNIT
+        - MapLayerType.TERRAIN
+        - MapLayerType.ZONE 
+        - MapLayerType.DECOR
       array_space_type_list: 
-        - [FORTIFIED_WALL, $PLAYER_ID]
+        - [BuildingInfo.FORTIFIED_WALL, $PLAYER_ID]
         - $TERRAIN
         - $ZONE
         - $DECOR
-      gate_type: FORTIFIED
+      gate_type: GateTypes.FORTIFIED_GATE
       player_id: $PLAYER_ID
     

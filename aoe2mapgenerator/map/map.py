@@ -187,7 +187,7 @@ class WorldPartition():
         distance = int((((points_needed/100)**(1/2) + 1) // 2) + 1)
         distance = min(distance, self.size//self.partition_size)
         distance += clumping//10
-        
+        distance += 2
         # Gets the sets of points within the distance square of the start point
         sets = [self.world_partition[
                                     (start_point[0]//self.partition_size+i,

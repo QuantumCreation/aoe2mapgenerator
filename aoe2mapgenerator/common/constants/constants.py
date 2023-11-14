@@ -1,5 +1,6 @@
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
 
 """
 Universal constants.
@@ -11,7 +12,7 @@ BASE_SCENARIO_NAME = "BASE_SCENARIO.aoe2scenario"
 
 GHOST_OBJECT_DISPLACEMENT = 999
 GHOST_OBJECT_MARGIN = 998
-DEFAULT_OBJECT_TYPES = []
+DEFAULT_OBJECT_TYPES = [UnitInfo.LEGIONARY]
 DEFAULT_EMPTY_VALUE = 0
 DEFAULT_PLAYER = PlayerId.GAIA
 DEFAULT_OBJECT_AND_PLAYER = (DEFAULT_EMPTY_VALUE, DEFAULT_PLAYER)

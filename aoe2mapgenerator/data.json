@@ -1,0 +1,19 @@
+[
+    {
+        "parent": {
+            "name": "John",
+            "children": [
+                {"name": "Alice", "age": 5},
+                {"name": "Bob", "age": 7}
+            ]
+        }
+    },
+    {
+        "parent": {
+            "name": "Sarah",
+            "children": [
+                {"name": "Charlie", "age": 3}
+            ]
+        }
+    }
+]
