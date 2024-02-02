@@ -84,7 +84,7 @@ class Scenario():
 
     def write_any_type(self, map_layer_type: MapLayerType) -> None:
         """
-        Writes to any type of map layer.
+        Writes to any type of map layer. Points are retrieved from the scenario's map object
 
         Args:
             map_layer_type (MapLayerType): Type of map layer to write to.

@@ -71,7 +71,7 @@ class TemplatePlacerMixin(PlacerMixin):
             template_file_name: Name of the template file to load.
             kwargs: Key word arguments corresponding to various placer variables.
         """
-        # print("Key words", kwargs)
+
         # start = time()
         if 'base_template_dir' not in kwargs:
             kwargs['base_template_dir'] = TEMPLATE_DIR
@@ -80,7 +80,7 @@ class TemplatePlacerMixin(PlacerMixin):
         # end = time()
         # print(f"Time to load yaml: {end-start}")
 
-        self._validate_user_included_required_fields(template, kwargs['map_layer_type_list'])
+        _validate_user_included_required_fields(template, kwargs['map_layer_type_list'])
         
         # total_conversion = 0
         # total_function_call = 0
@@ -89,11 +89,12 @@ class TemplatePlacerMixin(PlacerMixin):
         
         symbol_table = dict()
         
-        symbol_table = self._create_initial_symbol_table(**kwargs)
+        symbol_table = _create_initial_symbol_table(**kwargs)
         
         for command in template['command_list']:
             # print(symbol_table)
-            self._call_function(
+            # print(command["parameters"])
+            self.call_function(
                 function_name=command['command_name'], 
                 parameters=command['parameters'], 
                 symbol_table=symbol_table)
@@ -119,7 +120,7 @@ class TemplatePlacerMixin(PlacerMixin):
         # print(f"Time to convert yaml to python: {total_conversion}")
         # print(f"Time to run {template_file_name}: {total_function_call}")
     
-    def _call_function(
+    def call_function(
         self,
         function_name: str,
         parameters: dict,
@@ -130,342 +131,257 @@ class TemplatePlacerMixin(PlacerMixin):
 
         Args:
             function_name: Name of the function to call.
-            kwargs: Key word arguments to pass to the function.
+            parameters: Key word arguments to pass to the function.
+            symbol_table: Dictionary mapping yaml substitution variables to python objects.
+            
+        Example:
+            Parameters are mapped with the key being the name of the parameter, and the value 
+            being the specific argument to pass to the function for that parameter.
         """
         function = getattr(self, function_name)
-        # print(kwargs)
-        # print(function)
-        # print("Key WordS:", **kwargs)
-        self._validate_user_kwarg_input(function, parameters)
-        self._convert_parameters_to_python_data_types(parameters, symbol_table)
-        # print("PARAMS")
-        # print(parameters)
+
+        _validate_user_kwarg_input(function, parameters)
+        _convert_parameters_to_python_data_types(parameters, symbol_table)
+
+        # Calls the function with the final parameters
         function(**parameters)
     
-    # Would a dataclass somehow be useful here? Maybe include separate YAML format verifier.
-    # Also, this ugly sonofabitch function needs some work. We'll shall attend to his needs soon.
-    # Also converts from the variable names of types into actual types
-    def _convert_parameters_to_python_data_types(
-        self, 
-        parameters,
-        symbol_table
-        ):
-        """
-        Takes the yaml input and turns it into python objects.
-
-        Args:
-            ...
-        """
-        for parameter in parameters:
-            parameters[parameter] = self._convert_parameter_to_python_type(parameter, 
-                                                                           parameters[parameter], 
-                                                                           symbol_table)
-
-        # for parameter in parameters:
-            # print("PARAMETER: ", parameter)
-            # print(parameters[parameter])
-            # print([type(val) for val in parameters[parameter]])
-        # return
-        # STUFF
-        # if 'map_layer_type_list' in parameters:
-        #     parameters['map_layer_type_list'] = [
-        #         dictionary[value] if value in dictionary 
-        #         else MapLayerType(value) 
-        #         for value in parameters['map_layer_type_list']]
-            
-        # # Maybe have the function handle the entire list to limit function calls?
-        # if 'array_space_type_list' in parameters:
-        #     parameters['array_space_type_list'] = [
-        #             self._convert_array_space_type(value, dictionary)
-        #             for value in parameters['array_space_type_list']
-        #         ]
-
-        # if 'obj_type_list' in parameters:
-        #     parameters['obj_type_list'] = [
-        #         dictionary[value] if value in dictionary
-        #         else self._string_to_aoe2_enum_type(value)
-        #         for value in parameters['obj_type_list']
-        #     ]
-
-        # # GOD THIS TOOK SO LONG TO FIND. MAYBE CONVERT ADD BORDERS TO AN OBJECT TYPE LIST AS WELL.
-        # if 'obj_type' in parameters:
-        #     parameters['obj_type'] = (
-        #         dictionary[parameters['obj_type']] if parameters['obj_type'] in dictionary
-        #         else self._string_to_aoe2_enum_type(parameters['obj_type'])
-        #     )
-            
-
-        # if 'player_id' in parameters:
-        #     parameters['player_id'] = (
-        #         dictionary[parameters['player_id']] if parameters['player_id'] in dictionary 
-        #         else (PlayerId(parameters['player_id']) if parameters['player_id'] is not None
-        #             else DEFAULT_PLAYER
-        #             )
-        #         )
-
-        # if 'gate_type' in parameters:
-        #     parameters['gate_type'] = GateTypes(parameters['gate_type'])
-
-        # # IDK LOL
-        # if 'clumping_func' in parameters:
-        #     parameters['clumping_func'] = parameters['clumping_func']
-        
-        # if 'start_point' in parameters:
-        #     parameters['start_point'] = tuple(parameters['start_point'])
     
-    
-    def _convert_parameter_to_python_type(
-                    self, 
-                    parameter_type: str,
-                    parameter_value: Union[str, int, list], 
-                    symbol_table: dict,
-                    ) -> Union[None, int, float, str]:
-        """
-        Converts a string to a python type. Uses the symbol table to replace variables as needed.
-
-        Args:
-            value (str): String to convert.
-
-        Returns:
-            Union[None, int, float, str]: Converted value.
-        """
-        # Return current value if the value is already a python type
-        
-        # This code makes it so that the top level is a list, and the lower levels are tuples
-        # This makes it cover differnet cases, but it is liable to break things later
-        
-        if parameter_value is None:
-            return None
-
-        try:
-            val = ast.literal_eval(parameter_value)
-            return val
-        except:
-            pass
-            
-        
-        if type(parameter_value) in [int, float, bool]:
-            return parameter_value
-        
-        if type(parameter_value) == str and len(parameter_value) > 0 and parameter_value[0] == '$':
-            if parameter_value not in symbol_table:
-                raise ValueError(f"The value \'{parameter_value}\' is not a valid substitution variable.")
-            
-            return symbol_table[parameter_value]
-        
-        if type(parameter_value) == list:
-            if parameter_type == "array_space_type_list":
-                result = [self._convert_parameter_to_python_type(None, item, symbol_table) for item in parameter_value]
-                result = [tuple(item) for item in result]
-                return result
-            
-            return [self._convert_parameter_to_python_type(
-                            parameter_type,
-                            item, 
-                            symbol_table) 
-                              for item in parameter_value]
-        
-        if parameter_value.count('.') == 1:
-            return _convert_value_to_enum(parameter_value)
-            # print(enum_type, enum_value)
-            
-        
-        print(f"None was returned for the parameter: {parameter_value}")
-        # print(parameter_value.count('.'))
-        return None
-        
-    def _convert_string_string_tuple_to_enum_player_tuple(self, string_tuple: tuple) -> Union[None, int, float, str]:
-        """
-        Converts a string string tuple to an enum player tuple.
-        
-        Args:
-            string_tuple (tuple): String string tuple.
-        
-        Returns:
-            tuple: Enum player tuple.
-        """
-        object = self._convert_value_to_enum(string_tuple[0])
-        playerId = PlayerId.GAIA if string_tuple[1] is None else self._convert_value_to_enum(string_tuple[1])
-        return (object, playerId)
-        
-        
-        
-    
-    # def _create_dictionary_mapping(
-    #     self,
-    #     **kwargs,
-    #     ) -> dict:
-    #     """
-    #     Creates a dictionary mapping from placeholder variables to python objects.
-
-    #     Args:
-
-    #     """
-    #     default_dict = {}
-
-    #     # String formatted should probably be optimized/made pretty/use enum. SEE ENUMS.
-    #     # IS THIS EVEN NECESSARY? WE WILL ALWAYS GET THE SAME MAPPING. WHY HAVE AN EXTRA VARIABLE FOR THIS?
-    #     if 'map_layer_type_list' in kwargs:
-    #         for map_layer_type in kwargs['map_layer_type_list']:
-    #             default_dict[f"${map_layer_type._name_}_V"] = map_layer_type
-
-    #     if 'array_space_type_list' in kwargs:
-    #         map_layer_type_list = kwargs['map_layer_type_list']
-    #         for i, array_space_type in enumerate(kwargs['array_space_type_list']):
-    #             default_dict[f"${map_layer_type_list[i]._name_}"] = array_space_type
-
-    #     # OBJ LIST NOT YET SUPPORTED
-
-    #     if 'player_id' in kwargs:
-    #         if kwargs['player_id'] is not None:
-    #             default_dict[YamlReplacementKeywords.PLAYER_ID.value] = kwargs['player_id']
-
-    #     if 'gate_type' in kwargs:
-    #         default_dict[YamlReplacementKeywords.GATE_TYPE] = kwargs['gate_type']
-
-    #     return default_dict
-    
-    def _create_initial_symbol_table(self, **kwargs) -> dict:
-        """
-        Creates an initial symbol table for the yaml file.
-
-        Args:
-            ...
-        
-        Returns: A dictionary mapping from yaml substitution variables to python objects.
-        """
-        # Maybe add more fields later and organize better
-        symbol_table = dict()
-        
-        if 'map_layer_type_list' in kwargs:
-            for map_layer_type in kwargs['map_layer_type_list']:
-                symbol_table[f"${map_layer_type._name_}_V"] = map_layer_type
-        
-        if 'array_space_type_list' in kwargs:
-            map_layer_type_list = kwargs['map_layer_type_list']
-            for i, array_space_type in enumerate(kwargs['array_space_type_list']):
-                symbol_table[f"${map_layer_type_list[i]._name_}"] = array_space_type
-        
-        if 'player_id' in kwargs:
-            if kwargs['player_id'] is not None:
-                symbol_table[YamlReplacementKeywords.PLAYER_ID.value] = kwargs['player_id']
-        
-        if 'gate_type' in kwargs:
-            symbol_table[YamlReplacementKeywords.GATE_TYPE.value] = kwargs['gate_type']
-        
-        
-        return symbol_table
-
-    # Maybe add more fields later and organize better
-    def _validate_user_included_required_fields(self,
-        template: dict,
-        map_layer_type_list: list,
-        ):
-        """
-        Validates the input to the placement function.
-
-        Args:
-            template: Loaded yaml template.
-            map_layer_type_list: 
-        """
-        required_inputs = [MapLayerType[text] for text in template['required_inputs']]
-
-        for input in required_inputs:
-            if input not in map_layer_type_list:
-                raise ValueError(f"The template requires the {input} field.")
-
-        return True
-
-    # Could also check that required args 100% included. I'll deal with this laters. Bro.
-    def _validate_user_kwarg_input(self, function, parameters) -> None:
-        """
-        Validates that the key word arguments received match the keywords of the function.
-
-        Args:
-            function (function): The function to validate.
-            parameters (dict): The key word arguments to validate.
-        """
-        # Not all of these arguments need to be included, but if an argument not matching these keywords is given.
-        # The user has made a mistake.
-        arg_spec = inspect.getfullargspec(function)
-        acceptable_args = arg_spec.args
-        required_args = arg_spec.args[:-(0 if arg_spec.defaults is None else len(arg_spec.defaults))]
-
-        # I THINK SOMETHING IS WRONG HERE. CHECK IF THE REQUIRED ARGS ARE CHECKED CORRECTLY.
-        if len(required_args) > 0 and required_args[0] == 'self':
-            required_args.remove('self')
-
-        for arg in required_args:
-            if arg not in parameters:
-                closest_match = max(list(parameters), key = lambda key_word_arg: SequenceMatcher(None,arg.lower(),key_word_arg.lower()).ratio())
-
-                raise ValueError(
-                    f"The required key word argument \'{arg}\' was not included. "
-                    f"You wrote \'{closest_match}\', did you mean \'{arg}\'?"
-                )
-
-        # If the function accepts keyword arguments, we don't know what acceptable args are, hence skip.
-        if arg_spec.varkw is None:
-            for key_word_arg in parameters:
-                if key_word_arg not in acceptable_args:
-                    closest_match = max(acceptable_args, key = lambda acc_arg: SequenceMatcher(None,key_word_arg.lower(),acc_arg.lower()).ratio())
-
-                    raise ValueError(
-                        f"The key word argument \'{key_word_arg}\' for the function \'{function.__name__}\' was invalid. "
-                        f"You wrote \'{key_word_arg}\', did you mean \'{closest_match}\'?"
-                        )
-                    
-     # Do error handling later
-    def _string_to_aoe2_enum_type(self, text, default_value = None, return_default = False):
-        """
-        Converts a string to an age of empires enum type.
-
-        Args:
-            text: Input corresponding to an enum type.
-            default_value: Value to default to.
-            return_default: Boolean declaring whether or not to use a default.
-        """
-        AOE2_enums = [PlayerId, UnitInfo, BuildingInfo, OtherInfo, TerrainId]
-
-        # LMAO
-        for enum in AOE2_enums:
-            try:
-                return enum[text]
-            except:
-                continue
-
-        if return_default:
-            return default_value
-
-        raise ValueError(f"The value \'{text}\' was not found in any existing enum.")
 
 # -------------------------------- Conversion Functions ------------------------------
 
-    def _convert_array_space_type(self, array_space_type: list, dictionary: dict) -> None:
-        """
-        Converts a yaml array space type list into python objects.
+def _convert_array_space_type(array_space_type: list, dictionary: dict) -> None:
+    """
+    Converts a yaml array space type list into python objects.
 
-        Args:
-            array_space_type_list (list): List of array space types.
-            dictionary (dict): Dictionary mapping yaml substitution variables to python objects.
-        """
+    Args:
+        array_space_type_list (list): List of array space types.
+        dictionary (dict): Dictionary mapping yaml substitution variables to python objects.
+    """
 
-        if type(array_space_type) == list:
-            if len(array_space_type) != 2:
-                raise ValueError(f"Array space types must have a length of 2, not {len(array_space_type)}.")
-            array_space_type[0] = self._string_to_aoe2_enum_type(array_space_type[0])
+    if type(array_space_type) == list:
+        if len(array_space_type) != 2:
+            raise ValueError(f"Array space types must have a length of 2, not {len(array_space_type)}.")
+        array_space_type[0] = _string_to_aoe2_enum_type(array_space_type[0])
 
-            if array_space_type[1] in dictionary:
-                return (array_space_type[0], dictionary[array_space_type[1]])
-            if array_space_type[1] is None:
-                return (array_space_type[0], DEFAULT_PLAYER)
-            return PlayerId[array_space_type[1]]
-        elif array_space_type in dictionary:
-            return dictionary[array_space_type]
-        elif type(array_space_type) == int:
-            return array_space_type
+        if array_space_type[1] in dictionary:
+            return (array_space_type[0], dictionary[array_space_type[1]])
+        if array_space_type[1] is None:
+            return (array_space_type[0], DEFAULT_PLAYER)
+        return PlayerId[array_space_type[1]]
+    elif array_space_type in dictionary:
+        return dictionary[array_space_type]
+    elif type(array_space_type) == int:
+        return array_space_type
 
-        raise ValueError(f"The array space type \'{array_space_type}\' is not valid.")
+    raise ValueError(f"The array space type \'{array_space_type}\' is not valid.")
+
+# Would a dataclass somehow be useful here? Maybe include separate YAML format verifier.
+# Also, this ugly sonofabitch function needs some work. We'll shall attend to his needs soon.
+# Also converts from the variable names of types into actual types
+def _convert_parameters_to_python_data_types( 
+    parameters,
+    symbol_table
+    ):
+    """
+    Takes the yaml input and turns it into python objects.
+
+    Args:
+        ...
+    """
+    for parameter in parameters:
+        # print(parameter)
+        parameters[parameter] = _convert_parameter_to_python_type(parameter, 
+                                                                        parameters[parameter], 
+                                                                        symbol_table)
+        # print(parameters[parameter])
+        # print(type(parameters[parameter]))
+
+def _convert_parameter_to_python_type( 
+                parameter_type: str,
+                parameter_value: Union[str, int, list], 
+                symbol_table: dict,
+                ) -> Union[None, int, float, str]:
+    """
+    Converts a string to a python type. Uses the symbol table to replace variables as needed.
+
+    Args:
+        value (str): String to convert.
+
+    Returns:
+        Union[None, int, float, str]: Converted value.
+    """
+    # Return current value if the value is already a python type
+    
+    # This code makes it so that the top level is a list, and the lower levels are tuples
+    # This makes it cover differnet cases, but it is liable to break things later
+    
+    if parameter_value is None:
+        return None
+
+    try:
+        val = ast.literal_eval(parameter_value)
+        return val
+    except:
+        pass
+        
+    
+    if type(parameter_value) in [int, float, bool]:
+        return parameter_value
+    
+    if type(parameter_value) == str and len(parameter_value) > 0 and parameter_value[0] == '$':
+        if parameter_value not in symbol_table:
+            raise ValueError(f"The value \'{parameter_value}\' is not a valid substitution variable.")
+        
+        return symbol_table[parameter_value]
+    
+    if type(parameter_value) == list:
+        if parameter_type == "array_space_type_list":
+            result = [_convert_parameter_to_python_type(None, item, symbol_table) for item in parameter_value]
+            result = [tuple(item) for item in result]
+            return result
+        
+        return [_convert_parameter_to_python_type(
+                        parameter_type,
+                        item, 
+                        symbol_table) 
+                            for item in parameter_value]
+    
+    if parameter_value.count('.') == 1:
+        return _convert_value_to_enum(parameter_value)
+        
+    
+    print(f"None was returned for the parameter: {parameter_value}")
+    # print(parameter_value.count('.'))
+    return None
+    
+def _convert_string_string_tuple_to_enum_player_tuple(string_tuple: tuple) -> Union[None, int, float, str]:
+    """
+    Converts a string string tuple to an enum player tuple.
+    
+    Args:
+        string_tuple (tuple): String string tuple.
+    
+    Returns:
+        tuple: Enum player tuple.
+    """
+    object = _convert_value_to_enum(string_tuple[0])
+    playerId = PlayerId.GAIA if string_tuple[1] is None else _convert_value_to_enum(string_tuple[1])
+    return (object, playerId)
+    
+    
+def _create_initial_symbol_table(**kwargs) -> dict:
+    """
+    Creates an initial symbol table for the yaml file.
+
+    Args:
+        ...
+    
+    Returns: A dictionary mapping from yaml substitution variables to python objects.
+    """
+    # Maybe add more fields later and organize better
+    symbol_table = dict()
+    
+    if 'map_layer_type_list' in kwargs:
+        for map_layer_type in kwargs['map_layer_type_list']:
+            symbol_table[f"${map_layer_type._name_}_V"] = map_layer_type
+    
+    if 'array_space_type_list' in kwargs:
+        map_layer_type_list = kwargs['map_layer_type_list']
+        for i, array_space_type in enumerate(kwargs['array_space_type_list']):
+            symbol_table[f"${map_layer_type_list[i]._name_}"] = array_space_type
+    
+    if 'player_id' in kwargs:
+        if kwargs['player_id'] is not None:
+            symbol_table[YamlReplacementKeywords.PLAYER_ID.value] = kwargs['player_id']
+    
+    if 'gate_type' in kwargs:
+        symbol_table[YamlReplacementKeywords.GATE_TYPE.value] = kwargs['gate_type']
+    
+    return symbol_table
+
+# Maybe add more fields later and organize better
+def _validate_user_included_required_fields(
+    template: dict,
+    map_layer_type_list: list,
+    ):
+    """
+    Validates the input to the placement function.
+
+    Args:
+        template: Loaded yaml template.
+        map_layer_type_list: 
+    """
+    required_inputs = [MapLayerType[text] for text in template['required_inputs']]
+
+    for input in required_inputs:
+        if input not in map_layer_type_list:
+            raise ValueError(f"The template requires the {input} field.")
+
+    return True
+
+# Could also check that required args 100% included. I'll deal with this laters. Bro.
+def _validate_user_kwarg_input(function, parameters) -> None:
+    """
+    Validates that the key word arguments received match the keywords of the function.
+
+    Args:
+        function (function): The function to validate.
+        parameters (dict): The key word arguments to validate.
+    """
+    # Not all of these arguments need to be included, but if an argument not matching these keywords is given.
+    # The user has made a mistake.
+    arg_spec = inspect.getfullargspec(function)
+    acceptable_args = arg_spec.args
+    required_args = arg_spec.args[:-(0 if arg_spec.defaults is None else len(arg_spec.defaults))]
+
+    # I THINK SOMETHING IS WRONG HERE. CHECK IF THE REQUIRED ARGS ARE CHECKED CORRECTLY.
+    if len(required_args) > 0 and required_args[0] == 'self':
+        required_args.remove('self')
+
+    for arg in required_args:
+        if arg not in parameters:
+            closest_match = max(list(parameters), key = lambda key_word_arg: SequenceMatcher(None,arg.lower(),key_word_arg.lower()).ratio())
+
+            raise ValueError(
+                f"The required key word argument \'{arg}\' was not included. "
+                f"You wrote \'{closest_match}\', did you mean \'{arg}\'?"
+            )
+
+    # If the function accepts keyword arguments, we don't know what acceptable args are, hence skip.
+    if arg_spec.varkw is None:
+        for key_word_arg in parameters:
+            if key_word_arg not in acceptable_args:
+                closest_match = max(acceptable_args, key = lambda acc_arg: SequenceMatcher(None,key_word_arg.lower(),acc_arg.lower()).ratio())
+
+                raise ValueError(
+                    f"The key word argument \'{key_word_arg}\' for the function \'{function.__name__}\' was invalid. "
+                    f"You wrote \'{key_word_arg}\', did you mean \'{closest_match}\'?"
+                    )
+                
+    # Do error handling later
+def _string_to_aoe2_enum_type(text, default_value = None, return_default = False):
+    """
+    Converts a string to an age of empires enum type.
+
+    Args:
+        text: Input corresponding to an enum type.
+        default_value: Value to default to.
+        return_default: Boolean declaring whether or not to use a default.
+    """
+    AOE2_enums = [PlayerId, UnitInfo, BuildingInfo, OtherInfo, TerrainId]
+
+    # LMAO
+    for enum in AOE2_enums:
+        try:
+            return enum[text]
+        except:
+            continue
+
+    if return_default:
+        return default_value
+
+    raise ValueError(f"The value \'{text}\' was not found in any existing enum.")
 
 def _convert_value_to_enum(string: str) -> Union[None, int, float, str]:
     """
