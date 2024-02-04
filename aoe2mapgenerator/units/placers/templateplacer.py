@@ -194,8 +194,6 @@ def _convert_parameters_to_python_data_types(
         parameters[parameter] = _convert_parameter_to_python_type(parameter, 
                                                                         parameters[parameter], 
                                                                         symbol_table)
-        # print(parameters[parameter])
-        # print(type(parameters[parameter]))
 
 def _convert_parameter_to_python_type( 
                 parameter_type: str,
