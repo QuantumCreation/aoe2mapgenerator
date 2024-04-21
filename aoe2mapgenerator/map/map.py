@@ -13,7 +13,7 @@ from aoe2mapgenerator.visualizer.visualizer import VisualizerMixin
 
 class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin, MapUtilsMixin):
     """
-    TODO
+    Class for the Age of Empires Map layers
     """
 
     def __init__(self, size: int = 100):
