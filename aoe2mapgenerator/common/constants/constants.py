@@ -10,13 +10,16 @@ BASE_SCENE_DIR = "C:\\Users\\josep\\Games\\Age of Empires 2 DE\\7656119824275474
 TEMPLATE_DIR = "C:\\Users\\josep\\OneDrive\\Documents\\GitHub\\aoe2mapgenerator\\aoe2mapgenerator\\templates\\example_templates"
 BASE_SCENARIO_NAME = "BASE_SCENARIO.aoe2scenario"
 
+BASE_SCENE_DIR_LINUX = "/home/joseph/.steam/steam/steamapps/compatdata/813780/pfx/dosdevices/c:/users/steamuser/Games/Age of Empires 2 DE/76561198242754748/resources/_common/scenario/"
+TEMPLATE_DIR_LINUX = "/home/joseph/Documents/Projects/aoe2mapgenerator/aoe2mapgenerator/templates/example_templates"
+
+
 GHOST_OBJECT_DISPLACEMENT = 999
 GHOST_OBJECT_MARGIN = 998
 DEFAULT_OBJECT_TYPES = [UnitInfo.LEGIONARY]
 DEFAULT_EMPTY_VALUE = 0
 DEFAULT_PLAYER = PlayerId.GAIA
 DEFAULT_OBJECT_AND_PLAYER = (DEFAULT_EMPTY_VALUE, DEFAULT_PLAYER)
-
 
 X_SHIFT = 0.5
 Y_SHIFT = 0.5

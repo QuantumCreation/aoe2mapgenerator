@@ -73,7 +73,7 @@ def save_and_write_map(map: Map, base_scenario_full_path: str, output_file_full_
         Scenario: Scenario object.
     """
     scenario = Scenario(map, base_scenario_full_path)
-    scenario.change_map_size(map.size)
+    scenario._change_map_size(map.size)
     scenario.write_map()
     scenario.save_file(output_file_full_path)
 
@@ -150,7 +150,7 @@ def build_city(zone, player_id, map, base_template_dir):
             )
 
             map.place_template(
-                'City.yaml',
+                'city.yaml',
                 map_layer_type_list = [MapLayerType.UNIT, MapLayerType.TERRAIN, MapLayerType.ZONE, MapLayerType.DECOR],
                 array_space_type_list = [city_zone, city_zone, city_zone, city_zone],
                 player_id = player_id,

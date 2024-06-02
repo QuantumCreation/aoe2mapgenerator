@@ -1,6 +1,10 @@
 from enum import Enum
 import numpy as np
-
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
 
 
 # Endings for different gate types. This is ugly at the moment. Should probably be improved later on.
@@ -150,7 +154,11 @@ class TemplateTypes(Enum):
     Information:
         Dynamic templates actively find open locations to place objects.
         Static templates are rectangular sets of objects that are placed
-        as a single chunk.
+        as a single chunk.from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
     """
 
     DYNAMIC = 0
@@ -182,8 +190,6 @@ class YamlReplacementKeywords(Enum):
     # GATE TYPES
     GATE_TYPE = "$GATE_TYPE"
 
-
-
 class CheckPlacementReturnTypes(Enum):
     """
     Return types from the check placement function
@@ -192,3 +198,10 @@ class CheckPlacementReturnTypes(Enum):
     FAIL = 0
     SUCCESS = 1
     SUCCESS_IMPOSSIBLE = 2
+
+class AOE2Object(Enum):
+    
+    UNIT_TYPE = UnitInfo
+    BUILDING_TYPE = BuildingInfo
+    OTHER_TYPE = OtherInfo
+    TERRAIN_TYPE = TerrainId

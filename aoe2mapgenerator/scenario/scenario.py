@@ -28,10 +28,18 @@ class Scenario():
             map (Map): Map object to write to the scenario. 
             base_scenario_full_path (str, optional): Path to the base scenario file. Defaults to BASE_SCENARIO_FULL_PATH.
         """
-        self.scenario = self.get_scenario(base_scenario_full_path)
+        self.scenario = self._get_scenario(base_scenario_full_path)
         self.map = map
 
-    def get_scenario(self, file_full_path: str) -> AoE2DEScenario:
+    def write_map(self) -> None:
+        """
+        Writes to all map layers.
+        """
+        self._write_any_type(MapLayerType.UNIT)
+        self._write_any_type(MapLayerType.TERRAIN)
+        self._write_any_type(MapLayerType.DECOR)
+
+    def _get_scenario(self, file_full_path: str) -> AoE2DEScenario:
         """
         Loads a scenario from the given file name.
 
@@ -40,7 +48,7 @@ class Scenario():
         """
         return AoE2DEScenario.from_file(file_full_path)
 
-    def write_units(self, points: set, unit_const, player: int, rotation: int = -1) -> None:
+    def _write_units(self, points: set, unit_const, player: int, rotation: int = -1) -> None:
         """
         Takes a scenario and a list of points to create units in the corresponding positions.
 
@@ -68,7 +76,7 @@ class Scenario():
             else:
                 unit_manager.add_unit(player=player,unit_const=unit_const.ID,x=x+X_SHIFT,y=y+Y_SHIFT,rotation=rotation)
 
-    def write_terrain(self, points: set, terrain_const: TerrainId) -> None:
+    def _write_terrain(self, points: set, terrain_const: TerrainId) -> None:
         """
         Takes a scenario and a list of points to create units in the corresponding positions.
 
@@ -82,7 +90,7 @@ class Scenario():
             tile = map_manager.get_tile(x, y)
             tile.terrain_id = terrain_const.value
 
-    def write_any_type(self, map_layer_type: MapLayerType) -> None:
+    def _write_any_type(self, map_layer_type: MapLayerType) -> None:
         """
         Writes to any type of map layer. Points are retrieved from the scenario's map object
 
@@ -101,20 +109,11 @@ class Scenario():
             points = d[(aoe2_object, player_id)]
 
             if isinstance(aoe2_object, TerrainId):
-                self.write_terrain(points, aoe2_object)
+                self._write_terrain(points, aoe2_object)
             if isinstance(aoe2_object, BuildingInfo) or isinstance(aoe2_object, UnitInfo) or isinstance(aoe2_object, OtherInfo):
-                self.write_units(points, aoe2_object, player_id)
+                self._write_units(points, aoe2_object, player_id)
 
-    def write_map(self) -> None:
-        """
-        Writes to all map layers.
-        """
-        self.write_any_type(MapLayerType.UNIT)
-        self.write_any_type(MapLayerType.TERRAIN)
-        self.write_any_type(MapLayerType.DECOR)
-
-
-    def change_map_size(self, map_size: int) -> None:
+    def _change_map_size(self, map_size: int) -> None:
         """
         Changes the map size.
 

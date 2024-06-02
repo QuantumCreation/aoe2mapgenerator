@@ -11,7 +11,7 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
-from aoe2mapgenerator.common.constants.constants import TEMPLATE_DIR, DEFAULT_PLAYER
+from aoe2mapgenerator.common.constants.constants import TEMPLATE_DIR, DEFAULT_PLAYER, TEMPLATE_DIR_LINUX
 import re
 from typing import Union
 from yaml import load, UnsafeLoader
@@ -30,7 +30,7 @@ class TemplatePlacerMixin(PlacerMixin):
     Handles placing templates.
     """
 
-    def _load_yaml(self, template_file_name: str, base_template_dir: str = TEMPLATE_DIR) -> dict:
+    def _load_yaml(self, template_file_name: str, base_template_dir: str = TEMPLATE_DIR_LINUX) -> dict:
         """
         Loads yaml file form the template file name. 
 
@@ -74,51 +74,23 @@ class TemplatePlacerMixin(PlacerMixin):
 
         # start = time()
         if 'base_template_dir' not in kwargs:
-            kwargs['base_template_dir'] = TEMPLATE_DIR
+            kwargs['base_template_dir'] = TEMPLATE_DIR_LINUX
         
         template = self._load_yaml(template_file_name, kwargs['base_template_dir'])
-        # end = time()
-        # print(f"Time to load yaml: {end-start}")
-
+ 
         _validate_user_included_required_fields(template, kwargs['map_layer_type_list'])
-        
-        # total_conversion = 0
-        # total_function_call = 0
-
-        # calls = []
         
         symbol_table = dict()
         
         symbol_table = _create_initial_symbol_table(**kwargs)
         
         for command in template['command_list']:
-            # print(symbol_table)
-            # print(command["parameters"])
+
             self.call_function(
                 function_name=command['command_name'], 
                 parameters=command['parameters'], 
                 symbol_table=symbol_table)
-            # start = time()
-            # function = getattr(self, command['command_name'])
-            # self._validate_user_kwarg_input(function, **command['parameters'])
-  
-            # self._convert_parameters_to_python_data_types(
-            #     parameters = command['parameters'],
-            #     **kwargs
-            #     )
-            # # end = time()
-            # # total_conversion += end-start
-            # start = time()
-            # function(**command['parameters'])
-            # end = time()
-            # total_function_call += end-start
 
-            # calls += [[command['command_name'], command['parameters'], end-start]]
-        
-        # if max(calls, key = lambda x: x[2])[2] > 0.5:
-        #     print(f"Longest call: {max(calls, key = lambda x: x[2])}")
-        # print(f"Time to convert yaml to python: {total_conversion}")
-        # print(f"Time to run {template_file_name}: {total_function_call}")
     
     def call_function(
         self,
@@ -146,8 +118,6 @@ class TemplatePlacerMixin(PlacerMixin):
         # Calls the function with the final parameters
         function(**parameters)
     
-    
-
 # -------------------------------- Conversion Functions ------------------------------
 
 def _convert_array_space_type(array_space_type: list, dictionary: dict) -> None:
@@ -252,7 +222,7 @@ def _convert_parameter_to_python_type(
     print(f"None was returned for the parameter: {parameter_value}")
     # print(parameter_value.count('.'))
     return None
-    
+
 def _convert_string_string_tuple_to_enum_player_tuple(string_tuple: tuple) -> Union[None, int, float, str]:
     """
     Converts a string string tuple to an enum player tuple.
@@ -356,7 +326,7 @@ def _validate_user_kwarg_input(function, parameters) -> None:
                     f"The key word argument \'{key_word_arg}\' for the function \'{function.__name__}\' was invalid. "
                     f"You wrote \'{key_word_arg}\', did you mean \'{closest_match}\'?"
                     )
-                
+    
     # Do error handling later
 def _string_to_aoe2_enum_type(text, default_value = None, return_default = False):
     """

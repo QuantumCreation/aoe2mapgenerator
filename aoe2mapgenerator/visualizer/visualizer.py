@@ -35,7 +35,7 @@ class VisualizerMixin(MapUtilsMixin):
         for i, (x,y) in enumerate(points):
             mat[x][y] = c[mapping[i]]
         
-        fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (25,25))
+        fig, ax = plt.subplots(1,1,facecolor = "white", figsize = (20,20))
 
         # Transposes the matrix
         mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
@@ -70,7 +70,7 @@ class VisualizerMixin(MapUtilsMixin):
 
         # Transposes the matrix
         mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
-
+    
         ax.matshow(mat)
 
     def visualize_map(self):

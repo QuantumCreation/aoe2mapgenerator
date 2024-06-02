@@ -70,15 +70,11 @@ class PlacerMixin(MapUtilsMixin):
 
         # Choose a random start point if none is specified or invalid
         if start_point[0] < 0 or start_point[1] < 0:
-            # print(start_point)
-            # print("Setting random start point.")
             start_point = points_list[int(random.random()*len(points_list))]
         else:
             start_point = tuple(start_point)
 
             
-        
-
         # Start with some size as the default
         total_size = 1
         effmargin = (1 + margin) if ghost_margin else margin
@@ -92,16 +88,15 @@ class PlacerMixin(MapUtilsMixin):
 
             if group_size > len(obj_type_list):
                 total_size += (group_size-len(obj_type_list))*(ObjectSize(obj_type_list[-1]._name_).value + effmargin)**2
-        
+
+
+            # Get the world partition sets ************ CURRENTLY IGNORING WORLD PARTITION SETS *************
             # world_partition_sets = self.get_world_partition(start_point, total_size, clumping)
             # points_list = [list(set.intersection(s, wpset)) for wpset in world_partition_sets]
             # points_list = functools.reduce(lambda acc, lst: acc + lst, points_list)
 
             # Sort the points based on clumping score if group size is in a certain range
             if 1<group_size<len(points_list):
-                # points_list = nsmallest(group_size, 
-                #                         points_list, 
-                #                         key = lambda x: clumping_func(x, start_point, clumping))
                 points_list = sorted(points_list, key = lambda point: clumping_func(point, start_point, clumping))
 
 
@@ -635,6 +630,3 @@ class PlacerMixin(MapUtilsMixin):
                 return
         
         return
-
-
-
