@@ -11,9 +11,7 @@ from aoe2mapgenerator.units.placers.templateplacer import TemplatePlacerMixin
 from aoe2mapgenerator.map.map_utils import MapUtilsMixin
 from aoe2mapgenerator.visualizer.visualizer import VisualizerMixin
 from aoe2mapgenerator.map.maplayer import MapLayer
-from aoe2mapgenerator.map.worldpartition import WorldPartition
-
-
+from aoe2mapgenerator.common.enums.enum import AOE2Object
 
 class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin, MapUtilsMixin):
     """
@@ -36,11 +34,6 @@ class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin, MapUtilsM
         self.terrain_map_layer = MapLayer(MapLayerType.TERRAIN, self.size)
         self.decor_map_layer = MapLayer(MapLayerType.DECOR, self.size)
         self.elevation_map_layer = MapLayer(MapLayerType.ELEVATION, self.size)
-
-        # self.world_partition = WorldPartition(self.size, partition_size=10)
-
-    def get_world_partition(self, start_point, points_needed, clumping = 1):
-        return self.world_partition.get_world_partition(start_point, points_needed, clumping)
 
     def get_map_layer(self, map_layer_type: MapLayerType):
         """
@@ -107,4 +100,3 @@ class Map(TemplatePlacerMixin, VisualizerMixin, VoronoiGeneratorMixin, MapUtilsM
                                     array_space_type_list)
 
         return voronoi_zones       
-

@@ -1,6 +1,6 @@
 from AoE2ScenarioParser.datasets.players import PlayerId
 from copy import deepcopy
-from typing import Union, Callable
+from typing import Union, Callable, List
 import numpy as np
 
 from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE, DEFAULT_OBJECT_AND_PLAYER
@@ -10,14 +10,33 @@ from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
 from aoe2mapgenerator.units.placers.templateplacer import TemplatePlacerMixin
 from aoe2mapgenerator.map.map_utils import MapUtilsMixin
 from aoe2mapgenerator.visualizer.visualizer import VisualizerMixin
+from aoe2mapgenerator.common.enums.enum import AOE2Object
+from dataclasses import dataclass
 
+class MapObject():
+
+    def __init__(self, obj_type: AOE2Object, player_id: PlayerId):
+        self.obj_type = obj_type
+        self.player_id = player_id
+
+    def __hash__(self):
+        return hash((self.obj_type, self.player_id))
+    
+    def __eq__(self, other):
+        # Ensure the other object is an instance of CustomObject
+        if isinstance(other, MapObject):
+            return (self.obj_type, self.player_id) == (other.obj_type, other.player_id)
+        return False
+
+MapLayerArray = List[List[MapObject]]
+MapLayerDictionary = dict[MapObject, set[tuple[int, int]]]
 
 class MapLayer():
     """
     Single Map type constructor.
     """
 
-    def __init__(self, map_layer_type: MapLayerType, size: int = 100, array = [], dictionary = {}):
+    def __init__(self, map_layer_type: MapLayerType, size: int = 100, array: MapLayerArray = [], dict: MapLayerDictionary = {}):
         
         self.layer = map_layer_type
         self.size = size
@@ -29,10 +48,10 @@ class MapLayer():
         else:
             self.array = array
         
-        if dictionary == {}:
+        if dict == {}:
             self.dict = _create_dict(self.array)
         else:
-            self.dict = dictionary
+            self.dict = dict
         
     
     def set_point(self, x, y, new_value, player_id : PlayerId = PlayerId.GAIA):
@@ -45,27 +64,26 @@ class MapLayer():
             new_value: Value to set the point to.
         """
         # Retrieve correct dictionary and array.
-        d = self.dict
-        a = self.array
+        dictionary = self.dict
+        array = self.array
         
-        try:
-             # Remove element from the dictionary.
-            d[a[x][y]].remove((x,y))
-        except:
-            pass
+        # Remove element from the dictionary.
+        dictionary[array[x][y]].remove((x,y))
 
         # Remove entire dictionary entry if there are not elements left.
-        if len(d[a[x][y]]) == 0:
-            d.pop(a[x][y], None)
+        if len(dictionary[array[x][y]]) == 0:
+            dictionary.pop(array[x][y], None)
 
+        new_obj = MapObject(new_value, player_id)
+        
         # Assign new value to the array.
-        a[x][y] = (new_value, player_id)
+        array[x][y] = new_obj
 
         # Add the value to the dictionary.
-        if (new_value, player_id) in d:
-            d[a[x][y]].add((x,y))
+        if array[x][y] in dictionary:
+            dictionary[array[x][y]].add((x,y))
         else:
-            d[a[x][y]] = {(x,y)}
+            dictionary[array[x][y]] = {(x,y)}
     
     def get_array(self):
         return self.array

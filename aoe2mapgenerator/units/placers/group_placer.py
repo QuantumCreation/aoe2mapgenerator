@@ -83,17 +83,10 @@ class GroupPlacerManager(PlacerBase):
         total_size += (group_size-len(obj_type_list)) * ObjectInfo.get_object_effective_size(obj_type_list[-1], margin) if group_size > len(obj_type_list) else 0
 
         if clumping == -1:
-            # total_size = (self.size + 100)**2
             random.shuffle(points_list)
         else:
-
-            # Get the world partition sets ************ CURRENTLY IGNORING WORLD PARTITION SETS *************
-            # world_partition_sets = self.get_world_partition(start_point, total_size, clumping)
-            # points_list = [list(set.intersection(s, wpset)) for wpset in world_partition_sets]
-            # points_list = functools.reduce(lambda acc, lst: acc + lst, points_list)
-
             # Gets points within three times the radius required for the group
-            points_list = point_manager.get_nearby_points(start_point, (total_size**(1/2)) * 3) 
+            points_list = point_manager.get_nearby_points(start_point, (total_size**(1/2)) * 2) 
             
             # Sort the points based on clumping score if group size is in a certain range
             if 1<group_size<len(points_list):

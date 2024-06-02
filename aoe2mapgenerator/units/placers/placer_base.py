@@ -79,13 +79,7 @@ class PlacerBase():
             height: Height of a given object.
             width: Width of a given object.
         """
-        
-        # if height <= 0 or width <= 0:
-        #     if obj_type is None:
-        #         return False
-        #     obj_size = ObjectSize(obj_type._name_).value
-        #     width = obj_size
-        #     height = obj_size
+
         width = ObjectInfo.get_object_width(obj_type)
         height = ObjectInfo.get_object_height(obj_type)
         eff_width = ObjectInfo.get_object_effective_size(obj_type, margin)
