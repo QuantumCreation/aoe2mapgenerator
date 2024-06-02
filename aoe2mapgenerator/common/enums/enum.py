@@ -199,7 +199,7 @@ class CheckPlacementReturnTypes(Enum):
     SUCCESS = 1
     SUCCESS_IMPOSSIBLE = 2
 
-class AOE2Object(Enum):
+class AOE2ObjectType(Enum):
     
     UNIT_TYPE = UnitInfo
     BUILDING_TYPE = BuildingInfo

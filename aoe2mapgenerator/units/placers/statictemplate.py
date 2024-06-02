@@ -2,7 +2,8 @@ from dataclasses import dataclass
 import random
 from re import A
 from site import abs_paths
-from aoe2mapgenerator.common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
+from aoe2mapgenerator.common.constants.constants import DEFAULT_OBJECT_TYPES, DEFAULT_PLAYER
+from aoe2mapgenerator.common.constants.default_objects import GHOST_OBJECT_DISPLACEMENT, GHOST_OBJECT_MARGIN
 from aoe2mapgenerator.utils.utils import set_from_matrix
 from aoe2mapgenerator.common.enums.enum import ObjectSize, MapLayerType, GateTypes
 from AoE2ScenarioParser.datasets.players import PlayerId

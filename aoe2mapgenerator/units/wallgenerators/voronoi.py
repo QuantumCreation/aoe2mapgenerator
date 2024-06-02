@@ -4,20 +4,35 @@ from typing import Union, Callable
 import functools
 from AoE2ScenarioParser.datasets.players import PlayerId
 import random
+from aoe2mapgenerator.map.map import Map
+from aoe2mapgenerator.common.enums.enum import MapLayerType
+from aoe2mapgenerator.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.units.placers.point_manager import PointManager
+from aoe2mapgenerator.map.map_object import MapObject
+from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 
-from aoe2mapgenerator.map.map_utils import MapUtilsMixin
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
 
-class VoronoiGeneratorMixin(MapUtilsMixin):
+class VoronoiGenerator(PlacerBase):
     """
     Class for generating voronoi patterns.
     """
     global_zone_counter = 0
 
+    def __init__(self, map: Map):
+        self.map = map
+        self.size = map.size
+
     def generate_voronoi_cells(
-            self, 
+            self,
+            point_manager: PointManager,
             interpoint_distance: int,
-            map_layer_type_list: list,
-            array_space_type_list: list,
+            map_layer_type: MapLayerType,
+            map_object: MapObject,
             ):
         """
         Generates an array of voronoi shapes, with numbers starting from -1 and going down.
@@ -31,42 +46,35 @@ class VoronoiGeneratorMixin(MapUtilsMixin):
             list: List of the new zones.
         """
 
-
         # Generate a Poisson-distributed set of points.
-        points = self._generate_poisson_voronoi_point_distribution(self.size, interpoint_distance)
+        voronoi_seed_points = self._generate_poisson_voronoi_point_distribution(self.size, interpoint_distance)
 
-        available_points = self.get_intersection_of_spaces(map_layer_type_list, array_space_type_list)
+        # Create a voronoi diagram.
+        available_points = point_manager.get_point_list()
+    
+        voronoi_seed_points = [point for point in voronoi_seed_points if tuple(point) in available_points]
 
-        points = [point for point in points if tuple(point) in available_points]
+        if voronoi_seed_points == []:
+            # If there are no points, grab a random point from the available points.
+            voronoi_seed_points = [available_points[int(len(available_points)*random.random())]]
 
-        if points == []:
-            points = [list(available_points)[int(len(available_points)*random.random())]]
+        new_zones = []
+        
+        for point in available_points:
+            closest_seed_idx = -1
 
-
-        # Assign each point in the array to a Voronoi cell.
-        new_zones = self._assign_voronoi_cell_numbers(map_layer_type_list, array_space_type_list, points)
-
-        # Grow the Voronoi cells until they can no longer expand.
-        total = -1
-
-        while total != 0:
-            total = 0
-            new_points = []
-            for (x, y) in points:
-                layer = self.get_map_layer(map_layer_type_list[0])
-                array = layer.array
-                point_type = array[x][y]
-
-                new_points.extend(self._voronoi_grow_single(map_layer_type_list, 
-                                                            array_space_type_list, 
-                                                            (x, y), 
-                                                            point_type=point_type))
+            for i, seed in enumerate(voronoi_seed_points):
+                if closest_seed_idx == -1 or self.manhattan_distance(seed, point) < self.manhattan_distance(voronoi_seed_points[closest_seed_idx], point):
+                    closest_seed_idx = i
             
-            total += len(new_points)
-            points = new_points
+            new_object = MapObject(closest_seed_idx, PlayerId.GAIA)
+            new_zones.append(new_object)
+            self.map.set_point(point[0], point[1], new_object, map_layer_type, PlayerId.GAIA)
         
         return new_zones
-
+    
+    def manhattan_distance(self, point1, point2):
+        return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
 
     # ------------------------- HELPER METHODS ----------------------------------
 
@@ -88,92 +96,7 @@ class VoronoiGeneratorMixin(MapUtilsMixin):
         
         return points
 
-    def _assign_voronoi_cell_numbers(
-            self,
-            map_layer_type_list: list,
-            array_space_type_list: list,
-            points: list,
-            ):
-        """
-        Assigns a point value to each point.
-
-        Args:
-            map_layer_type_list: List of map layer types to use.
-            array_space_type_list: List of array space types to use.
-            points: List of points to assign values to.
-        """
-        new_zones = []
-
-        for i, (x,y) in enumerate(points):
-            for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
-                layer = self.get_map_layer(map_layer_type)
-                layer.set_point(x, y, -i-1-self.global_zone_counter)
-
-            new_zones.append((-i-1-self.global_zone_counter, PlayerId.GAIA))
-        
-        self.global_zone_counter += len(points)
-
-        return new_zones
-    
-    def _valid(self,
-               map_layer_type_list: list,
-               array_space_type_list: list,
-               x,
-               y):
-        """
-        Checks that point coordinates appear in the map layers with the correct space type.
-
-        Args:
-            map_layer_type_list: List of map layer types to use.
-            array_space_type_list: List of array space types to use.
-            x: X coordinate of the point.
-            y: Y coordinate of the point.
-        """
-        for map_layer_type, array_space_type in zip(map_layer_type_list, array_space_type_list):
-            layer = self.get_map_layer(map_layer_type)
-            dictionary = layer.dict
-            
-
-            if not array_space_type in dictionary or ((x, y) not in dictionary[array_space_type]):
-                return False
-        
-        return True
-
-    def _voronoi_grow_single(self, 
-                            map_layer_type_list: list,
-                            array_space_type_list: list,
-                            point, 
-                            point_type):
-        """
-        Grows a single cell for creating a voronoi pattern.
-
-        Args:
-            map_layer_type_list: List of map layer types to use.
-            array_space_type_list: List of array space types to use.
-            point: Point to grow from.
-            point_type: Point type to assign to the new points.
-        """
-        new_points = []
-
-        x, y = point
-
-        for i in range(-1,2):
-            for j in range(-1,2):
-                if abs(i) + abs(j) != 0:
-                    
-                
-                    if (self._valid(map_layer_type_list, array_space_type_list, x+i, y+j) and
-                            self.get_map_layer(map_layer_type_list[0]).array[x+i][y+j] != point_type):
-                        
-                        for map_layer_type in map_layer_type_list:
-                            layer = self.get_map_layer(map_layer_type)
-                            layer.set_point(x+i, y+j, point_type[0], point_type[1])
-
-                        new_points.append((x+i, y+j))
-        
-        return new_points
-
-    def _poisson_disk_sample(self, width=1.0, height=1.0, radius=0.025, k=30):
+    def _poisson_disk_sample(self, width=1.0, height=1.0, radius=0.025, k=30) -> np.ndarray:
         """
         Generates random points with the poisson disk method
 

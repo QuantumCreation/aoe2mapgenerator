@@ -11,7 +11,8 @@ import functools
 
 from aoe2mapgenerator.common.enums.enum import ObjectSize, Directions, MapLayerType, GateTypes, CheckPlacementReturnTypes
 from aoe2mapgenerator.units.placers.point_manager import PointManager
-from aoe2mapgenerator.common.constants.constants import GHOST_OBJECT_DISPLACEMENT, DEFAULT_OBJECT_TYPES, GHOST_OBJECT_MARGIN, DEFAULT_PLAYER
+from aoe2mapgenerator.common.constants.constants import DEFAULT_OBJECT_TYPES, DEFAULT_PLAYER
+from aoe2mapgenerator.common.constants.default_objects import GHOST_OBJECT_DISPLACEMENT, GHOST_OBJECT_MARGIN
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.units.placers.object_info import ObjectInfo
@@ -120,7 +121,7 @@ class GroupPlacerManager(PlacerBase):
 
     def place_groups(
         self, 
-        points_manager: PointManager,
+        point_manager: PointManager,
         map_layer_type: MapLayerType, 
         obj_type_list = DEFAULT_OBJECT_TYPES,
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -157,12 +158,12 @@ class GroupPlacerManager(PlacerBase):
             raise ValueError("Object type list \'{obj_type_list}\' has no entries.")
                 
         if groups_density is not None:
-            groups = groups_density*len(points_manager.get_point_list())//2000
+            groups = groups_density*len(point_manager.get_point_list())//2000
             groups = int(groups)
         
         for i in range(groups):
             self._place_group(
-                point_manager=points_manager,
+                point_manager=point_manager,
                 map_layer_type=map_layer_type, 
                 obj_type_list=obj_type_list, 
                 player_id=player_id,

@@ -4,29 +4,14 @@ from typing import Union, Callable, List
 import numpy as np
 
 from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE, DEFAULT_OBJECT_AND_PLAYER
-from aoe2mapgenerator.units.wallgenerators.voronoi import VoronoiGeneratorMixin
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
 from aoe2mapgenerator.units.placers.templateplacer import TemplatePlacerMixin
 from aoe2mapgenerator.map.map_utils import MapUtilsMixin
 from aoe2mapgenerator.visualizer.visualizer import VisualizerMixin
-from aoe2mapgenerator.common.enums.enum import AOE2Object
+from aoe2mapgenerator.common.enums.enum import AOE2ObjectType
 from dataclasses import dataclass
-
-class MapObject():
-
-    def __init__(self, obj_type: AOE2Object, player_id: PlayerId):
-        self.obj_type = obj_type
-        self.player_id = player_id
-
-    def __hash__(self):
-        return hash((self.obj_type, self.player_id))
-    
-    def __eq__(self, other):
-        # Ensure the other object is an instance of CustomObject
-        if isinstance(other, MapObject):
-            return (self.obj_type, self.player_id) == (other.obj_type, other.player_id)
-        return False
+from aoe2mapgenerator.map.map_object import MapObject
 
 MapLayerArray = List[List[MapObject]]
 MapLayerDictionary = dict[MapObject, set[tuple[int, int]]]
@@ -36,7 +21,7 @@ class MapLayer():
     Single Map type constructor.
     """
 
-    def __init__(self, map_layer_type: MapLayerType, size: int = 100, array: MapLayerArray = [], dict: MapLayerDictionary = {}):
+    def __init__(self, map_layer_type: MapLayerType, size: int = 100, array: MapLayerArray = [], dict: MapLayerDictionary = {}) -> None:
         
         self.layer = map_layer_type
         self.size = size
@@ -54,7 +39,7 @@ class MapLayer():
             self.dict = dict
         
     
-    def set_point(self, x, y, new_value, player_id : PlayerId = PlayerId.GAIA):
+    def set_point(self, x: int, y: int, new_value: AOE2ObjectType, player_id : PlayerId = PlayerId.GAIA) -> None:
         """
         Takes an x and y coordinate and updates both the array and set representation.
 
@@ -91,12 +76,12 @@ class MapLayer():
     def get_dict(self):
         return self.dict
 
-def _create_dict(array: list[list[object]]):
+def _create_dict(array: list[list[object]]) -> MapLayerDictionary:
     """
     Creates a set representation from the array.
     """
 
-    new_dict = dict()
+    new_dict: MapLayerDictionary = dict()
 
     for i in range(len(array)):
         for j in range(len(array[0])):
