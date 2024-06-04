@@ -15,7 +15,7 @@ from aoe2mapgenerator.common.constants.constants import DEFAULT_OBJECT_TYPES, DE
 from aoe2mapgenerator.common.constants.default_objects import GHOST_OBJECT_DISPLACEMENT, GHOST_OBJECT_MARGIN
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.units.placers.object_info import ObjectInfo
-
+from aoe2mapgenerator.common.enums.enum import AOE2ObjectType
 
 class PlacerBase():
 
@@ -29,7 +29,7 @@ class PlacerBase():
         self,
         point_manager: PointManager,
         goal_placement_point: tuple,
-        obj_type = None, 
+        obj_type: AOE2ObjectType = None, 
         margin: int = 0
         ):
         """
@@ -62,7 +62,7 @@ class PlacerBase():
         point_manager: PointManager,
         map_layer_type: MapLayerType, 
         point: tuple, 
-        obj_type, 
+        obj_type: AOE2ObjectType, 
         player_id: PlayerId, 
         margin: int, 
         ghost_margin: bool

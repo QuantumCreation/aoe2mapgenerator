@@ -8,6 +8,8 @@ class PointManager():
     def __init__(self):
         self.points_list = []
         self.points_dict = {}
+
+        self.points_removed = 0
     
     def add_point(self, point: tuple[float, float]) -> None:
         if point not in self.points_dict:
@@ -42,6 +44,8 @@ class PointManager():
             
             # Remove the last element from the list
             self.points_list.pop()
+        
+        self.points_removed += 1
 
     def remove_points(self, points: Union[list[tuple[float,float]], set[tuple[float,float]]]) -> None:
         for point in points:
@@ -57,7 +61,22 @@ class PointManager():
         return self.points_dict
     
     def get_point_list(self) -> list:
+        """
+        Gets the list of points
+
+        Returns:
+            list: The list of points
+
+        Note:
+            This often should not be used since this point list is a reference to a list,
+            which means that if we iterate over the points in this list, we will have an issue
+            where points are getting removed from the list as we are iterating over it.
+            This should only be used in cases where we are not modifying the list.
+        """
         return self.points_list
+    
+    def get_point_list_copy(self) -> list:
+        return self.points_list.copy()
     
     def get_nearby_points(self, point: tuple[float, float], search_distance: int) -> list:
         """
@@ -66,12 +85,7 @@ class PointManager():
         Args:
             point (tuple): The point to find the nearest points to
         """
-        all_points = []
-
-        points = self._get_points_within_distance(point, search_distance)
-        all_points.extend(points)
-
-        return points
+        return self._get_points_within_distance(point, search_distance)
     
     def _get_points_within_distance(self, point: tuple[float, float], distance: float) -> list:
         """
