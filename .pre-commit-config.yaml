@@ -1,0 +1,14 @@
+repos:
+  - repo: local
+    hooks:
+    - id: run-pytest
+      name: Run pytest
+      entry: pytest -v aoe2mapgenerator/unit_tests/
+      language: system
+      types: [python]
+
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.812
+    hooks:
+      - id: mypy

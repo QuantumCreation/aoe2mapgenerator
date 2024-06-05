@@ -21,7 +21,7 @@ class ObjectInfo:
         if not isinstance(aoe2_object, AOE2ObjectType):
             return 1
 
-        return ObjectSize(aoe2_object.__name__).value
+        return ObjectSize(aoe2_object.get_name()).value
 
     @staticmethod
     def get_object_height(aoe2_object: AOE2ObjectType):
@@ -31,7 +31,7 @@ class ObjectInfo:
         if not isinstance(aoe2_object, AOE2ObjectType):
             return 1
 
-        return ObjectSize(aoe2_object.__name__).value
+        return ObjectSize(aoe2_object.get_name()).value
 
     @staticmethod
     def get_object_size(aoe2_object: AOE2ObjectType):
@@ -41,7 +41,7 @@ class ObjectInfo:
         if not isinstance(aoe2_object, AOE2ObjectType):
             return 1
 
-        return ObjectSize(aoe2_object.__name__).value
+        return ObjectSize(aoe2_object.get_name()).value
 
     @staticmethod
     def get_object_effective_width(aoe2_object: AOE2ObjectType, margin: int = 0):
@@ -51,7 +51,7 @@ class ObjectInfo:
         if not isinstance(aoe2_object, AOE2ObjectType):
             return 1
 
-        return ObjectSize(aoe2_object.__name__).value + margin
+        return ObjectSize(aoe2_object.get_name()).value + margin
 
     @staticmethod
     def get_object_effective_height(aoe2_object: AOE2ObjectType, margin: int = 0):
@@ -61,7 +61,7 @@ class ObjectInfo:
         if not isinstance(aoe2_object, AOE2ObjectType):
             return 1
 
-        return ObjectSize(aoe2_object.__name__).value + margin
+        return ObjectSize(aoe2_object.get_name()).value + margin
 
     @staticmethod
     def get_object_effective_size(aoe2_object: AOE2ObjectType, margin: int = 0):
@@ -71,4 +71,4 @@ class ObjectInfo:
         if not isinstance(aoe2_object, AOE2ObjectType):
             return 1
 
-        return ObjectSize(aoe2_object.__name__).value + margin
+        return ObjectSize(aoe2_object.get_name()).value + margin

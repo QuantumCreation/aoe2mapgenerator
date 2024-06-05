@@ -1,20 +1,17 @@
-from AoE2ScenarioParser.datasets.players import PlayerId
-from copy import deepcopy
-from typing import Union, Callable
-import numpy as np
+"""
+TODO: Add module docstring.
+"""
 
-from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE, DEFAULT_OBJECT_AND_PLAYER
+from AoE2ScenarioParser.datasets.players import PlayerId
+
 from aoe2mapgenerator.common.enums.enum import MapLayerType
-from aoe2mapgenerator.units.placers.objectplacer import PlacerMixin
-from aoe2mapgenerator.units.placers.templateplacer import TemplatePlacerMixin
-from aoe2mapgenerator.map.map_utils import MapUtilsMixin
-from aoe2mapgenerator.visualizer.visualizer import VisualizerMixin
 from aoe2mapgenerator.map.maplayer import MapLayer
 from aoe2mapgenerator.common.enums.enum import AOE2ObjectType
 from aoe2mapgenerator.map.map_object import MapObject
+from aoe2mapgenerator.common.constants.constants import DisplacementType
 
 
-class Map(TemplatePlacerMixin, VisualizerMixin, MapUtilsMixin):
+class Map:
     """
     Class for the Age of Empires Map layers
     """
@@ -27,7 +24,7 @@ class Map(TemplatePlacerMixin, VisualizerMixin, MapUtilsMixin):
             size: Size of the map.
         """
         # TEMPLATE NAMES, MULTIPLE INHERITANCE, init, AAHGHG
-        self.template_names = {}
+        self.template_names: dict = {}
         self.size = size
 
         self.unit_map_layer = MapLayer(MapLayerType.UNIT, self.size)
@@ -43,7 +40,7 @@ class Map(TemplatePlacerMixin, VisualizerMixin, MapUtilsMixin):
 
         if not isinstance(map_layer_type, MapLayerType):
             raise ValueError("Map layer type is not a MapLayerType.")
-        
+
         if map_layer_type == MapLayerType.ZONE:
             return self.zone_map_layer
         elif map_layer_type == MapLayerType.TERRAIN:
@@ -54,16 +51,29 @@ class Map(TemplatePlacerMixin, VisualizerMixin, MapUtilsMixin):
             return self.decor_map_layer
         elif map_layer_type == MapLayerType.ELEVATION:
             return self.elevation_map_layer
-        
+
         raise ValueError("Retrieving map layer from map layer type failed.")
-    
+
     def get_all_map_layers(self) -> list[MapLayer]:
         """
         Gets all map layers.
         """
-        return [self.unit_map_layer, self.zone_map_layer, self.terrain_map_layer, self.decor_map_layer, self.elevation_map_layer]
+        return [
+            self.unit_map_layer,
+            self.zone_map_layer,
+            self.terrain_map_layer,
+            self.decor_map_layer,
+            self.elevation_map_layer,
+        ]
 
-    def set_point(self, x: int, y: int, new_value: AOE2ObjectType, map_layer_type: MapLayerType, player_id : PlayerId = PlayerId.GAIA):
+    def set_point(
+        self,
+        x: int,
+        y: int,
+        new_value: AOE2ObjectType | DisplacementType,
+        map_layer_type: MapLayerType,
+        player_id: PlayerId = PlayerId.GAIA,
+    ):
         """
         Takes an x and y coordinate and updates both the array and set representation.
 
@@ -71,35 +81,28 @@ class Map(TemplatePlacerMixin, VisualizerMixin, MapUtilsMixin):
             x: X coordinate.
             y: Y coordinate.
             new_value: Value to set the point to.
-        """        
+        """
         layer = self.get_map_layer(map_layer_type)
         layer.set_point(x, y, new_value, player_id)
 
-    # THIS PROBOBLY BELONGS SOMEWHERE ELSE, Also handle defaults better somehow
-    # def voronoi(self, 
-    #             interpoint_distance: int = 25,
-    #             map_layer_type_list: list = 
-    #             [may_layer_type for may_layer_type in MapLayerType],
-    #             array_space_type_list: list = 
-    #             [DEFAULT_OBJECT_AND_PLAYER for i in range(5)]
-    #             ) -> list:
-    #     """
-    #     Generates a voronoi cell map.
+    def get_dictionary_from_map_layer_type(self, map_layer_type: MapLayerType):
+        """
+        Gets the dictionary from a map layer type.
+        """
+        return self.get_map_layer(map_layer_type).get_dict()
 
-    #     Args:
-    #         interpoint_distance (int): Minimum distance between points.
-    #         map_layer_type_list (list): List of map layer types to use.
-    #         array_space_type_list (list): List of array space types to use.
-        
-    #     Returns:
-    #         list: List of unqiue values for each voronoi cell.
-    #     """
+    def get_array_from_map_layer_type(self, map_layer_type: MapLayerType):
+        """
+        Gets the array from a map layer type.
+        """
+        return self.get_map_layer(map_layer_type).get_array()
 
-
-    #     # Generate voronoi cells. Implicitly edits the map.
-    #     voronoi_zones = self.generate_voronoi_cells(
-    #                                 interpoint_distance,
-    #                                 map_layer_type_list,
-    #                                 array_space_type_list)
-
-    #     return voronoi_zones       
+    def get_set_with_map_object(
+        self,
+        map_layer_type: MapLayerType,
+        obj: MapObject,
+    ):
+        """
+        Returns the array representation of the map layer with the object.
+        """
+        return self.get_map_layer(map_layer_type).get_set_with_map_object(obj)

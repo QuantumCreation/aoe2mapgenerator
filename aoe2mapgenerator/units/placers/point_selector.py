@@ -10,7 +10,7 @@ from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.map.map_manager import MapManager
 
 
-class PointSelector:
+class PointSelector():
     """
     Class for selecting a set of points from the map.
     """
@@ -18,6 +18,18 @@ class PointSelector:
     def __init__(self, aoe2_map: Map):
         self.map = aoe2_map
         self.map_manager = MapManager(aoe2_map)
+
+    def get_points_from_map_layer(
+        self, map_layer_type: MapLayerType, object_type: MapObject
+    ) -> list:
+        """
+        Gets the points from a map layer.
+        
+        Args:
+            map_layer_type (MapLayerType): Type of map layer to use.
+            object_type (MapObject): Type of object to use.
+        """
+        return list(self.map.get_set_with_map_object(map_layer_type, object_type))
 
     def get_intersection_of_spaces(
         self,

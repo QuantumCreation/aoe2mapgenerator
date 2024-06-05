@@ -1,10 +1,14 @@
+"""
+TODO: Add docstrings
+"""
+
 import ast
 import inspect
+import json
 import os
 from copy import deepcopy
 from difflib import SequenceMatcher
-from time import time
-from typing import Union
+from typing import Dict, Union
 
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
@@ -18,14 +22,23 @@ from aoe2mapgenerator.common.constants.constants import (
     TEMPLATE_DIR_LINUX,
 )
 from aoe2mapgenerator.common.enums.enum import MapLayerType, YamlReplacementKeywords
+from aoe2mapgenerator.units.placers.placer_base import PlacerBase
+from aoe2mapgenerator.map.map import Map
+
+JSON = Dict[str, str]
+TemplateNames = Dict[str, JSON]
 
 
 # May replace or add separate support for json
 # For now, yaml is the easiest
-class TemplatePlacerMixin:
+class TemplatePlacer(PlacerBase):
     """
     Handles placing templates.
     """
+
+    def __init__(self, aoe2_map: Map):
+        super().__init__(aoe2_map)
+        self.template_names = {}
 
     def _load_yaml(
         self, template_file_name: str, base_template_dir: str = TEMPLATE_DIR_LINUX
@@ -49,12 +62,14 @@ class TemplatePlacerMixin:
         """
         if template_file_name in self.template_names:
             return deepcopy(self.template_names[template_file_name])
-        else:
-            print(f"NEW TEMPLATE LOADED: {template_file_name}")
-            with open(os.path.join(base_template_dir, template_file_name), "r") as f:
-                yaml = load(f, Loader=UnsafeLoader)
-                self.template_names[template_file_name] = deepcopy(yaml)
-                return yaml
+
+        print(f"NEW TEMPLATE LOADED: {template_file_name}")
+        with open(
+            os.path.join(base_template_dir, template_file_name), "r", encoding="utf-8"
+        ) as f:
+            yaml = load(f, Loader=UnsafeLoader)
+            self.template_names[template_file_name] = deepcopy(yaml)
+            return yaml
 
     # Also consider finding a way to prevent infinite loops of place template
     # when one template calls another template.
@@ -95,7 +110,7 @@ class TemplatePlacerMixin:
         self,
         function_name: str,
         parameters: dict,
-        symbol_table: dict = {},
+        symbol_table: dict,
     ):
         """
         Calls a function with the given arguments.
@@ -119,35 +134,6 @@ class TemplatePlacerMixin:
 
 
 # -------------------------------- Conversion Functions ------------------------------
-
-
-def _convert_array_space_type(array_space_type: list, dictionary: dict) -> None:
-    """
-    Converts a yaml array space type list into python objects.
-
-    Args:
-        array_space_type_list (list): List of array space types.
-        dictionary (dict): Dictionary mapping yaml substitution variables to python objects.
-    """
-
-    if type(array_space_type) == list:
-        if len(array_space_type) != 2:
-            raise ValueError(
-                f"Array space types must have a length of 2, not {len(array_space_type)}."
-            )
-        array_space_type[0] = _string_to_aoe2_enum_type(array_space_type[0])
-
-        if array_space_type[1] in dictionary:
-            return (array_space_type[0], dictionary[array_space_type[1]])
-        if array_space_type[1] is None:
-            return (array_space_type[0], DEFAULT_PLAYER)
-        return PlayerId[array_space_type[1]]
-    elif array_space_type in dictionary:
-        return dictionary[array_space_type]
-    elif type(array_space_type) == int:
-        return array_space_type
-
-    raise ValueError(f"The array space type '{array_space_type}' is not valid.")
 
 
 # Would a dataclass somehow be useful here? Maybe include separate YAML format verifier.
@@ -244,13 +230,13 @@ def _convert_string_string_tuple_to_enum_player_tuple(
     Returns:
         tuple: Enum player tuple.
     """
-    object = _convert_value_to_enum(string_tuple[0])
+    object_temp = _convert_value_to_enum(string_tuple[0])
     playerId = (
         PlayerId.GAIA
         if string_tuple[1] is None
         else _convert_value_to_enum(string_tuple[1])
     )
-    return (object, playerId)
+    return (object_temp, playerId)
 
 
 def _create_initial_symbol_table(**kwargs) -> dict:

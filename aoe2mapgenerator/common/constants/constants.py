@@ -1,10 +1,9 @@
-from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+"""
+This file contains the constants that are used throughout the project.
+"""
+
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
-
-"""
-Universal constants.
-"""
 
 BASE_SCENE_DIR = "C:\\Users\\josep\\Games\\Age of Empires 2 DE\\76561198242754748\\resources\\_common\\scenario\\"
 TEMPLATE_DIR = "C:\\Users\\josep\\OneDrive\\Documents\\GitHub\\aoe2mapgenerator\\aoe2mapgenerator\\templates\\example_templates"
@@ -32,3 +31,5 @@ DEFAULT_OBJECT_AND_PLAYER = (DEFAULT_EMPTY_VALUE, DEFAULT_PLAYER)
 
 X_SHIFT = 0.5
 Y_SHIFT = 0.5
+
+DisplacementType = int
