@@ -12,6 +12,8 @@ from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.utils.utils import unique_value_list
+from aoe2mapgenerator.units.placers.placer_configs import VisualizeMapConfig
+from aoe2mapgenerator.map.map_object import MapObject
 
 
 class Visualizer:
@@ -53,10 +55,7 @@ class Visualizer:
 
     def visualize_mat(
         self,
-        map_layer_type: MapLayerType,
-        include_zones=False,
-        transpose=False,
-        fig_size=(5, 5),
+        configuration: VisualizeMapConfig,
     ):
         """
         Visualizes a matrix.
@@ -64,6 +63,12 @@ class Visualizer:
         Args:
             map_layer_type: Type of value to visualize.
         """
+        map_layer_type = configuration.map_layer_type
+        include_zones = configuration.include_zones
+        transpose = configuration.transpose
+        fig_size = configuration.fig_size
+        include_legend = configuration.include_legend
+
         fig, ax = plt.subplots(1, 1, facecolor="white", figsize=fig_size)
 
         mat = deepcopy(self.map.get_array_from_map_layer_type(map_layer_type))
@@ -73,7 +78,7 @@ class Visualizer:
                 if (not include_zones) and isinstance(mat[i][j], int) and value < 0:
                     mat[i][j] = 0
 
-        values = unique_value_list(mat)
+        values: list[MapObject] = unique_value_list(mat)
         remap = dict(zip(values, range(len(values))))
 
         for i, row in enumerate(mat):
@@ -92,6 +97,28 @@ class Visualizer:
             ymax=np.full(len(mat), len(mat)) - 0.5,
             color="black",
         )
+
+        if include_legend:
+            handles = [
+                plt.Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    markerfacecolor="gray",
+                    markersize=10,
+                )
+                for _ in values
+            ]
+            labels = [f"Name: {v.obj_type}, Player: {v.player_id}" for v in values]
+            ax.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, -0.05),
+                fancybox=True,
+                shadow=True,
+            )
 
         # Transposes the matrix to match aoe2 map
         if transpose:

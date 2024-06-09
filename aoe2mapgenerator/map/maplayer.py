@@ -16,7 +16,13 @@ from aoe2mapgenerator.common.enums.enum import AOE2ObjectType
 from aoe2mapgenerator.map.map_object import MapObject
 
 MapLayerArray = List[List[MapObject]]
+"""
+MapLayerArray: 2D array representation of the map layer. Each element is a MapObject.
+"""
 MapLayerDictionary = dict[MapObject, set[tuple[int, int]]]
+"""
+MapLayerDictionary: Dictionary representation of the map layer. Each key is a MapObject and each value is a set of points.
+"""
 
 
 class MapLayer:
@@ -36,8 +42,7 @@ class MapLayer:
 
     def set_point(
         self,
-        x: int,
-        y: int,
+        point: tuple[int, int],
         new_value: AOE2ObjectType,
         player_id: PlayerId = PlayerId.GAIA,
     ) -> None:
@@ -49,6 +54,8 @@ class MapLayer:
             y: Y coordinate.
             new_value: Value to set the point to.
         """
+        x, y = point
+
         new_obj = MapObject(new_value, player_id)
         old_obj = self.array[x][y]
 

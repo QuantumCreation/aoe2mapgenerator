@@ -99,23 +99,21 @@ class PlacerBase:
             for i in range(-margin, eff_width):
                 for j in range(-margin, eff_height):
                     if 0 <= i < width and 0 <= j < height:
-                        self.map.set_point(
-                            x + i,
-                            y + j,
-                            GHOST_OBJECT_DISPLACEMENT_ID,
+                        self.safe_set_point(
+                            point_manager,
+                            (x + i, y + j),
+                            obj_type,
                             map_layer_type,
                             player_id,
                         )
-                        PlacerBase.points_set_on_map += 1
-                        point_manager.remove_point((x + i, y + j))
-                        PlacerBase.points_removed_from_point_manager += 1
 
-        self.map.set_point(
-            x + width // 2, y + height // 2, obj_type, map_layer_type, player_id
+        self.safe_set_point(
+            point_manager,
+            (x + width // 2, y + height // 2),
+            obj_type,
+            map_layer_type,
+            player_id,
         )
-        PlacerBase.points_set_on_map += 1
-        point_manager.remove_point((x + width // 2, y + height // 2))
-        PlacerBase.points_removed_from_point_manager += 1
 
         return
 
@@ -162,9 +160,25 @@ class PlacerBase:
             )
             return
 
+    def safe_set_point(
+        self,
+        point_manager: PointManager,
+        point: tuple[int, int],
+        obj_type: AOE2ObjectType,
+        map_layer_type: MapLayerType,
+        player_id: PlayerId,
+    ):
+        """
+        Safely sets a point on the map.
+        """
+        self.map.set_point(point, obj_type, map_layer_type, player_id)
+        PlacerBase.points_set_on_map += 1
+        point_manager.remove_point(point)
+        PlacerBase.points_removed_from_point_manager += 1
+
     # ---------------------------- SORTING FUNCTIONS ----------------------------
 
-    def _default_clumping_func(self, p1, p2, clumping):
+    def default_clumping_func(self, p1, p2, clumping):
         """
         Default clumping function.
 

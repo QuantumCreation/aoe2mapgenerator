@@ -14,6 +14,11 @@ from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.units.placers.point_manager import PointManager
 import numpy as np
 from scipy.ndimage import distance_transform_edt
+from aoe2mapgenerator.units.placers.placer_configs import (
+    PlaceGroupsConfig,
+    AddBordersConfig,
+    VoronoiGeneratorConfig,
+)
 
 
 class VoronoiGenerator(PlacerBase):
@@ -29,10 +34,8 @@ class VoronoiGenerator(PlacerBase):
 
     def generate_voronoi_cells(
         self,
-        point_manager: PointManager,
-        interpoint_distance: int,
-        map_layer_type: MapLayerType,
-    ):
+        configuration: VoronoiGeneratorConfig,
+    ) -> list[MapObject]:
         """
         Generates an array of voronoi shapes, with numbers starting from -1 and going down.
 
@@ -44,6 +47,9 @@ class VoronoiGenerator(PlacerBase):
         Returns:
             list: List of the new zones.
         """
+        point_manager = configuration.point_manager
+        interpoint_distance = configuration.interpoint_distance
+        map_layer_type = configuration.map_layer_type
 
         # Create a voronoi diagram.
         available_points = point_manager.get_point_list_copy()
@@ -76,13 +82,10 @@ class VoronoiGenerator(PlacerBase):
 
         new_zones = dict()
 
-        # Translate the points to the top left corner
-        # voronoi_seed_points = [
-        #     (x + top_left_corner[0], y + top_left_corner[1])
-        #     for x, y in voronoi_seed_points
-        # ]
-
-        voronoi_zones = generate_voronoi_l1(width, height, voronoi_seed_points)
+        # Weird transposing magic happening. I think something is wrong here, but it works so I'm not touching it.
+        voronoi_zones = generate_voronoi_l1(
+            width, height, voronoi_seed_points, zone_shift=self.global_zone_counter
+        )
 
         for point in available_points:
             try:
@@ -263,7 +266,10 @@ def generate_voronoi_l2(
 
 
 def generate_voronoi_l1(
-    grid_width: int, grid_height: int, seed_points: list[tuple[int, int]]
+    grid_width: int,
+    grid_height: int,
+    seed_points: list[tuple[int, int]],
+    zone_shift: int = 1,
 ) -> list[list[int]]:
     """
     Generate a Voronoi diagram on a cell grid using L1 distance.
@@ -296,7 +302,7 @@ def generate_voronoi_l1(
         distance_grid[update_mask] = distances[update_mask]
         index_grid[update_mask] = idx
 
-    # Increment every element by one so that it doesn't match the empty object value
-    index_grid += 1
+    # Increment every element so we don't get overlapping zones
+    index_grid += zone_shift
 
     return index_grid.transpose().tolist()

@@ -11,7 +11,7 @@ PointDict = dict[tuple[int, int], int]
 
 class PointManager:
     """
-    Class to manage points in a set and list
+    Class to manage points in a dict and list
     """
 
     def __init__(self):
@@ -226,3 +226,11 @@ class PointManager:
         self.points_list = []
         self.points_dict = {}
         self.points_removed = 0
+
+    def copy(self) -> "PointManager":
+        """
+        Copies the point manager
+        """
+        new_point_manager = PointManager()
+        new_point_manager.add_points(self.get_point_list())
+        return new_point_manager

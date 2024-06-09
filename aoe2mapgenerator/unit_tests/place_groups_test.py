@@ -16,6 +16,8 @@ from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.units.placers.group_placer import GroupPlacerManager
 from aoe2mapgenerator.units.placers.point_manager import PointManager
+from aoe2mapgenerator.units.placers.placer_configs import PlaceGroupsConfig
+from aoe2mapgenerator.map.map_manager import MapManager
 
 
 def test_place_groups():
@@ -24,32 +26,35 @@ def test_place_groups():
     """
     n = 200
     start_time = time.time()
-    aoe2_map = Map(n)
+
+    map_manager = MapManager(n)
 
     point_manager = PointManager()
-    group_placer = GroupPlacerManager(aoe2_map)
-
     point_manager.add_points([(i, j) for i in range(n) for j in range(n)])
 
     groups = 10
     group_size = 10
     total = groups * group_size
 
-    group_placer.place_groups(
+    configuration = PlaceGroupsConfig(
         point_manager=point_manager,
         map_layer_type=MapLayerType.UNIT,
         obj_type=UnitInfo.ALFRED_THE_ALPACA,
         player_id=PlayerId.ONE,
-        groups=10,
-        group_size=10,
+        groups=groups,
+        group_size=group_size,
     )
+    map_manager.place_groups(configuration)
 
-    dictionary = aoe2_map.get_dictionary_from_map_layer_type(MapLayerType.UNIT)
+    values = map_manager.get_set_with_map_object(
+        map_layer_type=MapLayerType.UNIT,
+        obj=MapObject(UnitInfo.ALFRED_THE_ALPACA, PlayerId.ONE),
+    )
 
     end_time = time.time()
     total_time = end_time - start_time
 
-    assert len(dictionary[MapObject(UnitInfo.ALFRED_THE_ALPACA, PlayerId.ONE)]) == total
+    assert len(values) == total
 
     assert (
         total_time < 1.5

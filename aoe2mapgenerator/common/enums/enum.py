@@ -73,25 +73,6 @@ class ObjectSize(Enum):
         return cls.DEFAULT_OBJECT_SIZE
 
 
-class GateTypeSize(Enum):
-
-    # GATE SIZES
-    PALISADE_GATE_NORTH_TO_SOUTH = ((0, 0), (1, 1), (2, 2), (3, 3))
-    PALISADE_GATE_WEST_TO_EAST = ((0, 0), (1, 1), (2, 2), (3, 3))
-    PALISADE_GATE_NORTHWEST_TO_SOUTHEAST = ((0, 0), (1, 1), (2, 2), (3, 3))
-    PALISADE_GATE_SOUTHWEST_TO_NORTHEAST = ((0, 0), (1, 1), (2, 2), (3, 3))
-
-    SEA_GATE = 3
-    FORTIFIED_GATE = 3
-    CITY_GATE = 3
-
-    @classmethod
-    def _missing_(cls, value):
-        if value in cls.__members__:
-            return cls.__members__[value]
-        return cls.PALISADE_GATE
-
-
 class ObjectRotation(Enum):
     """
     Gives the number of rotations an object can have.

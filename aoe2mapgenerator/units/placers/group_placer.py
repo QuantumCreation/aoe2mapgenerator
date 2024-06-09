@@ -16,6 +16,7 @@ from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.units.placers.object_info import ObjectInfo
 from aoe2mapgenerator.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.units.placers.placer_configs import PlaceGroupsConfig
 
 
 class GroupPlacerManager(PlacerBase):
@@ -28,39 +29,27 @@ class GroupPlacerManager(PlacerBase):
     # By default the object is placed in the first value from the map_layer_type list.
     def _place_group(
         self,
-        map_layer_type: MapLayerType,
-        point_manager: PointManager,
-        obj_type: AOE2ObjectType,
-        player_id: PlayerId = DEFAULT_PLAYER,
-        group_size: int = 1,
-        group_density: int = None,
-        clumping: int = 1,
-        clumping_func: Callable = None,
-        margin: int = 0,
-        start_point: tuple = None,
+        configuration: PlaceGroupsConfig,
     ):
         """
         Places a single group of units on a specific array space.
 
         Args:
-            map_layer_types (list[MapLayerType]): The list of map types.
-            array_space_ids (list[Union[int, tuple]]): The list of array space ids to get points for.
-            object_types (list, optional): The list of object types to be placed. Defaults to DEFAULT_OBJECT_TYPES.
-            player_id (PlayerId, optional): The id of the object to be placed. Defaults to DEFAULT_PLAYER.
-            group_size (int, optional): The number of members per group. Defaults to 1.
-            group_density (int, optional): The percentage of available points to be used for the group. Defaults to None.
-            clumping_factor (int, optional): How clumped the group members are. 0 is totally clumped. Higher numbers spread members out. Defaults to 1.
-            clumping_func (Callable, optional): The function used to calculate the clumping score. Defaults to None.
-            margin (int, optional): Margin between each object and any other object. Defaults to 0.
-            start_point (tuple, optional): The starting point to place the group. Defaults to (-1,-1).
-            ghost_margin (bool, optional): Whether to include ghost margins, i.e., change neighboring squares so nothing can use them. Defaults to True.
-            place_on_n_maps (int, optional): Places group on the first n maps corresponding to the value types. Defaults to 1.
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
         """
+        map_layer_type = configuration.map_layer_type
+        point_manager = configuration.point_manager
+        obj_type = configuration.obj_type
+        player_id = configuration.player_id
+        group_size = configuration.group_size
+        group_density = configuration.group_density
+        clumping = configuration.clumping
+        clumping_func = configuration.clumping_func
+        margin = configuration.margin
+        start_point = configuration.start_point
+
         if player_id is None:
             player_id = DEFAULT_PLAYER
-
-        if clumping_func is None:
-            clumping_func = self._default_clumping_func
 
         points_list = point_manager.get_point_list()
 
@@ -123,50 +112,25 @@ class GroupPlacerManager(PlacerBase):
 
     def place_groups(
         self,
-        point_manager: PointManager,
-        map_layer_type: MapLayerType,
-        obj_type: AOE2ObjectType,
-        player_id: PlayerId = DEFAULT_PLAYER,
-        groups: int = 1,
-        group_size: int = 1,
-        group_density: int = None,
-        groups_density: int = None,
-        clumping: int = 0,
-        clumping_func: Callable = None,
-        margin: int = 0,
-        start_point: tuple = None,
+        configuration: PlaceGroupsConfig,
     ):
         """
         Places multiple groups of objects.
 
         Args:
-            map_layer_type: The map type.
-            array_space_type: Array space id to get points for.
-            obj_type: The type of object to be placed.
-            player_id: Id of the object to be placed.
-            margin: Margin between each object and any other object.
-            group_size: Number of members per group.
-            groups: Number of groups.
-            clumping: How clumped the group members are. 0 is totally clumped. Higher numbers spread members out.
-            ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
+            configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
         """
+        point_manager = configuration.point_manager
+        groups_density = configuration.groups_density
+        groups = configuration.groups
 
         if groups_density is not None:
             groups = groups_density * len(point_manager.get_point_list()) // 2000
-            groups = int(groups)
+            configuration.groups = int(groups)
 
         for i in range(groups):
             self._place_group(
-                point_manager=point_manager,
-                map_layer_type=map_layer_type,
-                obj_type=obj_type,
-                player_id=player_id,
-                group_size=group_size,
-                group_density=group_density,
-                clumping=clumping,
-                clumping_func=clumping_func,
-                margin=margin,
-                start_point=start_point,
+                configuration=configuration,
             )
 
     # ---------------------------- HELPER METHODS ----------------------------------

@@ -68,8 +68,7 @@ class Map:
 
     def set_point(
         self,
-        x: int,
-        y: int,
+        point: tuple[int, int],
         new_value: AOE2ObjectType | DisplacementType,
         map_layer_type: MapLayerType,
         player_id: PlayerId = PlayerId.GAIA,
@@ -83,7 +82,7 @@ class Map:
             new_value: Value to set the point to.
         """
         layer = self.get_map_layer(map_layer_type)
-        layer.set_point(x, y, new_value, player_id)
+        layer.set_point(point, new_value, player_id)
 
     def get_dictionary_from_map_layer_type(self, map_layer_type: MapLayerType):
         """
