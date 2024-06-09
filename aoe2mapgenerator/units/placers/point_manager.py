@@ -190,8 +190,8 @@ class PointManager:
         """
         Gets the theoretical top left corner point in the set
         """
-        x = self.get_leftmost_point()[0]
-        y = self.get_topmost_point()[1]
+        x = self.get_topmost_point()[0]
+        y = self.get_leftmost_point()[1]
         return (x, y)
 
     def get_maximal_points(

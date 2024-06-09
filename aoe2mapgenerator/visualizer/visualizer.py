@@ -52,7 +52,11 @@ class Visualizer:
         ax.matshow(mat)
 
     def visualize_mat(
-        self, map_layer_type: MapLayerType, include_zones=False, transpose=False
+        self,
+        map_layer_type: MapLayerType,
+        include_zones=False,
+        transpose=False,
+        fig_size=(5, 5),
     ):
         """
         Visualizes a matrix.
@@ -60,7 +64,7 @@ class Visualizer:
         Args:
             map_layer_type: Type of value to visualize.
         """
-        fig, ax = plt.subplots(1, 1, facecolor="white", figsize=(25, 25))
+        fig, ax = plt.subplots(1, 1, facecolor="white", figsize=fig_size)
 
         mat = deepcopy(self.map.get_array_from_map_layer_type(map_layer_type))
 
