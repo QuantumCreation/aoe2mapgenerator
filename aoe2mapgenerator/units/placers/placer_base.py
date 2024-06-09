@@ -102,7 +102,7 @@ class PlacerBase:
                         self.map.set_point(
                             x + i,
                             y + j,
-                            DEFAULT_EMPTY_VALUE,
+                            GHOST_OBJECT_DISPLACEMENT_ID,
                             map_layer_type,
                             player_id,
                         )

@@ -6,7 +6,10 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 
 from typing import List
 
-from aoe2mapgenerator.common.constants.constants import DEFAULT_EMPTY_VALUE
+from aoe2mapgenerator.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    DEFAULT_PLAYER,
+)
 from aoe2mapgenerator.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.common.enums.enum import AOE2ObjectType
@@ -25,6 +28,9 @@ class MapLayer:
 
         self.layer = map_layer_type
         self.size = size
+        # Create a 2D array of the given size.
+        # These objects will all reference the same default object.
+        # This is done to save memory.
         self.array = [[DEFAULT_EMPTY_OBJECT for i in range(size)] for j in range(size)]
         self.dict = _create_dict(self.array)
 
@@ -43,27 +49,28 @@ class MapLayer:
             y: Y coordinate.
             new_value: Value to set the point to.
         """
+        new_obj = MapObject(new_value, player_id)
+        old_obj = self.array[x][y]
+
         # Retrieve correct dictionary and array.
         dictionary = self.dict
         array = self.array
 
         # Remove element from the dictionary.
-        dictionary[array[x][y]].remove((x, y))
+        dictionary[old_obj].remove((x, y))
 
         # Remove entire dictionary entry if there are not elements left.
-        if len(dictionary[array[x][y]]) == 0:
-            dictionary.pop(array[x][y], None)
-
-        new_obj = MapObject(new_value, player_id)
+        if len(dictionary[old_obj]) == 0:
+            dictionary.pop(old_obj, None)
 
         # Assign new value to the array.
         array[x][y] = new_obj
 
         # Add the value to the dictionary.
-        if array[x][y] in dictionary:
-            dictionary[array[x][y]].add((x, y))
+        if new_obj in dictionary:
+            dictionary[new_obj].add((x, y))
         else:
-            dictionary[array[x][y]] = {(x, y)}
+            dictionary[new_obj] = {(x, y)}
 
     def get_array_of_points(self, map_object: MapObject) -> set[tuple[int, int]]:
         """
@@ -87,6 +94,8 @@ class MapLayer:
         """
         Returns the array representation of the map layer with the object.
         """
+        if obj not in self.dict:
+            return set()
         return self.dict[obj]
 
 

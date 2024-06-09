@@ -73,6 +73,25 @@ class ObjectSize(Enum):
         return cls.DEFAULT_OBJECT_SIZE
 
 
+class GateTypeSize(Enum):
+
+    # GATE SIZES
+    PALISADE_GATE_NORTH_TO_SOUTH = ((0, 0), (1, 1), (2, 2), (3, 3))
+    PALISADE_GATE_WEST_TO_EAST = ((0, 0), (1, 1), (2, 2), (3, 3))
+    PALISADE_GATE_NORTHWEST_TO_SOUTHEAST = ((0, 0), (1, 1), (2, 2), (3, 3))
+    PALISADE_GATE_SOUTHWEST_TO_NORTHEAST = ((0, 0), (1, 1), (2, 2), (3, 3))
+
+    SEA_GATE = 3
+    FORTIFIED_GATE = 3
+    CITY_GATE = 3
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in cls.__members__:
+            return cls.__members__[value]
+        return cls.PALISADE_GATE
+
+
 class ObjectRotation(Enum):
     """
     Gives the number of rotations an object can have.
@@ -115,10 +134,14 @@ class Directions(Enum):
     """
 
     # I DONT THINK THESE ACTUALLY MATCH WHATS GOING ON IN AOE2. I PICKED THEM RANDOMLY.
-    NORTH = (0, 1)
-    SOUTH = (0, -1)
-    EAST = (1, 0)
-    WEST = (-1, 0)
+    NORTH: tuple[int, int] = (0, 1)
+    SOUTH: tuple[int, int] = (0, -1)
+    EAST: tuple[int, int] = (1, 0)
+    WEST: tuple[int, int] = (-1, 0)
+    NORTHWEST: tuple[int, int] = (-1, 1)
+    NORTHEAST: tuple[int, int] = (1, 1)
+    SOUTHWEST: tuple[int, int] = (-1, -1)
+    SOUTHEAST: tuple[int, int] = (1, -1)
 
     @classmethod
     def _missing_(cls, value):
@@ -128,17 +151,18 @@ class Directions(Enum):
 
 
 # Endings for different gate types. This is ugly at the moment. Should probably be improved later on.
-def add_endings(gate_name) -> tuple[str]:
+def add_endings(gate_name) -> tuple[str, ...]:
     """
     Adds the different endings to the gate type.
     """
-    endings = [
+    endings: list[str] = [
         "WEST_TO_EAST",
         "NORTH_TO_SOUTH",
         "NORTHWEST_TO_SOUTHEAST",
         "SOUTHWEST_TO_NORTHEAST",
     ]
-    return tuple((f"{gate_name}_{ending}" for ending in endings))
+    result = tuple((f"{gate_name}_{ending}" for ending in endings))
+    return result
 
 
 class GateTypes(Enum):
@@ -146,30 +170,118 @@ class GateTypes(Enum):
     Enum to match gate types with their different versions.
     """
 
-    PALISADE_GATE = add_endings("PALISADE_GATE")
-    SEA_GATE = add_endings("SEA_GATE")
-    FORTIFIED_GATE = add_endings("FORTIFIED_GATE")
-    CITY_GATE = add_endings("CITY_GATE")
+    PALISADE_GATE = "PALISADE_GATE"
+    SEA_GATE = "SEA_GATE"
+    FORTIFIED_GATE = "FORTIFIED_GATE"
+    CITY_GATE = "CITY_GATE"
 
-    @classmethod
-    def _missing_(cls, value):
-        if value in cls.__members__:
-            return cls.__members__[value]
-        return cls.FORTIFIED_GATE
+
+class GateObjects(Enum):
+    """
+    Enum to match gate types with their different versions.
+    """
+
+    PALISADE_GATE_NORTH_TO_SOUTH = "PALISADE_GATE_NORTH_TO_SOUTH"
+    PALISADE_GATE_WEST_TO_EAST = "PALISADE_GATE_WEST_TO_EAST"
+    PALISADE_GATE_NORTHWEST_TO_SOUTHEAST = "PALISADE_GATE_NORTHWEST_TO_SOUTHEAST"
+    PALISADE_GATE_SOUTHWEST_TO_NORTHEAST = "PALISADE_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    SEA_GATE_NORTH_TO_SOUTH = "SEA_GATE_NORTH_TO_SOUTH"
+    SEA_GATE_WEST_TO_EAST = "SEA_GATE_WEST_TO_EAST"
+    SEA_GATE_NORTHWEST_TO_SOUTHEAST = "SEA_GATE_NORTHWEST_TO_SOUTHEAST"
+    SEA_GATE_SOUTHWEST_TO_NORTHEAST = "SEA_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    FORTIFIED_GATE_NORTH_TO_SOUTH = "FORTIFIED_GATE_NORTH_TO_SOUTH"
+    FORTIFIED_GATE_WEST_TO_EAST = "FORTIFIED_GATE_WEST_TO_EAST"
+    FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST = "FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST"
+    FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST = "FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    CITY_GATE_NORTH_TO_SOUTH = "CITY_GATE_NORTH_TO_SOUTH"
+    CITY_GATE_WEST_TO_EAST = "CITY_GATE_WEST_TO_EAST"
+    CITY_GATE_NORTHWEST_TO_SOUTHEAST = "CITY_GATE_NORTHWEST_TO_SOUTHEAST"
+    CITY_GATE_SOUTHWEST_TO_NORTHEAST = "CITY_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    @staticmethod
+    def get_gate_names_from_gate_type(gate_type: GateTypes) -> tuple[str, ...]:
+        """
+        Gets the different gate names from the gate type.
+
+        Args:
+            gate_type: The gate type.
+        """
+        if gate_type == GateTypes.PALISADE_GATE:
+            return (
+                GateObjects.PALISADE_GATE_NORTH_TO_SOUTH.value,
+                GateObjects.PALISADE_GATE_WEST_TO_EAST.value,
+                GateObjects.PALISADE_GATE_NORTHWEST_TO_SOUTHEAST.value,
+                GateObjects.PALISADE_GATE_SOUTHWEST_TO_NORTHEAST.value,
+            )
+        if gate_type == GateTypes.SEA_GATE:
+            return (
+                GateObjects.SEA_GATE_NORTH_TO_SOUTH.value,
+                GateObjects.SEA_GATE_WEST_TO_EAST.value,
+                GateObjects.SEA_GATE_NORTHWEST_TO_SOUTHEAST.value,
+                GateObjects.SEA_GATE_SOUTHWEST_TO_NORTHEAST.value,
+            )
+        if gate_type == GateTypes.FORTIFIED_GATE:
+            return (
+                GateObjects.FORTIFIED_GATE_NORTH_TO_SOUTH.value,
+                GateObjects.FORTIFIED_GATE_WEST_TO_EAST.value,
+                GateObjects.FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST.value,
+                GateObjects.FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST.value,
+            )
+        if gate_type == GateTypes.CITY_GATE:
+            return (
+                GateObjects.CITY_GATE_NORTH_TO_SOUTH.value,
+                GateObjects.CITY_GATE_WEST_TO_EAST.value,
+                GateObjects.CITY_GATE_NORTHWEST_TO_SOUTHEAST.value,
+                GateObjects.CITY_GATE_SOUTHWEST_TO_NORTHEAST.value,
+            )
+        else:
+            raise ValueError(f"Unknown gate type: {gate_type}")
+
+    def get_gate_dimensions(self) -> tuple[tuple[int, int], ...]:
+        """
+        Gets the dimensions of the gate object.
+
+        Args:
+            gate_object: The gate object.
+        """
+        if self in [
+            GateObjects.PALISADE_GATE_NORTH_TO_SOUTH,
+            GateObjects.SEA_GATE_NORTH_TO_SOUTH,
+            GateObjects.FORTIFIED_GATE_NORTH_TO_SOUTH,
+            GateObjects.CITY_GATE_NORTH_TO_SOUTH,
+        ]:
+            return ((0, 0), (0, 1), (0, 2), (0, 3))
+        if self in [
+            GateObjects.PALISADE_GATE_WEST_TO_EAST,
+            GateObjects.SEA_GATE_WEST_TO_EAST,
+            GateObjects.FORTIFIED_GATE_WEST_TO_EAST,
+            GateObjects.CITY_GATE_WEST_TO_EAST,
+        ]:
+            return ((0, 0), (1, 0), (2, 0), (3, 0))
+        if self in [
+            GateObjects.PALISADE_GATE_NORTHWEST_TO_SOUTHEAST,
+            GateObjects.SEA_GATE_NORTHWEST_TO_SOUTHEAST,
+            GateObjects.FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST,
+            GateObjects.CITY_GATE_NORTHWEST_TO_SOUTHEAST,
+        ]:
+            return ((0, 0), (1, 1), (2, 2), (3, 3))
+        if self in [
+            GateObjects.PALISADE_GATE_SOUTHWEST_TO_NORTHEAST,
+            GateObjects.SEA_GATE_SOUTHWEST_TO_NORTHEAST,
+            GateObjects.FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST,
+            GateObjects.CITY_GATE_SOUTHWEST_TO_NORTHEAST,
+        ]:
+            return ((0, 0), (-1, 1), (-2, 2), (-3, 3))
+
+        raise ValueError(f"Unknown gate type: {self}")
 
 
 class TemplateTypes(Enum):
     """
-        Enum representing the different types of templates.
-
-        Information:
-            Dynamic templates actively find open locations to place objects.
-            Static templates are rectangular sets of objects that are placed
-            as a single chunk.from AoE2ScenarioParser.datasets.players import PlayerId
-    from AoE2ScenarioParser.datasets.units import UnitInfo
-    from AoE2ScenarioParser.datasets.buildings import BuildingInfo
-    from AoE2ScenarioParser.datasets.other import OtherInfo
-    from AoE2ScenarioParser.datasets.terrains import TerrainId
+    Enum representing the different types of templates.
     """
 
     DYNAMIC = 0

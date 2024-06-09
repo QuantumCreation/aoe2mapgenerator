@@ -14,7 +14,7 @@ from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.utils.utils import unique_value_list
 
 
-class VisualizerMixin:
+class Visualizer:
     """
     TODO
     """
@@ -51,7 +51,9 @@ class VisualizerMixin:
 
         ax.matshow(mat)
 
-    def visualize_mat(self, map_layer_type: MapLayerType, include_zones=False):
+    def visualize_mat(
+        self, map_layer_type: MapLayerType, include_zones=False, transpose=False
+    ):
         """
         Visualizes a matrix.
 
@@ -87,8 +89,9 @@ class VisualizerMixin:
             color="black",
         )
 
-        # Transposes the matrix
-        mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
+        # Transposes the matrix to match aoe2 map
+        if transpose:
+            mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
 
         ax.matshow(mat)
 

@@ -5,6 +5,10 @@ This module contains the PointManager class, which is used to manage points in a
 from typing import Union
 
 
+# The PointDict maps a point tuple to the index of the point in the list.
+PointDict = dict[tuple[int, int], int]
+
+
 class PointManager:
     """
     Class to manage points in a set and list
@@ -12,11 +16,11 @@ class PointManager:
 
     def __init__(self):
         self.points_list = []
-        self.points_dict = {}
+        self.points_dict: PointDict = {}
 
         self.points_removed = 0
 
-    def add_point(self, point: tuple[float, float]) -> None:
+    def add_point(self, point: tuple[int, int]) -> None:
         """
         Adds a point to the set and list
 
@@ -28,7 +32,7 @@ class PointManager:
             self.points_dict[point] = len(self.points_list) - 1
 
     def add_points(
-        self, points: Union[list[tuple[float, float]], set[tuple[float, float]]]
+        self, points: Union[list[tuple[int, int]], set[tuple[int, int]]]
     ) -> None:
         """
         Adds multiple points to the set and list
@@ -39,7 +43,7 @@ class PointManager:
         for point in points:
             self.add_point(point)
 
-    def remove_point(self, point: tuple[float, float]) -> None:
+    def remove_point(self, point: tuple[int, int]) -> None:
         """
         Removes a point from the set and list
 
@@ -67,7 +71,7 @@ class PointManager:
         self.points_removed += 1
 
     def remove_points(
-        self, points: Union[list[tuple[float, float]], set[tuple[float, float]]]
+        self, points: Union[list[tuple[int, int]], set[tuple[int, int]]]
     ) -> None:
         """
         Removes multiple points from the set and list
@@ -78,7 +82,7 @@ class PointManager:
         for point in points:
             self.remove_point(point)
 
-    def check_point_exists(self, point: tuple[float, float]) -> bool:
+    def check_point_exists(self, point: tuple[int, int]) -> bool:
         """
         Checks if a point exists in the set
 
@@ -96,9 +100,9 @@ class PointManager:
         """
         return sorted(self.points_list)
 
-    def get_point_set(self) -> set[tuple[int, int]]:
+    def get_point_dict(self) -> dict[tuple[int, int], int]:
         """
-        Gets the set of points
+        Gets the dictionary of points
 
         Args:
             point (tuple): The point to check
@@ -127,7 +131,7 @@ class PointManager:
         return self.points_list.copy()
 
     def get_nearby_points(
-        self, point: tuple[float, float], search_distance: int
+        self, point: tuple[int, int], search_distance: int
     ) -> list[tuple[int, int]]:
         """
         Returns the k nearest points to the given point
@@ -157,3 +161,68 @@ class PointManager:
                     points.append((point[0] + i, point[1] + j))
 
         return points
+
+    def get_leftmost_point(self) -> tuple[int, int]:
+        """
+        Gets the leftmost point in the set
+        """
+        return min(self.points_list, key=lambda point: point[1])
+
+    def get_rightmost_point(self) -> tuple[int, int]:
+        """
+        Gets the rightmost point in the set
+        """
+        return max(self.points_list, key=lambda point: point[1])
+
+    def get_topmost_point(self) -> tuple[int, int]:
+        """
+        Gets the topmost point in the set
+        """
+        return min(self.points_list, key=lambda point: point[0])
+
+    def get_bottommost_point(self) -> tuple[int, int]:
+        """
+        Gets the bottommost point in the set
+        """
+        return max(self.points_list, key=lambda point: point[0])
+
+    def get_theoretical_top_left_corner_point(self) -> tuple[int, int]:
+        """
+        Gets the theoretical top left corner point in the set
+        """
+        x = self.get_leftmost_point()[0]
+        y = self.get_topmost_point()[1]
+        return (x, y)
+
+    def get_maximal_points(
+        self,
+    ) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]:
+        """
+        Gets the maximal points in the set
+        """
+        return (
+            self.get_leftmost_point(),
+            self.get_rightmost_point(),
+            self.get_topmost_point(),
+            self.get_topmost_point(),
+        )
+
+    def get_y_point_range(self) -> int:
+        """
+        Gets the range of x values in the set
+        """
+        return 1 + abs(self.get_leftmost_point()[1] - self.get_rightmost_point()[1])
+
+    def get_x_point_range(self) -> int:
+        """
+        Gets the range of y values in the set
+        """
+        return 1 + abs(self.get_topmost_point()[0] - self.get_bottommost_point()[0])
+
+    def clear(self):
+        """
+        Clears the point manager
+        """
+        self.points_list = []
+        self.points_dict = {}
+        self.points_removed = 0

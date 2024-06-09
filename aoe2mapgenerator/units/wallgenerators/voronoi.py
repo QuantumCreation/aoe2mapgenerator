@@ -12,6 +12,8 @@ from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.units.placers.point_manager import PointManager
+import numpy as np
+from scipy.ndimage import distance_transform_edt
 
 
 class VoronoiGenerator(PlacerBase):
@@ -43,16 +45,27 @@ class VoronoiGenerator(PlacerBase):
             list: List of the new zones.
         """
 
-        # Generate a Poisson-distributed set of points.
-        voronoi_seed_points = self._generate_poisson_voronoi_point_distribution(
-            self.size, interpoint_distance
-        )
-
         # Create a voronoi diagram.
         available_points = point_manager.get_point_list_copy()
 
+        if len(available_points) == 0:
+            return []
+
+        height = point_manager.get_x_point_range()
+        width = point_manager.get_y_point_range()
+        top_left_corner = point_manager.get_theoretical_top_left_corner_point()
+
+        # Generate a Poisson-distributed set of points.
+        voronoi_seed_points = self._generate_poisson_voronoi_point_distribution(
+            width, height, interpoint_distance
+        )
+
+        # Filter out points that are not in the available points.
         voronoi_seed_points = [
-            point for point in voronoi_seed_points if tuple(point) in available_points
+            point
+            for point in voronoi_seed_points
+            if (point[0] + top_left_corner[0], point[1] + top_left_corner[1])
+            in available_points
         ]
 
         if voronoi_seed_points == []:
@@ -63,30 +76,34 @@ class VoronoiGenerator(PlacerBase):
 
         new_zones = dict()
 
-        for point in available_points:
-            closest_seed_idx = -1
+        # Translate the points to the top left corner
+        # voronoi_seed_points = [
+        #     (x + top_left_corner[0], y + top_left_corner[1])
+        #     for x, y in voronoi_seed_points
+        # ]
 
-            for i, seed in enumerate(voronoi_seed_points):
-                if closest_seed_idx == -1 or self.manhattan_distance(
-                    seed, point
-                ) < self.manhattan_distance(
-                    voronoi_seed_points[closest_seed_idx], point
-                ):
-                    closest_seed_idx = i
+        voronoi_zones = generate_voronoi_l1(width, height, voronoi_seed_points)
+
+        for point in available_points:
+            try:
+                x_voronoi = point[0] - top_left_corner[0]
+                y_voronoi = point[1] - top_left_corner[1]
+                zone_value = voronoi_zones[x_voronoi][y_voronoi]
+            except IndexError:
+                continue
 
             self._place(
                 point_manager,
                 map_layer_type,
                 point,
-                closest_seed_idx,
+                zone_value,
                 PlayerId.GAIA,
                 0,
-                False,
             )
 
             # This code to create the object is repeated in the map set point function
             # There is likely a better way to do this, but I'm unsure what it is
-            new_obj = MapObject(closest_seed_idx, PlayerId.GAIA)
+            new_obj = MapObject(zone_value, PlayerId.GAIA)
 
             if new_obj not in new_zones:
                 new_zones[new_obj] = ""
@@ -101,7 +118,9 @@ class VoronoiGenerator(PlacerBase):
 
     # ------------------------- HELPER METHODS ----------------------------------
 
-    def _generate_poisson_voronoi_point_distribution(self, size, interpoint_distance):
+    def _generate_poisson_voronoi_point_distribution(
+        self, width: int, height: int, interpoint_distance: int
+    ) -> list[tuple[int, int]]:
         """
         Generates a list of points for creating a voronoi pattern
 
@@ -111,7 +130,7 @@ class VoronoiGenerator(PlacerBase):
         """
         k = 40
 
-        points = self._poisson_disk_sample(size, size, interpoint_distance, k)
+        points = self._poisson_disk_sample(width, height, interpoint_distance, k)
         points = np.ndarray.tolist(points)
 
         for i, (a, b) in enumerate(points):
@@ -144,7 +163,7 @@ class VoronoiGenerator(PlacerBase):
             return P
 
         def in_limits(p):
-            return 0 <= p[0] < width and 0 <= p[1] < height
+            return 0 <= p[0] < height and 0 <= p[1] < width
 
         def neighborhood(shape, index, n=2):
             row, col = index
@@ -160,7 +179,10 @@ class VoronoiGenerator(PlacerBase):
             if m_array[i, j]:
                 return True
             for i, j in n_dict[(i, j)]:
-                if m_array[i, j] and squared_distance(p, p_array[i, j]) < squared_radius:
+                if (
+                    m_array[i, j]
+                    and squared_distance(p, p_array[i, j]) < squared_radius
+                ):
                     return True
             return False
 
@@ -171,8 +193,8 @@ class VoronoiGenerator(PlacerBase):
 
         # Here `2` corresponds to the number of dimension
         cellsize = radius / np.sqrt(2)
-        rows = int(np.ceil(width / cellsize))
-        cols = int(np.ceil(height / cellsize))
+        rows = int(np.ceil(height / cellsize))
+        cols = int(np.ceil(width / cellsize))
 
         # Squared radius because we'll compare squared distance
         squared_radius = radius * radius
@@ -188,8 +210,8 @@ class VoronoiGenerator(PlacerBase):
                 n_dict[(i, j)] = neighborhood(m_array.shape, (i, j), 2)
 
         points: list = []
-        add_point((np.random.uniform(width), np.random.uniform(height)))
-        while len(points)>0:
+        add_point((np.random.uniform(height), np.random.uniform(width)))
+        while len(points) > 0:
             index: int = np.random.randint(len(points))
             p = points[index]
             del points[index]
@@ -198,3 +220,83 @@ class VoronoiGenerator(PlacerBase):
                 if in_limits(q) and not in_neighborhood(q):
                     add_point(q)
         return p_array[m_array]
+
+
+def generate_voronoi_l2(
+    grid_width: int, grid_height: int, seed_points: list[tuple[int, int]]
+) -> list[list[int]]:
+    """
+    Generate a Voronoi diagram on a cell grid.
+
+    Args:
+        grid_size (tuple): The size of the grid (rows, columns).
+        seed_points (list): List of (x, y) tuples representing seed points.
+
+    Returns:
+        np.ndarray: A 2D array with the same size as grid, where each cell contains the index of the nearest seed point.
+    """
+    rows, cols = grid_width, grid_height
+    seeds = np.array(seed_points)
+
+    # Initialize an array to hold the seed indices
+    grid = np.full((rows, cols), -1)
+
+    # Place seed indices on the grid
+    for idx, (y, x) in enumerate(seeds):
+        grid[x, y] = idx
+
+    # Create an array to hold the distances
+    distance_grid = np.full((rows, cols), np.inf)
+    indices_grid = np.zeros((rows, cols), dtype=int)
+
+    # Compute the Euclidean Distance Transform for each seed
+    for idx, (y, x) in enumerate(seeds):
+        mask = grid == idx
+        distances = distance_transform_edt(
+            ~mask, return_distances=True, return_indices=False
+        )
+        update_mask = distances < distance_grid
+        distance_grid[update_mask] = distances[update_mask]
+        indices_grid[update_mask] = idx
+
+    return indices_grid.tolist()
+
+
+def generate_voronoi_l1(
+    grid_width: int, grid_height: int, seed_points: list[tuple[int, int]]
+) -> list[list[int]]:
+    """
+    Generate a Voronoi diagram on a cell grid using L1 distance.
+
+    Args:
+        grid_width (int): The width of the grid.
+        grid_height (int): The height of the grid.
+        seed_points (list): List of (x, y) tuples representing seed points.
+
+    Returns:
+        list[list[int]]: A 2D list where each cell contains the index of the nearest seed point incremented by 1.
+    """
+    # rows, cols = grid_height, grid_width
+    rows, cols = grid_width, grid_height
+
+    seeds = np.array(seed_points)
+
+    # Create a coordinate grid
+    x, y = np.meshgrid(np.arange(cols), np.arange(rows))
+    coordinates = np.stack([x, y], axis=-1)
+
+    # Initialize distance and index grids
+    distance_grid = np.full((rows, cols), np.inf)
+    index_grid = np.full((rows, cols), -1)
+
+    # Compute L1 distance for each seed point and update grids
+    for idx, (sx, sy) in enumerate(seeds):
+        distances = np.abs(coordinates[..., 0] - sx) + np.abs(coordinates[..., 1] - sy)
+        update_mask = distances < distance_grid
+        distance_grid[update_mask] = distances[update_mask]
+        index_grid[update_mask] = idx
+
+    # Increment every element by one so that it doesn't match the empty object value
+    index_grid += 1
+
+    return index_grid.transpose().tolist()

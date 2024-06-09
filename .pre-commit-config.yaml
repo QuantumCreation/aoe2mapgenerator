@@ -3,7 +3,8 @@ repos:
     hooks:
     - id: run-pytest
       name: Run pytest
-      entry: pytest -v aoe2mapgenerator/unit_tests/
+      entry: ./run_tests.sh -v
+      require_serial: true
       language: system
       types: [python]
 
