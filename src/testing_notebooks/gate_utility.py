@@ -41,7 +41,7 @@ from aoe2mapgenerator.src.serializer.serializer import (
     _get_default_arguments,
     _convert_enum_instance_to_string,
 )
-from aoe2mapgenerator.src.triggers.triggers import TriggerObject
+from aoe2mapgenerator.src.triggers.triggers import TriggerManager
 from aoe2mapgenerator.src.maingenerator import main_map_generator
 import inspect
 import ast
