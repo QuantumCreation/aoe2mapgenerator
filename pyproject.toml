@@ -6,8 +6,12 @@ authors = ["QuantumCreation <joseph6433@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 AoE2ScenarioParser = "^0.1.56"
+ipykernel = "^6.29.4"
+numpy = "^1.26.4"
+pyyaml = "^6.0.1"
+matplotlib = "^3.9.0"
 
 
 
