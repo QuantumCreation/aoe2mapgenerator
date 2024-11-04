@@ -1,4 +1,3 @@
-from AoE2ScenarioParser.objects.managers.trigger_manager import TriggerManager
 from AoE2ScenarioParser.objects.support.new_effect import NewEffectSupport
 from AoE2ScenarioParser.objects.data_objects.trigger import Trigger
 from AoE2ScenarioParser.datasets.effects import EffectId

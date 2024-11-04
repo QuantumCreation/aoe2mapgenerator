@@ -18,7 +18,7 @@ from aoe2mapgenerator.src.common.constants.constants import (
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
 
 
@@ -135,7 +135,7 @@ class GroupPlacerManager(PlacerBase):
         groups_density = configuration.groups_density
         groups = configuration.groups
 
-        all_placements = {
+        all_placements: dict[str, List[tuple[int, int]]] = {
             "group_centers": [],
             "objects": [],
             "displacements": [],

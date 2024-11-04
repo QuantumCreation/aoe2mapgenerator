@@ -8,11 +8,11 @@ from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from aoe2mapgenerator.src.units.placers.templateplacer import _convert_value_to_enum
-import json
-from enum import Enum
-
-
-# region Function Serialization
+from typing import Any
+from aoe2mapgenerator.src.serializer.serialization_utils import (
+    serialize_enum,
+    deserialize_enum,
+)
 
 
 # May have to add key word arguments to this function
@@ -103,7 +103,7 @@ def _get_default_arguments(object_type: type, function_name: str) -> list:
 # region Serialize Map
 
 
-def serialize_map(map: Map) -> json:
+def serialize_map(map: Map) -> dict[Any, Any]:
     """
     Convert a map into a dictionary.
 
@@ -218,28 +218,9 @@ def _recursive_parse_enum_to_string(value) -> list:
     if type(value) == list or type(value) == tuple:
         return [_recursive_parse_enum_to_string(item) for item in value]
     elif isinstance(value, Enum):
-        return _convert_enum_instance_to_string(value)
+        return serialize_enum(value)
     # print("Here")
     return value
-
-
-def _convert_enum_instance_to_string(enum_instance: object) -> str:
-    """
-    Converts an enum instance to a string.
-
-    Args:
-        enum_instance (Enum): Enum instance to convert to string.
-
-    Returns:
-        str: String representation of the enum instance.
-    """
-    try:
-        instance_name = enum_instance.name
-        enum_name = enum_instance.__class__.__name__
-    except:
-        raise ValueError("Error parsing enum instance")
-
-    return f"{enum_name}.{instance_name}"
 
 
 def _convert_map_value_to_string(value: tuple) -> str:
@@ -264,11 +245,9 @@ def _convert_map_value_to_string(value: tuple) -> str:
             #     # print(str(value[0]), str(value[1]))
             #     return str(value[0]), "GAIA"
             if type(value[0]) == int:
-                return str(value[0]), _convert_enum_instance_to_string(value[1])
+                return str(value[0]), serialize_enum(value[1])
             else:
-                return _convert_enum_instance_to_string(
-                    value[0]
-                ), _convert_enum_instance_to_string(value[1])
+                return serialize_enum(value[0]), serialize_enum(value[1])
         except:
             # print(value[0], value[1])
             raise ValueError("Error parsing map value")

@@ -17,6 +17,9 @@ from src.scenario.scenario import Scenario
 import numpy as np
 import random
 from src.common.constants.constants import DEFAULT_EMPTY_VALUE
+from aoe2mapgenerator.src.map.map_manager import MapManager
+from src.units.placers.placer_configs import VoronoiGeneratorConfig
+from src.units.wallgenerators.voronoi import VoronoiGenerator
 
 
 def main_map_generator(
@@ -36,7 +39,10 @@ def main_map_generator(
         **kwargs: Keyword arguments.
     """
     # map_size = 300
-    map = Map(map_size)
+    map_manager = MapManager(map_size)
+
+    map_manager.voronoi_generator.generate_voronoi_cells(VoronoiGeneratorConfig())
+
     new_zones = map.voronoi(75)
 
     keys = list(map.get_map_layer(MapLayerType.UNIT).dict.keys())

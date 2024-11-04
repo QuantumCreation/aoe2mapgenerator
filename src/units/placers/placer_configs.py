@@ -18,7 +18,7 @@ from aoe2mapgenerator.src.common.constants.constants import (
 )
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 
 
 from AoE2ScenarioParser.datasets.players import PlayerId
@@ -27,7 +27,7 @@ from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from aoe2mapgenerator.src.units.placers.point_manager import PointManager
 from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from typing import Callable
 from aoe2mapgenerator.src.map.map_object import MapObject
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
@@ -123,7 +123,7 @@ class VisualizeMapConfig:
     transpose: bool = False
     fig_size: tuple[int, int] = (15, 15)
     include_legend: bool = True
-    anchor: tuple[int, int] = (1.25, 1)
+    anchor: tuple[float, float] = (1.25, 1)
 
 
 @dataclass

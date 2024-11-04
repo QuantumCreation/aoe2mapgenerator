@@ -4,7 +4,6 @@ Handles all map generation and manipulation.
 
 from typing import Union
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from aoe2mapgenerator.src.map.map import Map
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
@@ -33,7 +32,6 @@ from aoe2mapgenerator.src.common.constants.constants import (
 from aoe2mapgenerator.src.common.constants.default_objects import (
     GHOST_OBJECT_DISPLACEMENT,
 )
-from aoe2mapgenerator.src.common.enums.enum import GateType
 import multiprocessing as mp
 from aoe2mapgenerator.src.map.map import Map
 import os
@@ -46,10 +44,9 @@ from aoe2mapgenerator.src.serializer.serializer import (
     _get_functions,
     _get_function_arguments,
     _get_default_arguments,
-    _convert_enum_instance_to_string,
+    serialize_enum,
 )
 from aoe2mapgenerator.src.triggers.triggers import TriggerManager
-from aoe2mapgenerator.src.maingenerator import main_map_generator
 import inspect
 import ast
 import json
@@ -75,7 +72,7 @@ from aoe2mapgenerator.src.common.constants.constants import (
 from typing import Callable
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.units.placers.placer_configs import (
     PlaceGroupsConfig,
     AddBordersConfig,
@@ -91,22 +88,22 @@ class MapManager:
     """
 
     def __init__(self, map_size: int):
-        self.map = Map(map_size)
+        self.map: Map = Map(map_size)
         self.templates: list = []
 
         # Initialize the placers
-        self.base_placer = PlacerBase(self.map)
-        self.wall_placer = WallPlacer(self.map)
-        self.gate_placer = GatePlacer(self.map)
-        self.group_placer = GroupPlacerManager(self.map)
-        self.voronoi_generator = VoronoiGenerator(self.map)
+        self.base_placer: PlacerBase = PlacerBase(self.map)
+        self.wall_placer: WallPlacer = WallPlacer(self.map)
+        self.gate_placer: GatePlacer = GatePlacer(self.map)
+        self.group_placer: GroupPlacerManager = GroupPlacerManager(self.map)
+        self.voronoi_generator: VoronoiGenerator = VoronoiGenerator(self.map)
 
         # Initialize the point selector and manager
-        self.point_selector = PointSelector(self.map)
-        self.point_manager = PointManager()
+        self.point_selector: PointSelector = PointSelector(self.map)
+        self.point_manager: PointManager = PointManager()
 
         # Initialize the visualizer
-        self.visualizer = Visualizer(self.map)
+        self.visualizer: Visualizer = Visualizer(self.map)
 
     def get_new_point_manager(self) -> PointManager:
         """

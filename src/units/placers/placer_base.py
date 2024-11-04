@@ -18,7 +18,7 @@ from aoe2mapgenerator.src.common.constants.constants import (
 )
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from typing import List
 from aoe2mapgenerator.src.units.utils import manhattan_distance
 from aoe2mapgenerator.src.map.map_object import MapObject

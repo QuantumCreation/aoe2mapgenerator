@@ -6,12 +6,14 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 
 from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from aoe2mapgenerator.src.map.maplayer import MapLayer
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.map.map_object import MapObject
 from aoe2mapgenerator.src.common.constants.constants import DisplacementType
+from aoe2mapgenerator.src.serializer.base_serializer import SerializableBase
+import ujson as json
 
 
-class Map:
+class Map(SerializableBase):
     """
     Class for the Age of Empires Map layers
     """
@@ -105,3 +107,37 @@ class Map:
         Returns the array representation of the map layer with the object.
         """
         return self.get_map_layer(map_layer_type).get_set_with_map_object(obj)
+
+    def to_dict(self):
+        return {
+            "unit_map_layer": self.unit_map_layer.to_dict(),
+            "zone_map_layer": self.zone_map_layer.to_dict(),
+            "terrain_map_layer": self.terrain_map_layer.to_dict(),
+            "decor_map_layer": self.decor_map_layer.to_dict(),
+            "elevation_map_layer": self.elevation_map_layer.to_dict(),
+        }
+
+    def serialize(self):
+        return self.dump(self.to_dict())
+
+    @staticmethod
+    def deserialize(json_string: str | dict) -> "Map":
+        if isinstance(json_string, dict):
+            json_dict: dict = json_string
+        else:
+            json_dict: dict = json.loads(json_string)
+
+        new_map = Map()
+
+        new_map.unit_map_layer = MapLayer.deserialize(json_dict["unit_map_layer"])
+        new_map.zone_map_layer = MapLayer.deserialize(json_dict["zone_map_layer"])
+        new_map.terrain_map_layer = MapLayer.deserialize(json_dict["terrain_map_layer"])
+        new_map.decor_map_layer = MapLayer.deserialize(json_dict["decor_map_layer"])
+        new_map.elevation_map_layer = MapLayer.deserialize(
+            json_dict["elevation_map_layer"]
+        )
+
+        return new_map
+
+    def __eq__(self, other):
+        return self.serialize() == other.serialize()

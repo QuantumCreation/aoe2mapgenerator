@@ -8,7 +8,7 @@ from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from aoe2mapgenerator.src.units.placers.point_manager import PointManager
 from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.units.placers.placer_configs import AddBordersConfig
 import random
 
