@@ -35,35 +35,30 @@ from aoe2mapgenerator.src.common.constants.default_objects import (
 import multiprocessing as mp
 from aoe2mapgenerator.src.map.map import Map
 import os
-from aoe2mapgenerator.src.serializer.serializer import (
-    _convert_map_value_to_string,
-    _get_enum_list,
-    _recursive_parse_enum_to_string,
-    serialize_map,
-    get_all_functions_and_arguments,
-    _get_functions,
-    _get_function_arguments,
-    _get_default_arguments,
-    serialize_enum,
-)
 from aoe2mapgenerator.src.triggers.triggers import TriggerManager
 import inspect
 import ast
-import json
+import ujson as json
 from enum import Enum
 from aoe2mapgenerator.src.units.wallgenerators.voronoi import VoronoiGenerator
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from aoe2mapgenerator.src.units.placers.statictemplate import TemplateCreator
 from aoe2mapgenerator.src.units.placers.group_placer import GroupPlacerManager
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.testing import awesome_function
 from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.point_selector import PointSelector
+from aoe2mapgenerator.src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
 from aoe2mapgenerator.src.visualizer.visualizer import Visualizer
 from aoe2mapgenerator.src.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.src.units.placers.wall_placer import WallPlacer
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
@@ -79,6 +74,9 @@ from aoe2mapgenerator.src.units.placers.placer_configs import (
     VoronoiGeneratorConfig,
     VisualizeMapConfig,
     PointSelectorConfig,
+)
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointManager,
 )
 
 
@@ -99,17 +97,10 @@ class MapManager:
         self.voronoi_generator: VoronoiGenerator = VoronoiGenerator(self.map)
 
         # Initialize the point selector and manager
-        self.point_selector: PointSelector = PointSelector(self.map)
-        self.point_manager: PointManager = PointManager()
+        self.point_manager: PointManager = PointManager(self.map)
 
         # Initialize the visualizer
         self.visualizer: Visualizer = Visualizer(self.map)
-
-    def get_new_point_manager(self) -> PointManager:
-        """
-        Returns a new point manager.
-        """
-        return PointManager()
 
     def place_groups(
         self,
@@ -150,7 +141,9 @@ class MapManager:
         """
         Selects points on the map.
         """
-        return self.point_selector.get_points_from_map_layer(configuration)
+        return self.point_manager.point_selector.get_points_from_map_layer(
+            configuration
+        )
 
     def get_map(self):
         """
@@ -189,4 +182,6 @@ class MapManager:
         """
         Gets the points from a map layer.
         """
-        return self.point_selector.get_points_from_map_layer(configuration)
+        return self.point_manager.point_selector.get_points_from_map_layer(
+            configuration
+        )

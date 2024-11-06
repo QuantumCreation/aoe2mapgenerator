@@ -11,7 +11,9 @@ from aoe2mapgenerator.src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
@@ -29,7 +31,7 @@ class PlacerBase:
     Base class for placing objects on a map.
     """
 
-    points_removed_from_point_manager = 0
+    points_removed_from_point_collection = 0
     points_set_on_map = 0
 
     def __init__(self, aoe2_map: Map):
@@ -37,7 +39,7 @@ class PlacerBase:
 
     def place_closest_to_point(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         map_layer_type: MapLayerType,
         obj_type: AOE2ObjectType,
         starting_point: tuple,
@@ -48,7 +50,7 @@ class PlacerBase:
         Places an object as close as possible to the starting point.
 
         Args:
-            point_manager (PointManager): The point manager.
+            point_collection (PointCollection): The point manager.
             map_layer_type (MapLayerType): The map type.
             obj_type (object): The type of object to be placed.
             starting_point (tuple): The point to place the object.
@@ -56,22 +58,22 @@ class PlacerBase:
             margin (int): Area around the object to be placed.
         """
 
-        points = point_manager.get_point_list()
+        points = point_collection.get_point_list()
         search_radius = 5
 
-        points = point_manager.get_nearby_points(starting_point, search_radius)
+        points = point_collection.get_nearby_points(starting_point, search_radius)
 
         for x, y in sorted(
             points,
             key=lambda point: manhattan_distance(point, starting_point),
         ):
 
-            status = self._check_placement(point_manager, (x, y), obj_type, margin)
+            status = self._check_placement(point_collection, (x, y), obj_type, margin)
             if status == CheckPlacementReturnTypes.FAIL:
                 return
 
             self.place_single(
-                point_manager,
+                point_collection,
                 map_layer_type,
                 (x, y),
                 obj_type,
@@ -82,7 +84,7 @@ class PlacerBase:
 
     def safe_set_point(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         point: tuple[int, int],
         obj_type: AOE2ObjectType,
         map_layer_type: MapLayerType,
@@ -93,12 +95,12 @@ class PlacerBase:
         """
         self.map.set_point(point, obj_type, map_layer_type, player_id)
         PlacerBase.points_set_on_map += 1
-        point_manager.remove_point(point)
-        PlacerBase.points_removed_from_point_manager += 1
+        point_collection.remove_point(point)
+        PlacerBase.points_removed_from_point_collection += 1
 
     def place_multiple(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         map_layer_type: MapLayerType,
         points: list[tuple[int, int]],
         obj_type: AOE2ObjectType,
@@ -111,12 +113,12 @@ class PlacerBase:
 
         for point in points:
             self.place_single(
-                point_manager, map_layer_type, point, obj_type, player_id, margin
+                point_collection, map_layer_type, point, obj_type, player_id, margin
             )
 
     def place_single(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         map_layer_type: MapLayerType,
         point: tuple[int, int],
         obj_type: AOE2ObjectType,
@@ -155,7 +157,7 @@ class PlacerBase:
                 for j in range(-margin, eff_height):
                     if 0 <= i < width and 0 <= j < height:
                         self.safe_set_point(
-                            point_manager,
+                            point_collection,
                             (x + i, y + j),
                             GHOST_OBJECT_DISPLACEMENT_ID,
                             map_layer_type,
@@ -167,7 +169,7 @@ class PlacerBase:
         placements["objects"].append(object_placement_point)
 
         self.safe_set_point(
-            point_manager,
+            point_collection,
             object_placement_point,
             obj_type,
             map_layer_type,
@@ -178,7 +180,7 @@ class PlacerBase:
 
     def _check_placement(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         goal_placement_point: tuple,
         obj_type: AOE2ObjectType = None,
         margin: int = 0,
@@ -188,7 +190,7 @@ class PlacerBase:
 
         Args:
             map_layer_type (MapLayerType): The map type.
-            point_manager (PointManager): The point manager.
+            point_collection (PointCollection): The point manager.
             goal_placement_point (tuple): The point to place the object.
             obj_type (object, optional): The type of object to be placed. Defaults to None.
             margin (int, optional): The margin around the object. Defaults to 0.
@@ -203,7 +205,7 @@ class PlacerBase:
 
         for i in range(-margin, eff_width):
             for j in range(-margin, eff_height):
-                if not point_manager.check_point_exists((x + i, y + j)):
+                if not point_collection.check_point_exists((x + i, y + j)):
                     return CheckPlacementReturnTypes.FAIL
 
         return CheckPlacementReturnTypes.SUCCESS

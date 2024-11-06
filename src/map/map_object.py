@@ -11,11 +11,11 @@ from aoe2mapgenerator.src.common.constants.constants import (
     DisplacementType,
 )
 
-from aoe2mapgenerator.src.serializer.base_serializer import SerializableBase
+from aoe2mapgenerator.src.serializer.base_serializer import Serializable
 import ujson as json
 
 
-class MapObject(SerializableBase):
+class MapObject(Serializable):
     """
     Class for the Age of Empires Map Object
     """
@@ -54,6 +54,7 @@ class MapObject(SerializableBase):
 
     def to_dict(self):
         return {
+            "_type": self.__class__.__name__,
             "_obj_type": self.serialize_prim(self._obj_type),
             "_player_id": self.serialize_prim(self._player_id),
         }
@@ -63,12 +64,13 @@ class MapObject(SerializableBase):
 
     @staticmethod
     def deserialize(json_string: str | dict) -> Any:
+        json_dict: dict
         if isinstance(json_string, dict):
-            json_dict: dict = json_string
+            json_dict = json_string
         else:
-            json_dict: dict = json.loads(json_string)
+            json_dict = json.loads(json_string)
 
-        obj_prim = SerializableBase.deserialize_prim(json_dict["_obj_type"])
-        player_id_prim = SerializableBase.deserialize_prim(json_dict["_player_id"])
+        obj_prim = Serializable.deserialize_prim(json_dict["_obj_type"])
+        player_id_prim = Serializable.deserialize_prim(json_dict["_player_id"])
 
         return MapObject(obj_type=obj_prim, player_id=player_id_prim)

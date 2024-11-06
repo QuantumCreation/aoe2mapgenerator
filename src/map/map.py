@@ -9,11 +9,11 @@ from aoe2mapgenerator.src.map.maplayer import MapLayer
 from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.map.map_object import MapObject
 from aoe2mapgenerator.src.common.constants.constants import DisplacementType
-from aoe2mapgenerator.src.serializer.base_serializer import SerializableBase
+from aoe2mapgenerator.src.serializer.base_serializer import Serializable
 import ujson as json
 
 
-class Map(SerializableBase):
+class Map(Serializable):
     """
     Class for the Age of Empires Map layers
     """
@@ -110,6 +110,7 @@ class Map(SerializableBase):
 
     def to_dict(self):
         return {
+            "_type": self.__class__.__name__,
             "unit_map_layer": self.unit_map_layer.to_dict(),
             "zone_map_layer": self.zone_map_layer.to_dict(),
             "terrain_map_layer": self.terrain_map_layer.to_dict(),
@@ -122,10 +123,11 @@ class Map(SerializableBase):
 
     @staticmethod
     def deserialize(json_string: str | dict) -> "Map":
+        json_dict: dict
         if isinstance(json_string, dict):
-            json_dict: dict = json_string
+            json_dict = json_string
         else:
-            json_dict: dict = json.loads(json_string)
+            json_dict = json.loads(json_string)
 
         new_map = Map()
 

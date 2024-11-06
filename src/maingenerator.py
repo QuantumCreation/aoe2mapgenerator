@@ -3,7 +3,7 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from src.common.enums.enum import (
+from aoe2mapgenerator.src.common.enums.enum import (
     MapLayerType,
     ObjectSize,
     GateType,
@@ -12,14 +12,14 @@ from src.common.enums.enum import (
     YamlReplacementKeywords,
     CheckPlacementReturnTypes,
 )
-from src.map.map import Map
-from src.scenario.scenario import Scenario
+from aoe2mapgenerator.src.map.map import Map
+from aoe2mapgenerator.src.scenario.scenario import Scenario
 import numpy as np
 import random
-from src.common.constants.constants import DEFAULT_EMPTY_VALUE
+from aoe2mapgenerator.src.common.constants.constants import DEFAULT_EMPTY_VALUE
 from aoe2mapgenerator.src.map.map_manager import MapManager
-from src.units.placers.placer_configs import VoronoiGeneratorConfig
-from src.units.wallgenerators.voronoi import VoronoiGenerator
+from aoe2mapgenerator.src.units.placers.placer_configs import VoronoiGeneratorConfig
+from aoe2mapgenerator.src.units.wallgenerators.voronoi import VoronoiGenerator
 
 
 def main_map_generator(

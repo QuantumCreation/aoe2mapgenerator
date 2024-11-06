@@ -11,7 +11,9 @@ from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.map.map_object import MapObject
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 import numpy as np
 from scipy.ndimage import distance_transform_edt
 from aoe2mapgenerator.src.units.placers.placer_configs import (
@@ -47,19 +49,19 @@ class VoronoiGenerator(PlacerBase):
         Returns:
             list: List of the new zones.
         """
-        point_manager = configuration.point_manager
+        point_collection = configuration.point_collection
         interpoint_distance = configuration.interpoint_distance
         map_layer_type = configuration.map_layer_type
 
         # Create a voronoi diagram.
-        available_points = point_manager.get_point_list_copy()
+        available_points = point_collection.get_point_list_copy()
 
         if len(available_points) == 0:
             return []
 
-        height = point_manager.get_x_point_range()
-        width = point_manager.get_y_point_range()
-        top_left_corner = point_manager.get_theoretical_top_left_corner_point()
+        height = point_collection.get_x_point_range()
+        width = point_collection.get_y_point_range()
+        top_left_corner = point_collection.get_theoretical_top_left_corner_point()
 
         # Generate a Poisson-distributed set of points.
         voronoi_seed_points = self._generate_poisson_voronoi_point_distribution(
@@ -96,7 +98,7 @@ class VoronoiGenerator(PlacerBase):
                 continue
 
             self.place_single(
-                point_manager,
+                point_collection,
                 map_layer_type,
                 point,
                 zone_value,

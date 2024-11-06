@@ -4,7 +4,7 @@ TODO: Add docstrings
 
 import ast
 import inspect
-import json
+import ujson as json
 import os
 from copy import deepcopy
 from difflib import SequenceMatcher

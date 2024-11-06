@@ -14,7 +14,7 @@ from aoe2mapgenerator.src.common.constants.default_objects import DEFAULT_EMPTY_
 from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.serializer.base_serializer import SerializableBase
+from aoe2mapgenerator.src.serializer.base_serializer import Serializable
 import ujson as json
 
 MapLayerArray = List[List[MapObject]]
@@ -27,7 +27,7 @@ MapLayerDictionary: Dictionary representation of the map layer. Each key is a Ma
 """
 
 
-class MapLayer(SerializableBase):
+class MapLayer(Serializable):
     """
     Single Map type constructor.
     """
@@ -109,6 +109,7 @@ class MapLayer(SerializableBase):
 
     def to_dict(self):
         return {
+            "_type": self.__class__.__name__,
             "layer": self.serialize_prim(self.map_layer_type),
             "size": self.serialize_prim(self.size),
             "array": [[cell.to_dict() for cell in row] for row in self.array],
@@ -119,18 +120,21 @@ class MapLayer(SerializableBase):
 
     @staticmethod
     def deserialize(json_string: str | dict) -> "MapLayer":
+
+        json_data: dict
+
         if isinstance(json_string, dict):
-            d: dict = json_string
+            json_data = json_string
         else:
-            d: dict = json.loads(json_string)
+            json_data = json.loads(json_string)
 
         new_layer = MapLayer(
-            MapLayer.deserialize_prim(d["layer"]),
-            int(d["size"]),
+            MapLayer.deserialize_prim(json_data["layer"]),
+            int(json_data["size"]),
         )
 
-        for i, row in enumerate(d["array"]):
-            for j, cell in enumerate(d["array"][i]):
+        for i, row in enumerate(json_data["array"]):
+            for j, cell in enumerate(json_data["array"][i]):
                 map_object = MapObject.deserialize(cell)
 
                 new_layer.set_point(

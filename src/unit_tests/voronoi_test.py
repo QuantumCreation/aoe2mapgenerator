@@ -10,7 +10,9 @@ from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.map.map_manager import MapManager
 from aoe2mapgenerator.src.map.map_object import MapObject
 from aoe2mapgenerator.src.units.placers.placer_configs import VoronoiGeneratorConfig
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 
 
 def test_voronoi():
@@ -21,11 +23,13 @@ def test_voronoi():
     n = 50
     map_manager = MapManager(n)
 
-    point_manager = PointManager()
-    point_manager.add_points([(i, j) for i in range(n) for j in range(n)])
+    map_manager.point_manager.add_point_collection("base_points")
+    map_manager.point_manager.get_point_collection("base_points").add_points(
+        [(i, j) for i in range(n) for j in range(n)]
+    )
 
     configuration = VoronoiGeneratorConfig(
-        point_manager=point_manager,
+        point_collection=map_manager.point_manager.get_point_collection("base_points"),
         interpoint_distance=10,
         map_layer_type=MapLayerType.UNIT,
     )

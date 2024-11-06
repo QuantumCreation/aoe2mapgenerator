@@ -25,9 +25,12 @@ from aoe2mapgenerator.src.common.enums.enum import (
 )
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.units.placers.point_selector import PointSelector
+from aoe2mapgenerator.src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
 from aoe2mapgenerator.src.units.placers.placer_configs import PointSelectorConfig
 from aoe2mapgenerator.src.scenario.gate import get_gate_x_shift, get_gate_y_shift
+from aoe2mapgenerator.src.common.enums.enum import GateObject
 
 
 class Scenario:

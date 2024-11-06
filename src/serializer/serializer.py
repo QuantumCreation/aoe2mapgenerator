@@ -1,6 +1,6 @@
 from aoe2mapgenerator.src.map.map import Map
 import inspect
-import json
+import ujson as json
 from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
