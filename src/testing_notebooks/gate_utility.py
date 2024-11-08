@@ -39,22 +39,26 @@ from aoe2mapgenerator.src.serializer.serializer import (
     _get_functions,
     _get_function_arguments,
     _get_default_arguments,
-    _convert_enum_instance_to_string,
+    serialize_enum,
 )
 from aoe2mapgenerator.src.triggers.triggers import TriggerManager
 from aoe2mapgenerator.src.maingenerator import main_map_generator
 import inspect
 import ast
-import json
+import ujson as json
 from enum import Enum
 from aoe2mapgenerator.src.units.wallgenerators.voronoi import VoronoiGenerator
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from aoe2mapgenerator.src.units.placers.statictemplate import TemplateCreator
 from aoe2mapgenerator.src.units.placers.group_placer import GroupPlacerManager
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.testing import awesome_function
 from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.point_selector import PointSelector
+from aoe2mapgenerator.src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
 from aoe2mapgenerator.src.visualizer.visualizer import Visualizer
 from aoe2mapgenerator.src.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.src.units.placers.wall_placer import WallPlacer
@@ -62,7 +66,7 @@ from aoe2mapgenerator.src.map.map_manager import MapManager
 from aoe2mapgenerator.src.units.placers.placer_configs import *
 from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
 import dataclasses
-import json
+import ujson as json
 from aoe2mapgenerator.src.units.wallgenerators.polygon import generate_polygonal_wall
 
 
@@ -85,8 +89,7 @@ def generate_polygon_walls_with_gates(
     """
     # Generate the polygonal wall points
     points = generate_polygonal_wall(x, y, sides, radius)
-    map_manager.point_manager.clear()
-    map_manager.point_manager.add_points(points)
+    map_manager.point_manager.add_point_collection("wall_points", points)
 
     # Set the type of wall to use
     wall_type = gate_type.get_building_info_wall()
@@ -101,7 +104,7 @@ def generate_polygon_walls_with_gates(
     )
 
     # Get the points for the wall
-    points = map_manager.point_selector.get_points_from_map_layer(
+    points = map_manager.point_manager.point_selector.get_points_from_map_layer(
         PointSelectorConfig(
             map_layer_type=MapLayerType.UNIT,
             object_type=MapObject(wall_type, player_id=PlayerId.ONE),

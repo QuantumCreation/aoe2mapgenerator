@@ -352,23 +352,3 @@ class CheckPlacementReturnTypes(Enum):
     FAIL = 0
     SUCCESS = 1
     SUCCESS_IMPOSSIBLE = 2
-
-
-class AOE2ObjectType(InfoDatasetBase):
-    """
-    AOE2 Object Type Enum
-    """
-
-    UNIT_TYPE = UnitInfo
-    BUILDING_TYPE = BuildingInfo
-    OTHER_TYPE = OtherInfo
-    TERRAIN_TYPE = TerrainId
-
-    # This is a custom type used for defining different zones on the map
-    ZONE_TYPE = int
-
-    def get_name(self):
-        """
-        Returns the name of the object type.
-        """
-        return self.name

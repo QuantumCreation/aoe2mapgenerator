@@ -2,20 +2,22 @@
 Defines classes which place decor on the map
 """
 
-from src.generation_scripts.template import AbstractTemplate
-from src.map.map_manager import MapManager
-from src.units.placers.point_manager import PointManager
-from src.units.placers.placer_configs import PlaceGroupsConfig
+from aoe2mapgenerator.src.generation_scripts.template import AbstractTemplate
+from aoe2mapgenerator.src.map.map_manager import MapManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
 import dataclasses
-import json
+import ujson as json
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
-from src.common.enums.enum import (
+from aoe2mapgenerator.src.common.enums.enum import (
     MapLayerType,
 )
-from src.units.placers.placer_configs import (
+from aoe2mapgenerator.src.units.placers.placer_configs import (
     PointSelectorConfig,
     PointSelectorInRangeConfig,
 )
@@ -27,7 +29,7 @@ class AutumnDecor(AbstractTemplate):
     """
 
     @staticmethod
-    def generate(point_manager: PointManager, map_manager: MapManager):
+    def generate(point_collection: PointCollection, map_manager: MapManager):
         """
         Places Autumn decor on the map.
 
@@ -61,7 +63,7 @@ class AutumnDecor(AbstractTemplate):
         for decor_object in decor_objects:
             map_manager.place_groups(
                 PlaceGroupsConfig(
-                    point_manager=point_manager,
+                    point_collection=point_collection,
                     map_layer_type=map_layer_type,
                     object_type=decor_object,
                     player_id=PlayerId.GAIA,
@@ -74,7 +76,7 @@ class AutumnDecor(AbstractTemplate):
         # Place the trees
         map_manager.place_groups(
             PlaceGroupsConfig(
-                point_manager=point_manager,
+                point_collection=point_collection,
                 map_layer_type=map_layer_type,
                 object_type=OtherInfo.TREE_OAK_AUTUMN,
                 player_id=PlayerId.GAIA,
@@ -86,7 +88,7 @@ class AutumnDecor(AbstractTemplate):
 
         map_manager.place_groups(
             PlaceGroupsConfig(
-                point_manager=point_manager,
+                point_collection=point_collection,
                 map_layer_type=map_layer_type,
                 object_type=OtherInfo.TREE_OAK_AUTUMN,
                 player_id=PlayerId.GAIA,
@@ -98,7 +100,7 @@ class AutumnDecor(AbstractTemplate):
 
         map_manager.place_groups(
             PlaceGroupsConfig(
-                point_manager=point_manager,
+                point_collection=point_collection,
                 map_layer_type=map_layer_type,
                 object_type=OtherInfo.TREE_OAK_AUTUMN,
                 player_id=PlayerId.GAIA,

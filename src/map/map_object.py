@@ -2,16 +2,20 @@
 TODO: Add module description
 """
 
+from typing import Any
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     DisplacementType,
 )
 
+from aoe2mapgenerator.src.serializer.base_serializer import Serializable
+import ujson as json
 
-class MapObject:
+
+class MapObject(Serializable):
     """
     Class for the Age of Empires Map Object
     """
@@ -47,3 +51,26 @@ class MapObject:
         Gets the player id.
         """
         return self._player_id
+
+    def to_dict(self):
+        return {
+            "_type": self.__class__.__name__,
+            "_obj_type": self.serialize_prim(self._obj_type),
+            "_player_id": self.serialize_prim(self._player_id),
+        }
+
+    def serialize(self) -> Any:
+        return self.dump(self.to_dict())
+
+    @staticmethod
+    def deserialize(json_string: str | dict) -> Any:
+        json_dict: dict
+        if isinstance(json_string, dict):
+            json_dict = json_string
+        else:
+            json_dict = json.loads(json_string)
+
+        obj_prim = Serializable.deserialize_prim(json_dict["_obj_type"])
+        player_id_prim = Serializable.deserialize_prim(json_dict["_player_id"])
+
+        return MapObject(obj_type=obj_prim, player_id=player_id_prim)

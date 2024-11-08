@@ -4,7 +4,6 @@ Handles all map generation and manipulation.
 
 from typing import Union
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
 from aoe2mapgenerator.src.map.map import Map
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
@@ -33,40 +32,33 @@ from aoe2mapgenerator.src.common.constants.constants import (
 from aoe2mapgenerator.src.common.constants.default_objects import (
     GHOST_OBJECT_DISPLACEMENT,
 )
-from aoe2mapgenerator.src.common.enums.enum import GateType
 import multiprocessing as mp
 from aoe2mapgenerator.src.map.map import Map
 import os
-from aoe2mapgenerator.src.serializer.serializer import (
-    _convert_map_value_to_string,
-    _get_enum_list,
-    _recursive_parse_enum_to_string,
-    serialize_map,
-    get_all_functions_and_arguments,
-    _get_functions,
-    _get_function_arguments,
-    _get_default_arguments,
-    _convert_enum_instance_to_string,
-)
 from aoe2mapgenerator.src.triggers.triggers import TriggerManager
-from aoe2mapgenerator.src.maingenerator import main_map_generator
 import inspect
 import ast
-import json
+import ujson as json
 from enum import Enum
 from aoe2mapgenerator.src.units.wallgenerators.voronoi import VoronoiGenerator
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from aoe2mapgenerator.src.units.placers.statictemplate import TemplateCreator
 from aoe2mapgenerator.src.units.placers.group_placer import GroupPlacerManager
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.testing import awesome_function
 from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.point_selector import PointSelector
+from aoe2mapgenerator.src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
 from aoe2mapgenerator.src.visualizer.visualizer import Visualizer
 from aoe2mapgenerator.src.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.src.units.placers.wall_placer import WallPlacer
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
@@ -75,13 +67,16 @@ from aoe2mapgenerator.src.common.constants.constants import (
 from typing import Callable
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.units.placers.placer_configs import (
     PlaceGroupsConfig,
     AddBordersConfig,
     VoronoiGeneratorConfig,
     VisualizeMapConfig,
     PointSelectorConfig,
+)
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointManager,
 )
 
 
@@ -91,28 +86,21 @@ class MapManager:
     """
 
     def __init__(self, map_size: int):
-        self.map = Map(map_size)
+        self.map: Map = Map(map_size)
         self.templates: list = []
 
         # Initialize the placers
-        self.base_placer = PlacerBase(self.map)
-        self.wall_placer = WallPlacer(self.map)
-        self.gate_placer = GatePlacer(self.map)
-        self.group_placer = GroupPlacerManager(self.map)
-        self.voronoi_generator = VoronoiGenerator(self.map)
+        self.base_placer: PlacerBase = PlacerBase(self.map)
+        self.wall_placer: WallPlacer = WallPlacer(self.map)
+        self.gate_placer: GatePlacer = GatePlacer(self.map)
+        self.group_placer: GroupPlacerManager = GroupPlacerManager(self.map)
+        self.voronoi_generator: VoronoiGenerator = VoronoiGenerator(self.map)
 
         # Initialize the point selector and manager
-        self.point_selector = PointSelector(self.map)
-        self.point_manager = PointManager()
+        self.point_manager: PointManager = PointManager(self.map)
 
         # Initialize the visualizer
-        self.visualizer = Visualizer(self.map)
-
-    def get_new_point_manager(self) -> PointManager:
-        """
-        Returns a new point manager.
-        """
-        return PointManager()
+        self.visualizer: Visualizer = Visualizer(self.map)
 
     def place_groups(
         self,
@@ -153,7 +141,9 @@ class MapManager:
         """
         Selects points on the map.
         """
-        return self.point_selector.get_points_from_map_layer(configuration)
+        return self.point_manager.point_selector.get_points_from_map_layer(
+            configuration
+        )
 
     def get_map(self):
         """
@@ -192,4 +182,6 @@ class MapManager:
         """
         Gets the points from a map layer.
         """
-        return self.point_selector.get_points_from_map_layer(configuration)
+        return self.point_manager.point_selector.get_points_from_map_layer(
+            configuration
+        )

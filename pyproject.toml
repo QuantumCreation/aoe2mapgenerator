@@ -12,6 +12,7 @@ ipykernel = "^6.29.4"
 numpy = "^1.26.4"
 pyyaml = "^6.0.1"
 matplotlib = "^3.9.0"
+ujson = "^5.10.0"
 
 
 

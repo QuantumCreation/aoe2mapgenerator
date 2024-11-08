@@ -11,14 +11,16 @@ from aoe2mapgenerator.src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.common.constants.constants import (
     DEFAULT_PLAYER,
 )
 from aoe2mapgenerator.src.map.map import Map
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
 
 
@@ -41,7 +43,7 @@ class GroupPlacerManager(PlacerBase):
             configuration (PlaceGroupsConfig): CoListnfiguration for placing a group of objects.
         """
         map_layer_type = configuration.map_layer_type
-        point_manager = configuration.point_manager
+        point_manager = configuration.point_collection
         obj_type = configuration.object_type
         player_id = configuration.player_id
         group_size = configuration.group_size
@@ -131,11 +133,11 @@ class GroupPlacerManager(PlacerBase):
         Args:
             configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
         """
-        point_manager = configuration.point_manager
+        point_collection = configuration.point_collection
         groups_density = configuration.groups_density
         groups = configuration.groups
 
-        all_placements = {
+        all_placements: dict[str, List[tuple[int, int]]] = {
             "group_centers": [],
             "objects": [],
             "displacements": [],
@@ -144,7 +146,9 @@ class GroupPlacerManager(PlacerBase):
         if groups_density is not None:
             # Scale off of object size
             size = ObjectInfo.get_object_size(configuration.object_type)
-            groups = int(groups_density * len(point_manager.get_point_list()) // size)
+            groups = int(
+                groups_density * len(point_collection.get_point_list()) // size
+            )
             configuration.groups = int(groups)
 
         for i in range(groups):

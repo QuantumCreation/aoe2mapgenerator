@@ -4,7 +4,7 @@ TODO: Add module documentation.
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from typing import List
+from typing import Any, List
 
 from aoe2mapgenerator.src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
@@ -12,8 +12,10 @@ from aoe2mapgenerator.src.common.constants.constants import (
 )
 from aoe2mapgenerator.src.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
 from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from aoe2mapgenerator.src.map.map_object import MapObject
+from aoe2mapgenerator.src.serializer.base_serializer import Serializable
+import ujson as json
 
 MapLayerArray = List[List[MapObject]]
 """
@@ -25,14 +27,14 @@ MapLayerDictionary: Dictionary representation of the map layer. Each key is a Ma
 """
 
 
-class MapLayer:
+class MapLayer(Serializable):
     """
     Single Map type constructor.
     """
 
     def __init__(self, map_layer_type: MapLayerType, size: int = 100) -> None:
 
-        self.layer = map_layer_type
+        self.map_layer_type = map_layer_type
         self.size = size
         # Create a 2D array of the given size.
         # These objects will all reference the same default object.
@@ -50,9 +52,9 @@ class MapLayer:
         Takes an x and y coordinate and updates both the array and set representation.
 
         Args:
-            x: X coordinate.
-            y: Y coordinate.
-            new_value: Value to set the point to.
+            point: Tuple of x and y coordinates.
+            new_value: New value to set.
+            player_id: Player ID to set.
         """
         x, y = point
 
@@ -104,6 +106,42 @@ class MapLayer:
         if obj not in self.dict:
             return set()
         return self.dict[obj]
+
+    def to_dict(self):
+        return {
+            "_type": self.__class__.__name__,
+            "layer": self.serialize_prim(self.map_layer_type),
+            "size": self.serialize_prim(self.size),
+            "array": [[cell.to_dict() for cell in row] for row in self.array],
+        }
+
+    def serialize(self) -> Any:
+        return self.dump(self.to_dict())
+
+    @staticmethod
+    def deserialize(json_string: str | dict) -> "MapLayer":
+
+        json_data: dict
+
+        if isinstance(json_string, dict):
+            json_data = json_string
+        else:
+            json_data = json.loads(json_string)
+
+        new_layer = MapLayer(
+            MapLayer.deserialize_prim(json_data["layer"]),
+            int(json_data["size"]),
+        )
+
+        for i, row in enumerate(json_data["array"]):
+            for j, cell in enumerate(json_data["array"][i]):
+                map_object = MapObject.deserialize(cell)
+
+                new_layer.set_point(
+                    (i, j), map_object.get_obj_type(), map_object.get_player_id()
+                )
+
+        return new_layer
 
 
 def _create_dict(array: list[list[MapObject]]) -> MapLayerDictionary:

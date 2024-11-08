@@ -36,7 +36,7 @@ def manhattan_distance(p1: tuple, p2: tuple) -> int:
 
 def connect_points_with_randomization(
     key_point_list: List[tuple[int, int]],
-    splits: int,
+    num_divisions: int,
     random_shift_range: int,
     base_points: List[tuple[int, int]] = None,
 ) -> List[tuple[int, int]]:
@@ -46,7 +46,7 @@ def connect_points_with_randomization(
     Args:
         key_point_list: List of points in order that will be connected, these points will always be included in the final list.
         point_list: List of points in order
-        splits: Number of splits to add
+        num_divisions: Number of splits to add
         random_shift_range: Range to shift each point along the original main line
     """
     if not base_points:
@@ -57,8 +57,8 @@ def connect_points_with_randomization(
 
     new_point_indicies = get_indicies_of_key_points(base_points, key_point_list)
 
-    for i in range(splits + 2):
-        index = int(((len(base_points) - 1) / (splits + 1)) * (i))
+    for i in range(num_divisions + 2):
+        index = int(((len(base_points) - 1) / (num_divisions + 1)) * (i))
         new_point_indicies.append(index)
 
     new_point_indicies.sort()

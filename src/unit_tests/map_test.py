@@ -43,11 +43,3 @@ def test_create_map_500():
     assert (
         total_time < 1.5
     ), f"Performance test failed: total time {total_time:.4f} seconds"
-
-
-# def test_create_map_500_benchmark(benchmark):
-#     """
-#     Tests the creation of a map with size 500.
-#     """
-#     n = 500
-#     benchmark(Map, n)

@@ -11,26 +11,23 @@ from aoe2mapgenerator.src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
 from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
 from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.common.enums.enum import AOE2ObjectType
+from aoe2mapgenerator.src.common.types import AOE2ObjectType
 from typing import Callable
 from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.src.units.utils import default_clumping_func
 
 
@@ -47,7 +44,7 @@ class AddBordersConfig:
         margin (int = 1): Margin between each object and any other object.
     """
 
-    point_manager: PointManager
+    point_collection: PointCollection
     map_layer_type: MapLayerType
     obj_type: AOE2ObjectType
     player_id: PlayerId = DEFAULT_PLAYER
@@ -60,7 +57,7 @@ class PlaceGroupsConfig:
     Configuration for placing groups of objects on a map.
 
     Args:
-        point_manager (PointManager): Manages the points to be placed.
+        point_collection (PointCollection): Manages the points to be placed.
         map_layer_type (MapLayerType): The map type.
         obj_type (AOE2ObjectType): The type of object to be placed.
         player_id (PlayerId = DEFAULT_PLAYER): Id of the objects being placed.
@@ -74,7 +71,7 @@ class PlaceGroupsConfig:
         start_point (tuple = None): The starting point to place the group.
     """
 
-    point_manager: PointManager
+    point_collection: PointCollection
     map_layer_type: MapLayerType
     object_type: AOE2ObjectType
     player_id: PlayerId = DEFAULT_PLAYER
@@ -99,7 +96,7 @@ class VoronoiGeneratorConfig:
         obj_type (AOE2ObjectType): The type of object to be placed.
     """
 
-    point_manager: PointManager
+    point_collection: PointCollection
     interpoint_distance: int
     map_layer_type: MapLayerType
 
@@ -123,7 +120,7 @@ class VisualizeMapConfig:
     transpose: bool = False
     fig_size: tuple[int, int] = (15, 15)
     include_legend: bool = True
-    anchor: tuple[int, int] = (1.25, 1)
+    anchor: tuple[float, float] = (1.25, 1)
 
 
 @dataclass

@@ -11,7 +11,9 @@ from aoe2mapgenerator.src.common.enums.enum import (
     GateType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_manager import PointManager
+from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+    PointCollection,
+)
 from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
 from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.src.map.map_object import AOE2ObjectType
@@ -29,7 +31,7 @@ class GatePlacer(PlacerBase):
 
     def place_gate_on_four_sides(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         map_layer_type: MapLayerType,
         gate_type: GateType,
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -44,10 +46,10 @@ class GatePlacer(PlacerBase):
             playerId: Id of the objects being placed.
         """
 
-        if len(point_manager.get_point_list()) == 0:
+        if len(point_collection.get_point_list()) == 0:
             return
 
-        avg_point = self._get_average_point_position(point_manager)
+        avg_point = self._get_average_point_position(point_collection)
 
         for direction in [
             Directions.EAST,
@@ -57,14 +59,14 @@ class GatePlacer(PlacerBase):
         ]:
 
             point = self._get_first_point_in_given_direction(
-                point_manager, avg_point, direction
+                point_collection, avg_point, direction
             )
 
             if point is None:
                 continue
 
             self._place_gate_closest_to_point(
-                point_manager=point_manager,
+                point_collection=point_collection,
                 map_layer_type=map_layer_type,
                 gate_type=gate_type,
                 goal_placement_point=point,
@@ -73,7 +75,7 @@ class GatePlacer(PlacerBase):
 
     def place_gate_on_eight_sides(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         map_layer_type: MapLayerType,
         gate_type: GateType,
         player_id: PlayerId = DEFAULT_PLAYER,
@@ -88,10 +90,10 @@ class GatePlacer(PlacerBase):
             playerId: Id of the objects being placed.
         """
 
-        if len(point_manager.get_point_list()) == 0:
+        if len(point_collection.get_point_list()) == 0:
             return
 
-        avg_point = self._get_average_point_position(point_manager)
+        avg_point = self._get_average_point_position(point_collection)
 
         for direction in [
             Directions.NORTH,
@@ -105,14 +107,14 @@ class GatePlacer(PlacerBase):
         ]:
 
             point = self._get_first_point_in_given_direction(
-                point_manager, avg_point, direction
+                point_collection, avg_point, direction
             )
 
             if point is None:
                 continue
 
             self._place_gate_closest_to_point(
-                point_manager=point_manager,
+                point_collection=point_collection,
                 map_layer_type=map_layer_type,
                 gate_type=gate_type,
                 goal_placement_point=point,
@@ -129,7 +131,7 @@ class GatePlacer(PlacerBase):
 
     def _place_gate_closest_to_point(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         map_layer_type: MapLayerType,
         gate_type: GateType,
         goal_placement_point: tuple,
@@ -146,7 +148,7 @@ class GatePlacer(PlacerBase):
             player_id: Id of the player for the given gate.
         """
 
-        points = point_manager.get_point_list()
+        points = point_collection.get_point_list()
 
         gate_objects = self._get_gate_objects(gate_type)
 
@@ -156,7 +158,7 @@ class GatePlacer(PlacerBase):
         ):
             for gate_object in gate_objects:
                 status = self._check_placement_for_gate(
-                    point_manager, gate_object, (x, y)
+                    point_collection, gate_object, (x, y)
                 )
 
                 if status == CheckPlacementReturnTypes.FAIL:
@@ -164,11 +166,11 @@ class GatePlacer(PlacerBase):
 
                 if status == CheckPlacementReturnTypes.SUCCESS:
                     self._place_gate(
-                        point_manager, map_layer_type, (x, y), gate_object, player_id
+                        point_collection, map_layer_type, (x, y), gate_object, player_id
                     )
                     return
 
-    def _get_average_point_position(self, point_manager: PointManager):
+    def _get_average_point_position(self, point_collection: PointCollection):
         """
         Gets the location of the average point from the given value type and array space lists.
         """
@@ -176,10 +178,10 @@ class GatePlacer(PlacerBase):
         totx = 0
         toty = 0
 
-        smallest_set = point_manager.get_point_list()
+        smallest_set = point_collection.get_point_list()
 
         for point in smallest_set:
-            status = self._check_placement(point_manager, point, None, 0)
+            status = self._check_placement(point_collection, point, None, 0)
 
             if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
                 return (0, 0)
@@ -192,7 +194,10 @@ class GatePlacer(PlacerBase):
         return (totx // total_points, toty // total_points)
 
     def _get_first_point_in_given_direction(
-        self, points_manager: PointManager, starting_point: tuple, direction: Directions
+        self,
+        points_manager: PointCollection,
+        starting_point: tuple,
+        direction: Directions,
     ):
         """
         Finds the first point in the matching array space type with the given direction.
@@ -223,7 +228,7 @@ class GatePlacer(PlacerBase):
 
     def _check_placement_for_gate(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         gate_object: GateObject,
         goal_placement_point: tuple,
     ):
@@ -231,7 +236,7 @@ class GatePlacer(PlacerBase):
         Checks if the given point is a valid placement for a gate.
 
         Args:
-            point_manager: The point manager.
+            point_collection: The point manager.
             goal_placement_point: The point to place the object.
             obj_type: The type of object to be placed.
             margin: The margin around the object.
@@ -245,14 +250,14 @@ class GatePlacer(PlacerBase):
             x_actual, y_actual = x + goal_x, y + goal_y
             point = (x_actual, y_actual)
 
-            if not point_manager.check_point_exists(point):
+            if not point_collection.check_point_exists(point):
                 return CheckPlacementReturnTypes.FAIL
 
         return CheckPlacementReturnTypes.SUCCESS
 
     def _place_gate(
         self,
-        point_manager: PointManager,
+        point_collection: PointCollection,
         map_layer_type: MapLayerType,
         point_to_place: tuple[int, int],
         gate_object: GateObject,
@@ -286,5 +291,5 @@ class GatePlacer(PlacerBase):
                     player_id,
                 )
 
-            point_manager.remove_point(point_to_place)
+            point_collection.remove_point(point_to_place)
             self.points_set_on_map += 1
