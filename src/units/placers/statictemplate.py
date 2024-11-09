@@ -2,7 +2,7 @@
 TODO: Add module description
 """
 
-from aoe2mapgenerator.src.map.map import Map
+from src.map.map import Map
 
 
 class TemplateCreator:

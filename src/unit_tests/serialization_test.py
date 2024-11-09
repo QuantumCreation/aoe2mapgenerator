@@ -8,18 +8,18 @@ import pytest
 import numpy as np
 
 
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.map.map import Map
+from src.map.map_manager import MapManager
+from src.map.map_object import MapObject
+from src.common.enums.enum import MapLayerType
+from src.units.placers.placer_configs import PlaceGroupsConfig
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 
-from aoe2mapgenerator.src.units.placers.point_management import point_collection
+from src.units.placers.point_management import point_collection
 
 
 def test_serialize():

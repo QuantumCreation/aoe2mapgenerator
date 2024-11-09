@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib.pylab import matshow
 import matplotlib.pyplot as plt
 from typing import List
-from aoe2mapgenerator.src.units.utils import connect_points
+from src.units.utils import connect_points
 
 
 def generate_polygonal_wall(

@@ -11,15 +11,15 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.group_placer import GroupPlacerManager
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_object import MapObject
+from src.units.placers.group_placer import GroupPlacerManager
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
-from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
-from aoe2mapgenerator.src.map.map_manager import MapManager
+from src.units.placers.placer_configs import PlaceGroupsConfig
+from src.map.map_manager import MapManager
 
 
 def test_place_groups():

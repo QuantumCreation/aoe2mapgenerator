@@ -1,12 +1,12 @@
 from typing import Any
 from enum import Enum
 from abc import ABC, abstractmethod
-from aoe2mapgenerator.src.serializer.serialization_utils import (
+from src.serializer.serialization_utils import (
     serialize_enum,
     deserialize_enum,
 )
-from aoe2mapgenerator.src.common.enums.enum import *
-from aoe2mapgenerator.src.common.enums.enum import GateType
+from src.common.enums.enum import *
+from src.common.enums.enum import GateType
 import ujson as json
 from typing import Any, Dict, List, Callable, Type, get_type_hints
 import inspect

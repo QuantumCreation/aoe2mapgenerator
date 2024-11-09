@@ -17,13 +17,13 @@ from AoE2ScenarioParser.datasets.terrains import TerrainId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from yaml import UnsafeLoader, load
 
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_PLAYER,
     TEMPLATE_DIR_LINUX,
 )
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType, YamlReplacementKeywords
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.map.map import Map
+from src.common.enums.enum import MapLayerType, YamlReplacementKeywords
+from src.units.placers.placer_base import PlacerBase
+from src.map.map import Map
 
 JSON = Dict[str, str]
 TemplateNames = Dict[str, JSON]
@@ -244,7 +244,7 @@ def _create_initial_symbol_table(**kwargs) -> dict:
     Creates an initial symbol table for the yaml file.
 
     Args:
-        ...
+        **kwargs: Key word arguments.
 
     Returns: A dictionary mapping from yaml substitution variables to python objects.
     """

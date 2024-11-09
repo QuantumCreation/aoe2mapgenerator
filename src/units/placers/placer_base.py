@@ -7,23 +7,23 @@ import random
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+from src.units.placers.point_management.point_collection import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
+from src.map.map import Map
+from src.units.placers.object_info import ObjectInfo
+from src.common.types import AOE2ObjectType
 from typing import List
-from aoe2mapgenerator.src.units.utils import manhattan_distance
-from aoe2mapgenerator.src.map.map_object import MapObject
+from src.units.utils import manhattan_distance
+from src.map.map_object import MapObject
 
 
 class PlacerBase:

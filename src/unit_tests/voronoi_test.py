@@ -5,12 +5,12 @@ Tests the voronoi algorithm.
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.placer_configs import VoronoiGeneratorConfig
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_manager import MapManager
+from src.map.map_object import MapObject
+from src.units.placers.placer_configs import VoronoiGeneratorConfig
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
 

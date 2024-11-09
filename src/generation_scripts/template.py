@@ -3,8 +3,8 @@ This file contains the base class for all the generation scripts.
 """
 
 from abc import ABC, abstractmethod
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
 

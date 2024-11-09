@@ -1,15 +1,15 @@
-from aoe2mapgenerator.src.map.map import Map
+from src.map.map import Map
 import inspect
 import ujson as json
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
+from src.common.enums.enum import MapLayerType
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from aoe2mapgenerator.src.units.placers.templateplacer import _convert_value_to_enum
+from src.units.placers.templateplacer import _convert_value_to_enum
 from typing import Any
-from aoe2mapgenerator.src.serializer.serialization_utils import (
+from src.serializer.serialization_utils import (
     serialize_enum,
     deserialize_enum,
 )

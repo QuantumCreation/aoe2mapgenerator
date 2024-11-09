@@ -7,28 +7,28 @@ from dataclasses import dataclass
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+from src.units.placers.point_management.point_collection import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
+from src.common.types import AOE2ObjectType
 
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
+from src.common.enums.enum import MapLayerType
+from src.common.constants.constants import DEFAULT_PLAYER
+from src.common.types import AOE2ObjectType
 from typing import Callable
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.utils import default_clumping_func
+from src.map.map_object import MapObject
+from src.units.utils import default_clumping_func
 
 
 @dataclass

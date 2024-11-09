@@ -4,14 +4,14 @@ WallPlacer class for placing walls on a map.
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.common.enums.enum import MapLayerType
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.units.placers.placer_configs import AddBordersConfig
+from src.common.constants.constants import DEFAULT_PLAYER
+from src.units.placers.placer_base import PlacerBase
+from src.common.types import AOE2ObjectType
+from src.units.placers.placer_configs import AddBordersConfig
 import random
 
 

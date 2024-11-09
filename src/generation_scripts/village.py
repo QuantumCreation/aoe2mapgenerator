@@ -2,9 +2,9 @@
 Defines classes which places villages on the map
 """
 
-from aoe2mapgenerator.src.generation_scripts.template import AbstractTemplate
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.generation_scripts.template import AbstractTemplate
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
 

@@ -7,8 +7,12 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from noise import pnoise2
+from src.map.map_object import MapObject
 
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.units.placers.placer_base import PlacerBase
 
 
 class PerlinGenerator(PlacerBase):
@@ -16,17 +20,45 @@ class PerlinGenerator(PlacerBase):
     Class for generating perlin patterns.
     """
 
-    def generate_perlin(self, size: int, sections: int, seed: int) -> None:
+    def safe_generate_perlin(
+        self, sections: int, seed: int, point_collection: PointCollection
+    ) -> list[MapObject]:
+        """
+        Generates perlin pattern safely.
+
+        Args:
+            sections(int): Number of sections to split into.
+            seed(int): Seed for the perlin noise.
+
+        Returns:
+            list[MapObject]: List of map objects generated from the perlin pattern.
+        """
+
+        top_left_point = point_collection.get_theoretical_top_left_corner_point()
+        bottom_right_point = (
+            point_collection.get_theoretical_bottom_right_corner_point()
+        )
+
+        height = bottom_right_point[0] - top_left_point[0]
+        width = bottom_right_point[1] - top_left_point[1]
+
+        self.generate_perlin(max(height, width), sections, seed)
+
+    def generate_perlin(self, array_size: int, sections: int, seed: int) -> None:
         """
         Generates perlin noise.
 
         Args:
-            size: Size of the array.
+            array_size: Size of the array.
             sections: Number of sections to split into.
             seed: Seed for the perlin noise.
         """
         self._generate_perlin_instance(
-            octaves=[25], array_size=size, seed=seed, perlin_size=1, sections=sections
+            octaves=[25],
+            array_size=array_size,
+            seed=seed,
+            perlin_size=1,
+            sections=sections,
         )
 
     def _generate_perlin_instance(
@@ -37,6 +69,19 @@ class PerlinGenerator(PlacerBase):
         perlin_size: int,
         sections: int,
     ) -> list[list]:
+        """
+        Generates perlin noise.
+
+        Args:
+            octaves(list[int]): Octaves for the perlin noise.
+            array_size(int): Size of the array.
+            seed(int): Seed for the perlin noise.
+            perlin_size(int): Size of the perlin noise.
+            sections(int): Number of sections to split into.
+
+        Returns:
+            list[list]: Perlin noise array.
+        """
 
         seed = random.randint(0, 100)
         perlin_size = 1

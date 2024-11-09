@@ -2,9 +2,9 @@
 TODO: Add module description.
 """
 
-from aoe2mapgenerator.src.common.enums.enum import ObjectSize
+from src.common.enums.enum import ObjectSize
 from AoE2ScenarioParser.datasets.support.info_dataset_base import InfoDatasetBase
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
+from src.common.types import AOE2ObjectType
 
 
 class ObjectInfo:

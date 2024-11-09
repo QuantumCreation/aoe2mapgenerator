@@ -7,21 +7,21 @@ from typing import Callable
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 from typing import List
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_PLAYER,
 )
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
+from src.map.map import Map
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.object_info import ObjectInfo
+from src.common.types import AOE2ObjectType
+from src.units.placers.placer_configs import PlaceGroupsConfig
 
 
 class GroupPlacerManager(PlacerBase):

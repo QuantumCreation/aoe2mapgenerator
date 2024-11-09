@@ -8,12 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 
-from aoe2mapgenerator.src.common.constants.constants import DEFAULT_EMPTY_VALUE
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.utils.utils import unique_value_list
-from aoe2mapgenerator.src.units.placers.placer_configs import VisualizeMapConfig
-from aoe2mapgenerator.src.map.map_object import MapObject
+from src.common.constants.constants import DEFAULT_EMPTY_VALUE
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.utils.utils import unique_value_list
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.map.map_object import MapObject
 
 
 class Visualizer:

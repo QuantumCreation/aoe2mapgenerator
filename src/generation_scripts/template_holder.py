@@ -2,7 +2,7 @@
 Template Holder class which holders objects of the Template class.
 """
 
-from aoe2mapgenerator.src.generation_scripts.template import AbstractTemplate
+from src.generation_scripts.template import AbstractTemplate
 
 
 class TemplateHolder:

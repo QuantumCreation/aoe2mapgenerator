@@ -7,16 +7,16 @@ import random
 import numpy as np
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_object import MapObject
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
 import numpy as np
 from scipy.ndimage import distance_transform_edt
-from aoe2mapgenerator.src.units.placers.placer_configs import (
+from src.units.placers.placer_configs import (
     PlaceGroupsConfig,
     AddBordersConfig,
     VoronoiGeneratorConfig,
