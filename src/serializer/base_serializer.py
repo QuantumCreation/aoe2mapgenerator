@@ -52,7 +52,7 @@ class Serializable(ABC):
 class SerializationRegistry:
     """Registry for serializable types"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._types: Dict[str, Type[Serializable]] = {}
 
     def register_type(self, cls: Type[Serializable]) -> None:
@@ -79,7 +79,7 @@ class FunctionRunner:
     with support for custom serializable objects.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._function_registry: Dict[str, Callable] = {}
         self._serialization_registry = SerializationRegistry()
 

@@ -5,7 +5,7 @@ TODO: Add module docstring.
 from AoE2ScenarioParser.datasets.players import PlayerId
 
 from src.common.enums.enum import MapLayerType
-from src.map.maplayer import MapLayer
+from src.map.maplayer import MapLayer, MapLayerDictionary
 from src.common.types import AOE2ObjectType
 from src.map.map_object import MapObject
 from src.common.constants.constants import DisplacementType
@@ -86,7 +86,9 @@ class Map(Serializable):
         layer = self.get_map_layer(map_layer_type)
         layer.set_point(point, new_value, player_id)
 
-    def get_dictionary_from_map_layer_type(self, map_layer_type: MapLayerType):
+    def get_dictionary_from_map_layer_type(
+        self, map_layer_type: MapLayerType
+    ) -> MapLayerDictionary:
         """
         Gets the dictionary from a map layer type.
         """

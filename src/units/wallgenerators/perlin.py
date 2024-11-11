@@ -44,6 +44,8 @@ class PerlinGenerator(PlacerBase):
 
         self.generate_perlin(max(height, width), sections, seed)
 
+        return []
+
     def generate_perlin(self, array_size: int, sections: int, seed: int) -> None:
         """
         Generates perlin noise.

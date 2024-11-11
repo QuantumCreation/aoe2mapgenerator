@@ -20,7 +20,7 @@ class AbstractTemplate(ABC):
 
     @staticmethod
     @abstractmethod
-    def generate(point_collection: PointCollection, map_manager: MapManager):
+    def generate(map_manager: MapManager, point_collection: PointCollection):
         """
         Generate the map.
         """

@@ -21,6 +21,7 @@ from src.units.placers.placer_configs import (
     AddBordersConfig,
     VoronoiGeneratorConfig,
 )
+from typing import List
 
 
 class VoronoiGenerator(PlacerBase):
@@ -125,7 +126,7 @@ class VoronoiGenerator(PlacerBase):
 
     def _generate_poisson_voronoi_point_distribution(
         self, width: int, height: int, interpoint_distance: int
-    ) -> list[tuple[int, int]]:
+    ) -> List[tuple[int, int]]:
         """
         Generates a list of points for creating a voronoi pattern
 
@@ -141,7 +142,7 @@ class VoronoiGenerator(PlacerBase):
         for i, (a, b) in enumerate(points):
             points[i] = [int(a), int(b)]
 
-        return points
+        return list(points)
 
     def _poisson_disk_sample(
         self, width=1.0, height=1.0, radius=0.025, k=30

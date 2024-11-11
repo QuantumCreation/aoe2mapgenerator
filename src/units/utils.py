@@ -3,11 +3,13 @@ Holds various utility functions for placing objects on a map.
 """
 
 import random
-from typing import List
+from typing import List, Optional, Tuple
 import numpy as np
 
 
-def default_clumping_func(p1, p2, clumping):
+def default_clumping_func(
+    p1: Tuple[int, int], p2: Tuple[int, int], clumping: int
+) -> float:
     """
     Default clumping function.
 
@@ -23,7 +25,7 @@ def default_clumping_func(p1, p2, clumping):
     return (distance) + random.random() * (clumping) ** 2
 
 
-def manhattan_distance(p1: tuple, p2: tuple) -> int:
+def manhattan_distance(p1: Tuple[int, int], p2: Tuple[int, int]) -> int:
     """
     Calculates the Manhattan distance between two points.
 
@@ -35,19 +37,19 @@ def manhattan_distance(p1: tuple, p2: tuple) -> int:
 
 
 def connect_points_with_randomization(
-    key_point_list: List[tuple[int, int]],
+    key_point_list: List[Tuple[int, int]],
     num_divisions: int,
     random_shift_range: int,
-    base_points: List[tuple[int, int]] = None,
-) -> List[tuple[int, int]]:
+    base_points: Optional[List[Tuple[int, int]]] = None,
+) -> List[Tuple[int, int]]:
     """
     Creates list of all connecting points with additional randomization for a list of points.
 
     Args:
         key_point_list: List of points in order that will be connected, these points will always be included in the final list.
-        point_list: List of points in order
-        num_divisions: Number of splits to add
-        random_shift_range: Range to shift each point along the original main line
+        num_divisions: Number of splits to add.
+        random_shift_range: Range to shift each point along the original main line.
+        base_points: Optional list of base points.
     """
     if not base_points:
         base_points = connect_points(key_point_list)
@@ -75,36 +77,40 @@ def connect_points_with_randomization(
     return randomized_points
 
 
-def connect_points(point_list: List[tuple[int, int]]) -> List[tuple[int, int]]:
+def connect_points(point_list: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
     """
     Creates list of all connecting points for a list of outer perimeter points.
 
     Args:
-        point_list: list of outer perimeter points in order
+        point_list: List of outer perimeter points in order.
 
-    Returns list of points connecting each adjacent set of perimeter points
+    Returns list of points connecting each adjacent set of perimeter points.
     """
-    returned_points = []
+    returned_points: List[Tuple[int, int]] = []
 
     for i, (x, y) in enumerate(point_list[:-1]):
-        next_point = [
+        next_point: List[int] = [
             point_list[(i + 1) % len(point_list)][0],
             point_list[(i + 1) % len(point_list)][1],
         ]
-        new_points = _connect(np.array([[x, y], next_point]))
+
+        points_to_connect: np.ndarray = np.array([[x, y], next_point], dtype=np.int32)
+
+        new_points = _connect(points_to_connect)
         returned_points.extend(new_points)
 
     return [tuple(point) for point in np.array(returned_points)]
 
 
 def _check_base_point_valid(
-    base_points: List[tuple[int, int]], key_points: List[tuple[int, int]]
+    base_points: List[Tuple[int, int]], key_points: List[Tuple[int, int]]
 ) -> bool:
     """
     Checks if the base points are valid.
 
     Args:
         base_points: List of base points.
+        key_points: List of key points.
     """
     for key_point in key_points:
         if key_point not in base_points:
@@ -113,7 +119,7 @@ def _check_base_point_valid(
 
 
 def get_indicies_of_key_points(
-    base_points: List[tuple[int, int]], key_points: List[tuple[int, int]]
+    base_points: List[Tuple[int, int]], key_points: List[Tuple[int, int]]
 ) -> List[int]:
     """
     Gets the indicies of the key points in the base points list.
@@ -122,21 +128,21 @@ def get_indicies_of_key_points(
         base_points: List of base points.
         key_points: List of key points.
     """
-    key_point_indicies = []
+    key_point_indicies: List[int] = []
     for key_point in key_points:
         key_point_indicies.append(base_points.index(key_point))
 
     return list(reversed(key_point_indicies))
 
 
-def _connect(ends: np.ndarray[np.int32]) -> np.ndarray[np.int32]:
+def _connect(ends: np.ndarray) -> np.ndarray:
     """
     Connects a start and end point.
 
     Args:
         ends: List with a start (x,y) coordinate and an end (x,y) coordinate.
     """
-    d0, d1 = np.abs(np.diff(ends, axis=0))[0]
+    d0, d1 = np.abs(np.diff(ends, axis=0).astype(np.int32))[0]
     if d0 > d1:
         return np.c_[
             np.linspace(ends[0, 0], ends[1, 0], d0 + 1, dtype=np.int32),

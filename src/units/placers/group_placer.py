@@ -63,7 +63,7 @@ class GroupPlacerManager(PlacerBase):
 
         # Adjust group size based on density if specified
         if group_density is not None:
-            group_size = group_density * len(points_list) // 100
+            group_size = int(group_density * len(points_list) // 100)
 
         # Choose a random start point if none is specified or invalid
         if start_point is None:

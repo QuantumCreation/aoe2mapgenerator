@@ -29,7 +29,7 @@ class AutumnDecor(AbstractTemplate):
     """
 
     @staticmethod
-    def generate(point_collection: PointCollection, map_manager: MapManager):
+    def generate(map_manager: MapManager, point_collection: PointCollection):
         """
         Places Autumn decor on the map.
 

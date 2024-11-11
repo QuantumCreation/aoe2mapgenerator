@@ -108,7 +108,15 @@ class PlacerBase:
         margin: int = 0,
     ):
         """
-        places multiple objects at the given points.
+        places multiple objects at the given points. Does not check for safe placement.
+
+        Args:
+            point_collection: The point manager.
+            map_layer_type: The map type.
+            points: Points to place objects.
+            obj_type: The type of object to be placed.
+            player_id: Id of the player for the given object.
+            margin: Area around the object to be placed.
         """
 
         for point in points:

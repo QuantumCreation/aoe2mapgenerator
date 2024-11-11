@@ -31,6 +31,8 @@ from src.units.placers.point_management.point_selector import (
 from src.units.placers.placer_configs import PointSelectorConfig
 from src.scenario.gate import get_gate_x_shift, get_gate_y_shift
 from src.common.enums.enum import GateObject
+from src.map.maplayer import MapLayerDictionary
+from typing import List
 
 
 class Scenario:
@@ -79,17 +81,16 @@ class Scenario:
         Args:
             map_layer_type (MapLayerType): Type of map layer to write to.
         """
-        # HAS TO BE CHANGED ***** Wrote this a long while ago. IDK what needs to be changed LMAO
-        d = self.map.get_dictionary_from_map_layer_type(map_layer_type)
-        point_selector = PointSelector(self.map)
+        d: MapLayerDictionary = self.map.get_dictionary_from_map_layer_type(
+            map_layer_type
+        )
+        point_selector: PointSelector = PointSelector(self.map)
 
         for map_object in d:
-            (aoe2_object, player_id) = (
-                map_object.get_obj_type(),
-                map_object.get_player_id(),
-            )
+            aoe2_object: AOE2ObjectType = map_object.get_obj_type()
+            player_id: int = map_object.get_player_id()
 
-            points = point_selector.get_points_from_map_layer(
+            points: List[tuple[int, int]] = point_selector.get_points_from_map_layer(
                 PointSelectorConfig(map_layer_type, map_object)
             )
 
@@ -99,7 +100,11 @@ class Scenario:
                 self._write_units(points, aoe2_object, player_id)
 
     def _write_units(
-        self, points: set, aoe2_object: AOE2ObjectType, player: int, rotation: int = -1
+        self,
+        points: set | List[tuple[int, int]],
+        aoe2_object: AOE2ObjectType,
+        player: int,
+        rotation: int = -1,
     ) -> None:
         """
         Takes a scenario and a list of points to create units in the corresponding positions.
@@ -147,7 +152,9 @@ class Scenario:
                     rotation=rotation,
                 )
 
-    def _write_terrain(self, points: set, terrain_const: TerrainId) -> None:
+    def _write_terrain(
+        self, points: set | List[tuple[int, int]], terrain_const: TerrainId
+    ) -> None:
         """
         Takes a scenario and a list of points to create units in the corresponding positions.
 

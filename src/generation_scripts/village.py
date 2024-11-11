@@ -14,7 +14,8 @@ class Village(AbstractTemplate):
     Class to generate villages on the map
     """
 
-    def generate(self, point_collection: PointCollection, map_manager: MapManager):
+    @staticmethod
+    def generate(map_manager: MapManager, point_collection: PointCollection) -> None:
         """
         Generates a village
         """
