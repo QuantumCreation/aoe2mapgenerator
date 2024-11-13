@@ -1,5 +1,5 @@
 from enum import Enum
-from aoe2mapgenerator.src.common.enums.enum import *
+from src.common.enums.enum import *
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo

@@ -7,21 +7,21 @@ from typing import Callable
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 from typing import List
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_PLAYER,
 )
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
+from src.map.map import Map
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.object_info import ObjectInfo
+from src.common.types import AOE2ObjectType
+from src.units.placers.placer_configs import PlaceGroupsConfig
 
 
 class GroupPlacerManager(PlacerBase):
@@ -63,7 +63,7 @@ class GroupPlacerManager(PlacerBase):
 
         # Adjust group size based on density if specified
         if group_density is not None:
-            group_size = group_density * len(points_list) // 100
+            group_size = int(group_density * len(points_list) // 100)
 
         # Choose a random start point if none is specified or invalid
         if start_point is None:
@@ -164,7 +164,7 @@ class GroupPlacerManager(PlacerBase):
 
     # ---------------------------- HELPER METHODS ----------------------------------
 
-    def _distance_to_edge(self, points, point):
+    def __distance_to_edge(self, points, point):
         """
         Finds distance to edge blocks.
 

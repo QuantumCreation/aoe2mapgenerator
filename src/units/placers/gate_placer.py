@@ -5,23 +5,23 @@ TODO:
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     Directions,
     MapLayerType,
     GateType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+from src.units.placers.point_management.point_collection import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.map.map_object import AOE2ObjectType
-from aoe2mapgenerator.src.common.enums.enum import GateObject
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import DEFAULT_PLAYER
+from src.units.placers.placer_base import PlacerBase
+from src.map.map_object import AOE2ObjectType
+from src.common.enums.enum import GateObject
+from src.common.constants.constants import (
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
-from aoe2mapgenerator.src.units.utils import manhattan_distance
+from src.units.utils import manhattan_distance
 
 
 class GatePlacer(PlacerBase):

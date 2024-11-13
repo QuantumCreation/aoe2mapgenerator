@@ -2,11 +2,11 @@
 This module contains the PointManager class, which is used to manage points in a set and list.
 """
 
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.units.placers.point_management.point_selector import (
+from src.map.map import Map
+from src.units.placers.point_management.point_selector import (
     PointSelector,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+from src.units.placers.point_management.point_collection import (
     PointCollection,
 )
 

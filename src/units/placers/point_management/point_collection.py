@@ -2,12 +2,12 @@
 This module contains the PointCollection class, which is used to store points in a set and list.
 """
 
-from typing import Union
+from typing import Union, List, Dict, Tuple
 
 # The Point type is a tuple of two integers.
-Point = tuple[int, int]
+Point = Tuple[int, int]
 # The PointDict maps a point tuple to the index of the point in the list.
-PointDict = dict[Point, int]
+PointDict = Dict[Point, int]
 
 
 class PointCollection:
@@ -15,12 +15,12 @@ class PointCollection:
     This is a class to store points in a set and list.
     """
 
-    def __init__(self):
-        self.__points_list = []
+    def __init__(self) -> None:
+        self.__points_list: List[Point] = []
         self.__points_dict: PointDict = {}
         self.points_removed: int = 0
 
-    def add_point(self, point: tuple[int, int]) -> None:
+    def add_point(self, point: Point) -> None:
         """
         Adds a point to the set and list
 
@@ -31,9 +31,7 @@ class PointCollection:
             self.__points_list.append(point)
             self.__points_dict[point] = len(self.__points_list) - 1
 
-    def add_points(
-        self, points: Union[list[tuple[int, int]], set[tuple[int, int]]]
-    ) -> None:
+    def add_points(self, points: Union[List[Point], set[Point]]) -> None:
         """
         Adds multiple points to the set and list
 
@@ -43,7 +41,7 @@ class PointCollection:
         for point in points:
             self.add_point(point)
 
-    def remove_point(self, point: tuple[int, int]) -> None:
+    def remove_point(self, point: Point) -> None:
         """
         Removes a point from the set and list
 
@@ -70,9 +68,7 @@ class PointCollection:
 
         self.points_removed += 1
 
-    def remove_points(
-        self, points: Union[list[tuple[int, int]], set[tuple[int, int]]]
-    ) -> None:
+    def remove_points(self, points: Union[List[Point], set[Point]]) -> None:
         """
         Removes multiple points from the set and list
 
@@ -82,7 +78,7 @@ class PointCollection:
         for point in points:
             self.remove_point(point)
 
-    def check_point_exists(self, point: tuple[int, int]) -> bool:
+    def check_point_exists(self, point: Point) -> bool:
         """
         Checks if a point exists in the set
 
@@ -91,7 +87,7 @@ class PointCollection:
         """
         return point in self.__points_dict
 
-    def get_sorted_points(self) -> list[tuple[int, int]]:
+    def get_sorted_points(self) -> List[Point]:
         """
         Gets the list of points sorted
 
@@ -100,7 +96,7 @@ class PointCollection:
         """
         return sorted(self.__points_list)
 
-    def get_point_dict(self) -> dict[tuple[int, int], int]:
+    def get_point_dict(self) -> PointDict:
         """
         Gets the dictionary of points
 
@@ -109,7 +105,7 @@ class PointCollection:
         """
         return self.__points_dict
 
-    def get_point_list(self) -> list[tuple[int, int]]:
+    def get_point_list(self) -> List[Point]:
         """
         Gets the list of points
 
@@ -124,15 +120,13 @@ class PointCollection:
         """
         return self.__points_list
 
-    def get_point_list_copy(self) -> list[tuple[int, int]]:
+    def get_point_list_copy(self) -> List[Point]:
         """
         Gets the list of points
         """
         return self.__points_list.copy()
 
-    def get_nearby_points(
-        self, point: tuple[int, int], search_distance: int
-    ) -> list[tuple[int, int]]:
+    def get_nearby_points(self, point: Point, search_distance: int) -> List[Point]:
         """
         Returns the k nearest points to the given point
 
@@ -141,9 +135,7 @@ class PointCollection:
         """
         return self._get_points_within_distance(point, search_distance)
 
-    def _get_points_within_distance(
-        self, point: tuple[int, int], distance: float
-    ) -> list[tuple[int, int]]:
+    def _get_points_within_distance(self, point: Point, distance: float) -> List[Point]:
         """
         Returns all points within a certain distance of the given point
 
@@ -151,7 +143,7 @@ class PointCollection:
             point (tuple): The point to find the nearest points to
             distance (float): The maximum distance from the point to include
         """
-        points = []
+        points: List[Point] = []
 
         for i in range(-int(distance), int(distance) + 1):
             for j in range(-int(distance), int(distance) + 1):
@@ -162,31 +154,31 @@ class PointCollection:
 
         return points
 
-    def get_leftmost_point(self) -> tuple[int, int]:
+    def get_leftmost_point(self) -> Point:
         """
         Gets the leftmost point in the set
         """
         return min(self.__points_list, key=lambda point: point[1])
 
-    def get_rightmost_point(self) -> tuple[int, int]:
+    def get_rightmost_point(self) -> Point:
         """
         Gets the rightmost point in the set
         """
         return max(self.__points_list, key=lambda point: point[1])
 
-    def get_topmost_point(self) -> tuple[int, int]:
+    def get_topmost_point(self) -> Point:
         """
         Gets the topmost point in the set
         """
         return min(self.__points_list, key=lambda point: point[0])
 
-    def get_bottommost_point(self) -> tuple[int, int]:
+    def get_bottommost_point(self) -> Point:
         """
         Gets the bottommost point in the set
         """
         return max(self.__points_list, key=lambda point: point[0])
 
-    def get_theoretical_top_left_corner_point(self) -> tuple[int, int]:
+    def get_theoretical_top_left_corner_point(self) -> Point:
         """
         Gets the theoretical top left corner point in the set
         """
@@ -194,7 +186,7 @@ class PointCollection:
         y = self.get_leftmost_point()[1]
         return (x, y)
 
-    def get_theoretical_bottom_right_corner_point(self) -> tuple[int, int]:
+    def get_theoretical_bottom_right_corner_point(self) -> Point:
         """
         Gets the theoretical bottom right corner point in the set
         """
@@ -202,7 +194,7 @@ class PointCollection:
         y = self.get_rightmost_point()[1]
         return (x, y)
 
-    def get_theoretical_top_right_corner_point(self) -> tuple[int, int]:
+    def get_theoretical_top_right_corner_point(self) -> Point:
         """
         Gets the theoretical top right corner point in the set
         """
@@ -210,7 +202,7 @@ class PointCollection:
         y = self.get_rightmost_point()[1]
         return (x, y)
 
-    def get_theoretical_bottom_left_corner_point(self) -> tuple[int, int]:
+    def get_theoretical_bottom_left_corner_point(self) -> Point:
         """
         Gets the theoretical bottom left corner point in the set
         """
@@ -220,7 +212,7 @@ class PointCollection:
 
     def get_maximal_points(
         self,
-    ) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]:
+    ) -> Tuple[Point, Point, Point, Point]:
         """
         Gets the maximal points in the set
         """
@@ -243,7 +235,7 @@ class PointCollection:
         """
         return 1 + abs(self.get_topmost_point()[0] - self.get_bottommost_point()[0])
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clears the point collector
         """

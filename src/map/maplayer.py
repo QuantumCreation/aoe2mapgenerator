@@ -6,15 +6,15 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 
 from typing import Any, List
 
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     DEFAULT_PLAYER,
 )
-from aoe2mapgenerator.src.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.serializer.base_serializer import Serializable
+from src.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
+from src.common.enums.enum import MapLayerType
+from src.common.types import AOE2ObjectType
+from src.map.map_object import MapObject
+from src.serializer.base_serializer import Serializable
 import ujson as json
 
 MapLayerArray = List[List[MapObject]]

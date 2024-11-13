@@ -7,20 +7,21 @@ import random
 import numpy as np
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_object import MapObject
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
 import numpy as np
 from scipy.ndimage import distance_transform_edt
-from aoe2mapgenerator.src.units.placers.placer_configs import (
+from src.units.placers.placer_configs import (
     PlaceGroupsConfig,
     AddBordersConfig,
     VoronoiGeneratorConfig,
 )
+from typing import List
 
 
 class VoronoiGenerator(PlacerBase):
@@ -53,9 +54,7 @@ class VoronoiGenerator(PlacerBase):
         interpoint_distance = configuration.interpoint_distance
         map_layer_type = configuration.map_layer_type
 
-        # Create a voronoi diagram.
         available_points = point_collection.get_point_list_copy()
-
         if len(available_points) == 0:
             return []
 
@@ -63,31 +62,80 @@ class VoronoiGenerator(PlacerBase):
         width = point_collection.get_y_point_range()
         top_left_corner = point_collection.get_theoretical_top_left_corner_point()
 
-        # Generate a Poisson-distributed set of points.
-        voronoi_seed_points = self._generate_poisson_voronoi_point_distribution(
-            width, height, interpoint_distance
+        voronoi_seed_points = self._generate_filtered_voronoi_seed_points(
+            width, height, interpoint_distance, available_points, top_left_corner
         )
 
-        # Filter out points that are not in the available points.
-        voronoi_seed_points = [
-            point
-            for point in voronoi_seed_points
-            if (point[0] + top_left_corner[0], point[1] + top_left_corner[1])
-            in available_points
-        ]
-
-        if voronoi_seed_points == []:
-            # If there are no points, grab a random point from the available points.
+        if not voronoi_seed_points:
             voronoi_seed_points = [
                 available_points[int(len(available_points) * random.random())]
             ]
 
-        new_zones = dict()
-
-        # Weird transposing magic happening. I think something is wrong here, but it works so I'm not touching it.
         voronoi_zones = generate_voronoi_l1(
             width, height, voronoi_seed_points, zone_shift=self.global_zone_counter
         )
+
+        return self._create_zones_from_voronoi(
+            voronoi_zones,
+            available_points,
+            top_left_corner,
+            map_layer_type,
+            point_collection,
+        )
+
+    def _generate_filtered_voronoi_seed_points(
+        self, width, height, interpoint_distance, available_points, top_left_corner
+    ) -> list[tuple[int, int]]:
+        """
+        Generates and filters voronoi seed points based on available points.
+
+        Args:
+            width (int): Width of the area.
+            height (int): Height of the area.
+            interpoint_distance (int): Minimum distance between points.
+            available_points (list): List of available points.
+            top_left_corner (tuple): Top left corner point.
+
+        Returns:
+            list: Filtered voronoi seed points.
+        """
+        voronoi_seed_points = self._generate_poisson_voronoi_point_distribution(
+            width, height, interpoint_distance
+        )
+
+        filtered_points = []
+        for point in voronoi_seed_points:
+            adjusted_point = (
+                point[0] + top_left_corner[0],
+                point[1] + top_left_corner[1],
+            )
+            if adjusted_point in available_points:
+                filtered_points.append(point)
+
+        return filtered_points
+
+    def _create_zones_from_voronoi(
+        self,
+        voronoi_zones,
+        available_points,
+        top_left_corner,
+        map_layer_type,
+        point_collection,
+    ) -> list[MapObject]:
+        """
+        Creates zones from voronoi zones and places them on the map.
+
+        Args:
+            voronoi_zones (list): Voronoi zones.
+            available_points (list): List of available points.
+            top_left_corner (tuple): Top left corner point.
+            map_layer_type (MapLayerType): Map layer type.
+            point_collection (PointCollection): Point collection.
+
+        Returns:
+            list: List of new zones.
+        """
+        new_zones = dict()
 
         for point in available_points:
             try:
@@ -106,10 +154,7 @@ class VoronoiGenerator(PlacerBase):
                 0,
             )
 
-            # This code to create the object is repeated in the map set point function
-            # There is likely a better way to do this, but I'm unsure what it is
             new_obj = MapObject(zone_value, PlayerId.GAIA)
-
             if new_obj not in new_zones:
                 new_zones[new_obj] = ""
 
@@ -125,7 +170,7 @@ class VoronoiGenerator(PlacerBase):
 
     def _generate_poisson_voronoi_point_distribution(
         self, width: int, height: int, interpoint_distance: int
-    ) -> list[tuple[int, int]]:
+    ) -> List[tuple[int, int]]:
         """
         Generates a list of points for creating a voronoi pattern
 
@@ -141,7 +186,7 @@ class VoronoiGenerator(PlacerBase):
         for i, (a, b) in enumerate(points):
             points[i] = [int(a), int(b)]
 
-        return points
+        return list(points)
 
     def _poisson_disk_sample(
         self, width=1.0, height=1.0, radius=0.025, k=30

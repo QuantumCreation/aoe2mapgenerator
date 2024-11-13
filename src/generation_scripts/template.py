@@ -3,8 +3,8 @@ This file contains the base class for all the generation scripts.
 """
 
 from abc import ABC, abstractmethod
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
 
@@ -20,7 +20,7 @@ class AbstractTemplate(ABC):
 
     @staticmethod
     @abstractmethod
-    def generate(point_collection: PointCollection, map_manager: MapManager):
+    def generate(map_manager: MapManager, point_collection: PointCollection):
         """
         Generate the map.
         """

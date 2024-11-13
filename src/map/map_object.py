@@ -5,13 +5,13 @@ TODO: Add module description
 from typing import Any
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.types import AOE2ObjectType
+from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     DisplacementType,
 )
 
-from aoe2mapgenerator.src.serializer.base_serializer import Serializable
+from src.serializer.base_serializer import Serializable
 import ujson as json
 
 

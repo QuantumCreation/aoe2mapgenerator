@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 
 
-from aoe2mapgenerator.src.map.map import Map
+from src.map.map import Map
 
 
 @pytest.mark.order(1)

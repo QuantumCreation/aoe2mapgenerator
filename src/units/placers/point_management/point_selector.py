@@ -4,14 +4,14 @@ Docsting
 
 import functools
 from typing import List
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.placer_configs import (
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_object import MapObject
+from src.units.placers.placer_configs import (
     PointSelectorConfig,
     PointSelectorInRangeConfig,
 )
-from aoe2mapgenerator.src.units.utils import manhattan_distance
+from src.units.utils import manhattan_distance
 
 
 class PointSelector:

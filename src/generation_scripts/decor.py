@@ -2,22 +2,22 @@
 Defines classes which place decor on the map
 """
 
-from aoe2mapgenerator.src.generation_scripts.template import AbstractTemplate
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.generation_scripts.template import AbstractTemplate
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
-from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
+from src.units.placers.placer_configs import PlaceGroupsConfig
 import dataclasses
 import ujson as json
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
 )
-from aoe2mapgenerator.src.units.placers.placer_configs import (
+from src.units.placers.placer_configs import (
     PointSelectorConfig,
     PointSelectorInRangeConfig,
 )
@@ -29,7 +29,7 @@ class AutumnDecor(AbstractTemplate):
     """
 
     @staticmethod
-    def generate(point_collection: PointCollection, map_manager: MapManager):
+    def generate(map_manager: MapManager, point_collection: PointCollection):
         """
         Places Autumn decor on the map.
 
