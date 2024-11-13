@@ -24,6 +24,7 @@ from src.common.types import AOE2ObjectType
 from typing import List
 from src.units.utils import manhattan_distance
 from src.map.map_object import MapObject
+from src.common.types import Point
 
 
 class PlacerBase:
@@ -58,7 +59,7 @@ class PlacerBase:
             margin (int): Area around the object to be placed.
         """
 
-        points = point_collection.get_point_list()
+        points: List[Point] = point_collection.get_point_list()
         search_radius = 5
 
         points = point_collection.get_nearby_points(starting_point, search_radius)

@@ -164,7 +164,7 @@ class GroupPlacerManager(PlacerBase):
 
     # ---------------------------- HELPER METHODS ----------------------------------
 
-    def _distance_to_edge(self, points, point):
+    def __distance_to_edge(self, points, point):
         """
         Finds distance to edge blocks.
 

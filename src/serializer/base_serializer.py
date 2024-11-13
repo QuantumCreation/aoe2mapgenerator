@@ -61,7 +61,7 @@ class SerializationRegistry:
             raise ValueError(f"Class {cls.__name__} must inherit from Serializable")
         self._types[cls.__name__] = cls
 
-    def deserialize_value(self, data: Dict[str, Any]) -> Serializable:
+    def deserialize(self, data: Dict[str, Any]) -> Serializable:
         """Deserialize a dictionary into an object"""
         if "_type" not in data:
             raise ValueError("Serialized data missing '_type' field")
@@ -97,7 +97,7 @@ class FunctionRunner:
         Handles nested lists and dictionaries containing serializable objects.
         """
         if isinstance(value, dict) and "_type" in value:
-            return self._serialization_registry.deserialize_value(value)
+            return self._serialization_registry.deserialize(value)
 
         if isinstance(value, list):
             # Handle List[SomeType] annotations
