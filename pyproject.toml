@@ -19,6 +19,7 @@ types-pyyaml = "^6.0.12.20240917"
 
 [tool.mypy]
 files = ["src"]
+norecursedirs = ["src/unit_tests"]
 ignore_missing_imports = true
 
 [build-system]

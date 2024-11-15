@@ -2,7 +2,7 @@
 Defines classes which place decor on the map
 """
 
-from src.generation_scripts.template import AbstractTemplate
+from src.templates.abstract_template import AbstractTemplate
 from src.map.map_manager import MapManager
 from src.units.placers.point_management.point_manager import (
     PointCollection,
@@ -29,7 +29,7 @@ class AutumnDecor(AbstractTemplate):
     """
 
     @staticmethod
-    def generate(map_manager: MapManager, point_collection: PointCollection):
+    def generate(map_manager: MapManager, point_collection: PointCollection) -> None:
         """
         Places Autumn decor on the map.
 

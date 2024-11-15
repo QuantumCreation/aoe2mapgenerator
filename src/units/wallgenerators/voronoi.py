@@ -145,7 +145,7 @@ class VoronoiGenerator(PlacerBase):
             except IndexError:
                 continue
 
-            self.place_single(
+            self._place_single(
                 point_collection,
                 map_layer_type,
                 point,

@@ -13,9 +13,18 @@ from src.units.placers.placer_configs import VoronoiGeneratorConfig
 from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.common.constants.constants import (
+    LINUX_PROJECT_PATH,
+    LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+)
+import os
+from src.utils.utils import current_function_name, combine_test_name_and_function_name
+
+FILE_NAME = os.path.basename(__file__).replace(".py", "")
 
 
-def test_voronoi():
+def test_voronoi(should_visualize):
     """
     Tests the creation of a map with size 500.
     """
@@ -35,5 +44,18 @@ def test_voronoi():
     )
 
     zones = map_manager.place_voronoi_zones(configuration)
+
+    if should_visualize:
+        # Visualize the map
+        visualize_config = VisualizeMapConfig(
+            map_layer_type=MapLayerType.UNIT,
+            include_zones=True,
+            transpose=False,
+            save_figure=True,
+            file_name=combine_test_name_and_function_name(FILE_NAME),
+            file_path=LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+        )
+
+        map_manager.visualize_map(visualize_config)
 
     assert len(zones) > 3

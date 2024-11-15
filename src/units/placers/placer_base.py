@@ -46,9 +46,10 @@ class PlacerBase:
         starting_point: tuple,
         player_id: PlayerId,
         margin: int = 0,
-    ):
+    ) -> None:
         """
-        Places an object as close as possible to the starting point.
+        Places an object as close as possible to the starting point, while still being a valid placement.
+        Searches through nearby points within the point collection to find a valid placement.
 
         Args:
             point_collection (PointCollection): The point manager.
@@ -73,7 +74,7 @@ class PlacerBase:
             if status == CheckPlacementReturnTypes.FAIL:
                 return
 
-            self.place_single(
+            self._place_single(
                 point_collection,
                 map_layer_type,
                 (x, y),
@@ -83,21 +84,42 @@ class PlacerBase:
             )
             return
 
-    def safe_set_point(
+    def place_if_possible(
         self,
         point_collection: PointCollection,
-        point: tuple[int, int],
-        obj_type: AOE2ObjectType,
         map_layer_type: MapLayerType,
+        obj_type: AOE2ObjectType,
+        starting_point: Point,
         player_id: PlayerId,
-    ):
+        margin: int = 0,
+    ) -> None:
         """
-        Safely sets a point on the map by removing it from the point manager and updating relevant static variables.
+        Places an object if a valid placement exists.
+
+        Args:
+            point_collection (PointCollection): The point manager.
+            map_layer_type (MapLayerType): The map type.
+            obj_type (object): The type of object to be placed.
+            player_id (PlayerId): Id of the player for the given object.
+            margin (int): Area around the object to be placed.
         """
-        self.map.set_point(point, obj_type, map_layer_type, player_id)
-        PlacerBase.points_set_on_map += 1
-        point_collection.remove_point(point)
-        PlacerBase.points_removed_from_point_collection += 1
+        print(margin)
+        status = self._check_placement(
+            point_collection, starting_point, obj_type, margin
+        )
+        print(point_collection.get_point_list())
+        print(status)
+        print(starting_point)
+        if status == CheckPlacementReturnTypes.SUCCESS:
+            self._place_single(
+                point_collection,
+                map_layer_type,
+                starting_point,
+                obj_type,
+                player_id,
+                margin,
+            )
+            return
 
     def place_multiple(
         self,
@@ -121,11 +143,11 @@ class PlacerBase:
         """
 
         for point in points:
-            self.place_single(
+            self._place_single(
                 point_collection, map_layer_type, point, obj_type, player_id, margin
             )
 
-    def place_single(
+    def _place_single(
         self,
         point_collection: PointCollection,
         map_layer_type: MapLayerType,
@@ -165,7 +187,7 @@ class PlacerBase:
             for i in range(-margin, eff_width):
                 for j in range(-margin, eff_height):
                     if 0 <= i < width and 0 <= j < height:
-                        self.safe_set_point(
+                        self.__set_point_and_track_changes(
                             point_collection,
                             (x + i, y + j),
                             GHOST_OBJECT_DISPLACEMENT_ID,
@@ -177,7 +199,7 @@ class PlacerBase:
         object_placement_point = (x + width // 2, y + height // 2)
         placements["objects"].append(object_placement_point)
 
-        self.safe_set_point(
+        self.__set_point_and_track_changes(
             point_collection,
             object_placement_point,
             obj_type,
@@ -219,9 +241,25 @@ class PlacerBase:
 
         return CheckPlacementReturnTypes.SUCCESS
 
+    def __set_point_and_track_changes(
+        self,
+        point_collection: PointCollection,
+        point: tuple[int, int],
+        obj_type: AOE2ObjectType,
+        map_layer_type: MapLayerType,
+        player_id: PlayerId,
+    ):
+        """
+        Safely sets a point on the map by removing it from the point manager and updating relevant static variables.
+        """
+        self.map.set_point(point, obj_type, map_layer_type, player_id)
+        PlacerBase.points_set_on_map += 1
+        point_collection.remove_point(point)
+        PlacerBase.points_removed_from_point_collection += 1
+
     # ---------------------------- SORTING FUNCTIONS ----------------------------
 
-    def default_clumping_func(self, p1, p2, clumping):
+    def _default_clumping_func(self, p1, p2, clumping):
         """
         Default clumping function.
 

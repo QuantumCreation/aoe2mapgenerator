@@ -2,7 +2,7 @@
 Defines classes which places villages on the map
 """
 
-from src.generation_scripts.template import AbstractTemplate
+from src.templates.abstract_template import AbstractTemplate
 from src.map.map_manager import MapManager
 from src.units.placers.point_management.point_manager import (
     PointCollection,

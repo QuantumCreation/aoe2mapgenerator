@@ -14,6 +14,7 @@ from src.map.map import Map
 from src.utils.utils import unique_value_list
 from src.units.placers.placer_configs import VisualizeMapConfig
 from src.map.map_object import MapObject
+import os
 
 
 class Visualizer:
@@ -132,6 +133,12 @@ class Visualizer:
             mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
 
         ax.matshow(mat)
+
+        if configuration.save_figure:
+            plt.savefig(
+                os.path.join(configuration.file_path, configuration.file_name),
+                bbox_inches="tight",
+            )
 
     def visualize_map(self):
         """

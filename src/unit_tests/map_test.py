@@ -9,6 +9,15 @@ import numpy as np
 
 
 from src.map.map import Map
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.common.constants.constants import (
+    LINUX_PROJECT_PATH,
+    LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+)
+import os
+from src.utils.utils import current_function_name, combine_test_name_and_function_name
+
+FILE_NAME = os.path.basename(__file__).replace(".py", "")
 
 
 @pytest.mark.order(1)

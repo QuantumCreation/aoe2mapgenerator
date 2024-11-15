@@ -4,10 +4,14 @@ repos:
     - id: run-pytest
       name: Run pytest
       entry: ./run_tests.sh -v
-      require_serial: true
       language: system
+      require_serial: true
       types: [python]
-
+      pass_filenames: false
+      stages: [commit] 
+      exclude: ^src/unit_tests/unit_test_result_images/
+      args: ["--should-visualize=false"]  # Pass the flag to pytest
+ 
 
   - repo: local
     hooks:
@@ -17,3 +21,5 @@ repos:
       require_serial: true
       language: system
       types: [python]
+
+      

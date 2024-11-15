@@ -30,18 +30,13 @@ class WallPlacer(PlacerBase):
         Adds borders to a cell based on border margin size and type.
 
         Args:
-            map_layer_type: The map type.
-            array_space_type: Array space id to get points for.
-            obj_type_list: The type of object to be placed.
-            margin: Type of margin to place.
-            player_id: Id of the objects being placed.
-            place_on_n_maps: Number of maps to place the objects on.
+            configuration (AddBordersConfig): Configuration for adding borders to
         """
         point_collection = configuration.point_collection
         map_layer_type = configuration.map_layer_type
-        obj_type = configuration.obj_type
+        obj_type: AOE2ObjectType = configuration.obj_type
         player_id = configuration.player_id
-        margin = configuration.margin
+        border_width = configuration.border_width
 
         if player_id is None:
             player_id = DEFAULT_PLAYER
@@ -49,19 +44,21 @@ class WallPlacer(PlacerBase):
         points = point_collection.get_point_list_copy()
 
         # As points are added to the original point manager
-        # They get removed, howeer that interferes with the loop
+        # They get removed, however that interferes with the loop
         # that calculates whether or not a point is on the border.
         copy_point_collection = point_collection.copy()
 
         for point in points:
-            if self._is_on_border(copy_point_collection, point, margin):
+            if self.__is_on_border(copy_point_collection, point, border_width):
 
-                self.safe_set_point(
+                # margin 0 since each wall is placed next to other wall pieces
+                self.place_if_possible(
                     point_collection=point_collection,
-                    point=point,
-                    obj_type=obj_type,
                     map_layer_type=map_layer_type,
+                    obj_type=obj_type,
+                    starting_point=point,
                     player_id=player_id,
+                    margin=0,
                 )
 
         return
@@ -81,7 +78,7 @@ class WallPlacer(PlacerBase):
         points_away_from_border = []
 
         for point in points_list:
-            if self._is_on_border(point_collection, point, 5):
+            if self.__is_on_border(point_collection, point, 5):
                 continue
             points_away_from_border.append(point)
 
@@ -89,11 +86,11 @@ class WallPlacer(PlacerBase):
             random.randint(0, len(points_away_from_border) - 1)
         ]
 
-    def _is_on_border(
+    def __is_on_border(
         self,
         point_collection: PointCollection,
         point: tuple[int, int],
-        margin: int,
+        border_width: int,
     ):
         """
         Checks if given point is on a border.
@@ -101,12 +98,12 @@ class WallPlacer(PlacerBase):
         Args:
             points: Set of all points in space.
             point: single point to find distance for.
-            margin: Number of squares to fill in along the edge.
+            border_width: Number of squares to fill in along the edge.
         """
         x, y = point
 
-        for i in range(-margin, margin + 1):
-            for j in range(-abs(abs(i) - margin), abs(abs(i) - margin) + 1):
+        for i in range(-border_width, border_width + 1):
+            for j in range(-abs(abs(i) - border_width), abs(abs(i) - border_width) + 1):
                 neighbor_point = (x + i, y + j)
                 point_exists = point_collection.check_point_exists(neighbor_point)
                 if not point_exists:

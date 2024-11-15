@@ -29,14 +29,21 @@ class PointManager:
         self.__point_collections: dict[str, PointCollection] = {}
         self.points_removed: int = 0
 
-    def add_point_collection(self, name: str, points: list[Point] = []) -> None:
+    def add_point_collection(
+        self, name: str, points: list[Point] = [], make_unique=False
+    ) -> str:
         """
         Adds a point collection to the list
 
         Args:
             name (str): The name of the point collection
             points (list[Point]): The list of points to add to the collection
+
+        Returns: Name of the point collection
         """
+        if make_unique:
+            name = self.__make_unique_name(name)
+
         if name in self.__point_collections:
             raise ValueError(
                 f"A point collection with the name '{name}' already exists."
@@ -46,6 +53,22 @@ class PointManager:
         point_collection.add_points(points)
 
         self.__point_collections[name] = point_collection
+
+        return name
+
+    def remove_point_collection(self, name: str) -> None:
+        """
+        Removes a point collection from the list
+
+        Args:
+            name (str): The name of the point collection
+        """
+        if name not in self.__point_collections:
+            raise ValueError(
+                f"A point collection with the name '{name}' does not exist."
+            )
+
+        del self.__point_collections[name]
 
     def get_point_collection(self, name: str) -> PointCollection:
         """
@@ -65,3 +88,14 @@ class PointManager:
         Lists all the point collections
         """
         return list(self.__point_collections.keys())
+
+    def __make_unique_name(self, name: str) -> str:
+        """
+        Makes a unique name for the point collection
+        """
+        i = 1
+        new_name = name
+        while new_name in self.__point_collections:
+            new_name = f"{name}_{i}"
+            i += 1
+        return new_name

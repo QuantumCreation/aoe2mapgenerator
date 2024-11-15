@@ -29,6 +29,7 @@ from src.common.types import AOE2ObjectType
 from typing import Callable
 from src.map.map_object import MapObject
 from src.units.utils import default_clumping_func
+from src.common.constants.constants import LINUX_PROJECT_PATH
 
 
 @dataclass
@@ -48,7 +49,7 @@ class AddBordersConfig:
     map_layer_type: MapLayerType
     obj_type: AOE2ObjectType
     player_id: PlayerId = DEFAULT_PLAYER
-    margin: int = 1
+    border_width: int = 1
 
 
 @dataclass
@@ -121,6 +122,9 @@ class VisualizeMapConfig:
     fig_size: tuple[int, int] = (15, 15)
     include_legend: bool = True
     anchor: tuple[float, float] = (1.25, 1)
+    save_figure: bool = False
+    file_name: str = "map_visualization.png"
+    file_path: str = LINUX_PROJECT_PATH
 
 
 @dataclass

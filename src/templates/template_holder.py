@@ -2,7 +2,7 @@
 Template Holder class which holders objects of the Template class.
 """
 
-from src.generation_scripts.template import AbstractTemplate
+from src.templates.abstract_template import AbstractTemplate
 from typing import List
 
 
