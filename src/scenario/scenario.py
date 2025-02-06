@@ -179,11 +179,43 @@ class Scenario:
 
         map_manager.map_size = map_size
 
-    def save_file(self, output_file_full_path: str) -> None:
+    def save_file(
+        self,
+        file_name: str = "test.aoe2scenario",
+        output_file_dir: str = BASE_SCENE_DIR_LINUX,
+    ) -> None:
         """
         Saves the scenario to the given output file name.
 
         Args:
             output_file_full_path (str): Full path to the output file.
         """
-        self.scenario.write_to_file(output_file_full_path)
+        file_name = (
+            file_name
+            if file_name.endswith(".aoe2scenario")
+            else file_name + ".aoe2scenario"
+        )
+        file_name = self._generate_unique_filename(file_name, output_file_dir)
+        self.scenario.write_to_file(os.path.join(output_file_dir, file_name))
+        print(f"File saved to {os.path.join(output_file_dir, file_name)}")
+
+    def _generate_unique_filename(self, file_name: str, output_file_dir: str) -> str:
+        """
+        Generates a unique filename by appending a number if the file already exists.
+
+        Args:
+            file_name (str): Desired file name.
+            output_file_dir (str): Directory to check for existing files.
+
+        Returns:
+            str: Unique file name.
+        """
+        base_name, extension = os.path.splitext(file_name)
+        counter = 1
+        unique_file_name = file_name
+
+        while os.path.exists(os.path.join(output_file_dir, unique_file_name)):
+            unique_file_name = f"{base_name}_{counter}{extension}"
+            counter += 1
+
+        return unique_file_name

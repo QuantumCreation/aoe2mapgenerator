@@ -12,6 +12,7 @@ from src.units.placers.placer_configs import (
     PointSelectorInRangeConfig,
 )
 from src.units.utils import manhattan_distance
+from src.units.placers.point_management.point_collection import PointCollection
 
 
 class PointSelector:
@@ -97,6 +98,44 @@ class PointSelector:
             for potential_point in points
             if min_range <= manhattan_distance(potential_point, point) <= max_range
         }
+
+    def get_connected_points(
+        self,
+        point_collection: PointCollection,
+        starting_point: tuple[int, int],
+        map_layer_type: MapLayerType,
+        object_type: MapObject,
+    ) -> set[tuple[int, int]]:
+        """
+        Gets all contiguous points of the same type.
+
+        Args:
+            point (tuple[int, int]): The starting point.
+            map_layer_type (MapLayerType): The type of map layer to use.
+            object_type (MapObject): The type of object to use.
+        """
+        visited = set()
+        to_visit = [starting_point]
+
+        while to_visit:
+            current_point = to_visit.pop()
+            if current_point in visited:
+                continue
+
+            visited.add(current_point)
+            neighbors = point_collection.get_neighbors(current_point)
+
+            for neighbor in neighbors:
+                if (
+                    neighbor not in visited
+                    and self.map.get_map_layer(
+                        map_layer_type=map_layer_type
+                    ).get_object_at_point(neighbor)
+                    == object_type
+                ):
+                    to_visit.append(neighbor)
+
+        return visited
 
     # def get_all_points_in_range(
     #     self, point: tuple[int, int], point_manager: PointManager

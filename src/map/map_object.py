@@ -13,6 +13,7 @@ from src.common.constants.constants import (
 
 from src.serializer.base_serializer import Serializable
 import ujson as json
+from src.utils.flywheel_factory import FlywheelFactory
 
 
 class MapObject(Serializable):
@@ -20,13 +21,31 @@ class MapObject(Serializable):
     Class for the Age of Empires Map Object
     """
 
+    # USing a flywheel causes issues elsewhere
+    # def __new__(cls, obj_type: AOE2ObjectType, player_id):
+    #     """
+    #     Returns a cached instance of MapObject if available, otherwise creates a new one.
+
+    #     Args:
+    #         obj_type (AOE2ObjectType): The type of object.
+    #         player_id (PlayerId): The owner of the object.
+    #     """
+    #     key = (obj_type, player_id)
+    #     return FlywheelFactory.get_instance(
+    #         key, lambda: super(MapObject, cls).__new__(cls)
+    #     )
+
     def __init__(
         self,
         obj_type: AOE2ObjectType | DisplacementType = DEFAULT_EMPTY_VALUE,
         player_id: PlayerId = PlayerId.GAIA,
     ):
+        self._initialized = True
         self._obj_type = obj_type
         self._player_id = player_id
+
+    def __repr__(self):
+        return f"MapObject({self.obj_type}, Player: {self.player_id})"
 
     def __hash__(self):
         return hash((self._obj_type, self._player_id))

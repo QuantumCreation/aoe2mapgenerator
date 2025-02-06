@@ -21,6 +21,10 @@ from src.units.placers.placer_configs import (
     PointSelectorConfig,
     PointSelectorInRangeConfig,
 )
+from src.templates.gate_utility import generate_polygon_walls_with_gates
+from src.common.enums.enum import GateType
+from src.templates.decor import AutumnDecor
+from typing import Tuple
 
 
 class FortTemplate(AbstractTemplate):
@@ -29,7 +33,13 @@ class FortTemplate(AbstractTemplate):
     """
 
     @staticmethod
-    def generate(map_manager: MapManager, point_collection: PointCollection) -> None:
+    def generate2(
+        map_manager: MapManager,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int],
+        sides: int = 8,
+        radius: int = 12,
+    ) -> None:
         """
         Places Autumn decor on the map.
 
@@ -38,16 +48,16 @@ class FortTemplate(AbstractTemplate):
             map_manager (MapManager): Manages the map.
         """
 
+        distance_from_center = 10
         map_layer_type = MapLayerType.UNIT
 
-        config = PlaceGroupsConfig(
+        generate_polygon_walls_with_gates(
+            map_manager=map_manager,
             point_collection=point_collection,
-            map_layer_type=map_layer_type,
-            object_type=OtherInfo.TREE_OAK_AUTUMN,
-            player_id=PlayerId.GAIA,
-            group_size=250,
-            groups_density=0.0001,
-            clumping=15,
+            point=center_point,
+            sides=sides,
+            radius=radius,
+            gate_type=GateType.FORTIFIED_GATE,
         )
 
-        map_manager.place_groups(config)
+        # AutumnDecor.generate(map_manager, point_collection)

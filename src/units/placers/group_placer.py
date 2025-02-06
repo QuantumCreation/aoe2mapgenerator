@@ -23,6 +23,7 @@ from src.units.placers.object_info import ObjectInfo
 from src.common.types import AOE2ObjectType
 from src.units.placers.placer_configs import PlaceGroupsConfig
 from src.common.types import Point
+from src.units.placers.point_management.points_returned import PointPlacementResults
 
 
 class GroupPlacerManager(PlacerBase):
@@ -35,7 +36,7 @@ class GroupPlacerManager(PlacerBase):
     def place_groups(
         self,
         configuration: PlaceGroupsConfig,
-    ) -> dict[str, List[tuple[int, int]]]:
+    ) -> None:
         """
         Places multiple groups of objects.
 
@@ -45,28 +46,10 @@ class GroupPlacerManager(PlacerBase):
         Returns:
             dict[str, List[tuple[int, int]]]: Dictionary containing group centers, objects, and displacements.
         """
-        all_placements = self._initialize_placements()
         groups = self._determine_group_count(configuration)
 
         for _ in range(groups):
-            placements = self._place_group(configuration)
-            if placements:
-                self._update_all_placements(all_placements, placements)
-
-        return all_placements
-
-    def _initialize_placements(self) -> dict[str, List[tuple[int, int]]]:
-        """
-        Initializes the placements dictionary.
-
-        Returns:
-            dict[str, List[tuple[int, int]]]: Initialized placements dictionary.
-        """
-        return {
-            "group_centers": [],
-            "objects": [],
-            "displacements": [],
-        }
+            self._place_group(configuration)
 
     def _determine_group_count(self, configuration: PlaceGroupsConfig) -> int:
         """
@@ -88,26 +71,10 @@ class GroupPlacerManager(PlacerBase):
             configuration.groups = groups
         return configuration.groups
 
-    def _update_all_placements(
-        self,
-        all_placements: dict[str, List[tuple[int, int]]],
-        placements: dict[str, List[tuple[int, int]]],
-    ) -> None:
-        """
-        Updates the all_placements dictionary with new placements.
-
-        Args:
-            all_placements (dict[str, List[tuple[int, int]]]): Dictionary containing all placements.
-            placements (dict[str, List[tuple[int, int]]]): Dictionary containing new placements.
-        """
-        all_placements["group_centers"].extend(placements["group_center"])
-        all_placements["objects"].extend(placements["objects"])
-        all_placements["displacements"].extend(placements["displacements"])
-
     def _place_group(
         self,
         configuration: PlaceGroupsConfig,
-    ) -> dict[str, List[tuple[int, int]]] | None:
+    ) -> None:
         """
         Places a single group of units on a specific array space.
 
@@ -127,9 +94,7 @@ class GroupPlacerManager(PlacerBase):
         start_point: Point = self._choose_start_point(configuration, points_list)
         points_list = self._prepare_points_list(configuration, points_list, start_point)
 
-        return self._place_objects(
-            configuration, points_list, start_point, group_size, player_id
-        )
+        self._place_objects(configuration, points_list, group_size, player_id)
 
     def _adjust_group_size(
         self, configuration: PlaceGroupsConfig, points_list: List[tuple[int, int]]
@@ -172,7 +137,8 @@ class GroupPlacerManager(PlacerBase):
         start_point: Point,
     ) -> List[Point]:
         """
-        Prepares the points list based on the configuration and start point.
+        Prepares the points list based on the configuration and start point. This finds the points closest to the start point
+        and sorts them based on the clumping function.
 
         Args:
             configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
@@ -207,10 +173,9 @@ class GroupPlacerManager(PlacerBase):
         self,
         configuration: PlaceGroupsConfig,
         points_list: List[tuple[int, int]],
-        start_point: tuple[int, int],
         group_size: int,
         player_id: PlayerId,
-    ) -> dict[str, List[tuple[int, int]]]:
+    ) -> None:
         """
         Places objects on the map based on the configuration and points list.
 
@@ -225,11 +190,6 @@ class GroupPlacerManager(PlacerBase):
             dict[str, List[tuple[int, int]]]: Dictionary containing group center, objects, and displacements.
         """
         placed = 0
-        all_placements = {
-            "group_center": [start_point],
-            "objects": [],
-            "displacements": [],
-        }
 
         for x, y in points_list:
             GroupPlacerManager.points_iterated += 1
@@ -247,7 +207,7 @@ class GroupPlacerManager(PlacerBase):
                 break
 
             if status == CheckPlacementReturnTypes.SUCCESS:
-                placements = self._place_single(
+                self._place_single(
                     configuration.point_collection,
                     configuration.map_layer_type,
                     (x, y),
@@ -255,11 +215,7 @@ class GroupPlacerManager(PlacerBase):
                     player_id,
                     configuration.margin,
                 )
-                all_placements["objects"].extend(placements["objects"])
-                all_placements["displacements"].extend(placements["displacements"])
                 placed += 1
-
-        return all_placements
 
     # ---------------------------- HELPER METHODS ----------------------------------
 

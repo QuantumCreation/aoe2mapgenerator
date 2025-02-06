@@ -78,6 +78,7 @@ from src.units.placers.placer_configs import (
 from src.units.placers.point_management.point_manager import (
     PointManager,
 )
+from src.scenario.scenario import Scenario
 
 
 class MapManager:
@@ -88,6 +89,7 @@ class MapManager:
     def __init__(self, map_size: int):
         self.map: Map = Map(map_size)
         self.templates: list = []
+        self.scenario: Scenario | None = None
 
         # Initialize the placers
         self.base_placer: PlacerBase = PlacerBase(self.map)
@@ -102,14 +104,25 @@ class MapManager:
         # Initialize the visualizer
         self.visualizer: Visualizer = Visualizer(self.map)
 
+    def write_map_and_save(self, file_name: str):
+        """
+        Writes the map and saves it to a file.
+        """
+        if self.scenario is None:
+            self.scenario = Scenario(self.map)
+
+        self.scenario._change_map_size(self.map.size)
+        self.scenario.write_map()
+        self.scenario.save_file(file_name)
+
     def place_groups(
         self,
         configuration: PlaceGroupsConfig,
-    ) -> dict[str, list[tuple[int, int]]]:
+    ) -> None:
         """
         Places groups of objects on the map.
         """
-        return self.group_placer.place_groups(configuration)
+        self.group_placer.place_groups(configuration)
 
     def place_borders(
         self,

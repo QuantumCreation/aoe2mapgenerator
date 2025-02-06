@@ -1,0 +1,6027 @@
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/utils/utils.py
+"""
+Contains utility functions for all classes
+"""
+
+import inspect
+
+
+def set_from_matrix(matrix):
+    """
+    Takes a matrix and gets a set of the values.
+
+    Args:
+        matrix: Matrix to flatten.
+    """
+    result = set()
+
+    for row in matrix:
+        for ele in row:
+            result.add(ele)
+
+    return result
+
+
+def unique_value_list(matrix):
+    """
+    Takes a matrix and returns a list of the unique values.
+
+    Args:
+        matrix: Matrix to get unique values from.
+    """
+    return list(set_from_matrix(matrix))
+
+
+def current_function_name():
+    """
+    Returns the name of the current function.
+    """
+    return inspect.stack()[2].function
+
+
+def combine_test_name_and_function_name(test_name: str):
+    """
+    Combines the test name with the function name.
+    """
+    return test_name + "|" + current_function_name()
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/utils/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/manager/mapmanager.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/utils.py
+"""
+Holds various utility functions for placing objects on a map.
+"""
+
+import random
+from typing import List, Optional, Tuple
+import numpy as np
+
+
+def default_clumping_func(
+    p1: Tuple[int, int], p2: Tuple[int, int], clumping: int
+) -> float:
+    """
+    Default clumping function.
+
+    Args:
+        p1: First point.
+        p2: Second point.
+        clumping: Factor to determine how clumped placed objects in a group are.
+    """
+    if clumping == -1:
+        clumping = 999
+
+    distance = (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+    return (distance) + random.random() * (clumping) ** 2
+
+
+def manhattan_distance(p1: Tuple[int, int], p2: Tuple[int, int]) -> int:
+    """
+    Calculates the Manhattan distance between two points.
+
+    Args:
+        p1: First point.
+        p2: Second point.
+    """
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+
+def connect_points_with_randomization(
+    key_point_list: List[Tuple[int, int]],
+    num_divisions: int,
+    random_shift_range: int,
+    base_points: Optional[List[Tuple[int, int]]] = None,
+) -> List[Tuple[int, int]]:
+    """
+    Creates list of all connecting points with additional randomization for a list of points.
+
+    Args:
+        key_point_list: List of points in order that will be connected, these points will always be included in the final list.
+        num_divisions: Number of splits to add.
+        random_shift_range: Range to shift each point along the original main line.
+        base_points: Optional list of base points.
+    """
+    if not base_points:
+        base_points = connect_points(key_point_list)
+    else:
+        if not _check_base_point_valid(base_points, key_point_list):
+            raise ValueError("Base points must include all key points.")
+
+    new_point_indicies = get_indicies_of_key_points(base_points, key_point_list)
+
+    for i in range(num_divisions + 2):
+        index = int(((len(base_points) - 1) / (num_divisions + 1)) * (i))
+        new_point_indicies.append(index)
+
+    new_point_indicies.sort()
+    new_points = [base_points[i] for i in new_point_indicies]
+
+    for i, point in enumerate(new_points):
+        if point not in key_point_list:
+            new_points[i] = (
+                point[0] + random.randint(-random_shift_range, random_shift_range),
+                point[1] + random.randint(-random_shift_range, random_shift_range),
+            )
+
+    randomized_points = connect_points(new_points)
+    return randomized_points
+
+
+def connect_points(point_list: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    """
+    Creates list of all connecting points for a list of outer perimeter points.
+
+    Args:
+        point_list: List of outer perimeter points in order.
+
+    Returns list of points connecting each adjacent set of perimeter points.
+    """
+    returned_points: List[Tuple[int, int]] = []
+
+    for i, (x, y) in enumerate(point_list[:-1]):
+        next_point: List[int] = [
+            point_list[(i + 1) % len(point_list)][0],
+            point_list[(i + 1) % len(point_list)][1],
+        ]
+
+        points_to_connect: np.ndarray = np.array([[x, y], next_point], dtype=np.int32)
+
+        new_points = _connect(points_to_connect)
+        returned_points.extend(new_points)
+
+    return [tuple(point) for point in np.array(returned_points)]
+
+
+def _check_base_point_valid(
+    base_points: List[Tuple[int, int]], key_points: List[Tuple[int, int]]
+) -> bool:
+    """
+    Checks if the base points are valid.
+
+    Args:
+        base_points: List of base points.
+        key_points: List of key points.
+    """
+    for key_point in key_points:
+        if key_point not in base_points:
+            return False
+    return True
+
+
+def get_indicies_of_key_points(
+    base_points: List[Tuple[int, int]], key_points: List[Tuple[int, int]]
+) -> List[int]:
+    """
+    Gets the indicies of the key points in the base points list.
+
+    Args:
+        base_points: List of base points.
+        key_points: List of key points.
+    """
+    key_point_indicies: List[int] = []
+    for key_point in key_points:
+        key_point_indicies.append(base_points.index(key_point))
+
+    return list(reversed(key_point_indicies))
+
+
+def _connect(ends: np.ndarray) -> np.ndarray:
+    """
+    Connects a start and end point.
+
+    Args:
+        ends: List with a start (x,y) coordinate and an end (x,y) coordinate.
+    """
+    d0, d1 = np.abs(np.diff(ends, axis=0).astype(np.int32))[0]
+    if d0 > d1:
+        return np.c_[
+            np.linspace(ends[0, 0], ends[1, 0], d0 + 1, dtype=np.int32),
+            np.round(np.linspace(ends[0, 1], ends[1, 1], d0 + 1)).astype(np.int32),
+        ]
+    return np.c_[
+        np.round(np.linspace(ends[0, 0], ends[1, 0], d1 + 1)).astype(np.int32),
+        np.linspace(ends[0, 1], ends[1, 1], d1 + 1, dtype=np.int32),
+    ]
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/wallgenerators/voronoi.py
+"""
+TODO: Add a description of this file.
+"""
+
+import random
+
+import numpy as np
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_object import MapObject
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+import numpy as np
+from scipy.ndimage import distance_transform_edt
+from src.units.placers.placer_configs import (
+    PlaceGroupsConfig,
+    AddBordersConfig,
+    VoronoiGeneratorConfig,
+)
+from typing import List
+
+
+class VoronoiGenerator(PlacerBase):
+    """
+    Class for generating voronoi patterns.
+    """
+
+    global_zone_counter = 0
+
+    def __init__(self, aoe2_map: Map):
+        super().__init__(aoe2_map)
+        self.size = aoe2_map.size
+
+    def generate_voronoi_cells(
+        self,
+        configuration: VoronoiGeneratorConfig,
+    ) -> list[MapObject]:
+        """
+        Generates an array of voronoi shapes, with numbers starting from -1 and going down.
+
+        Args:
+            interpoint_distance (int): Minimum distance between points.
+            map_layer_type_list (list): List of map layer types to use.
+            array_space_type_list (list): List of array space types to use.
+
+        Returns:
+            list: List of the new zones.
+        """
+        point_collection = configuration.point_collection
+        interpoint_distance = configuration.interpoint_distance
+        map_layer_type = configuration.map_layer_type
+
+        available_points = point_collection.get_point_list_copy()
+        if len(available_points) == 0:
+            return []
+
+        height = point_collection.get_x_point_range()
+        width = point_collection.get_y_point_range()
+        top_left_corner = point_collection.get_theoretical_top_left_corner_point()
+
+        voronoi_seed_points = self._generate_filtered_voronoi_seed_points(
+            width, height, interpoint_distance, available_points, top_left_corner
+        )
+
+        if not voronoi_seed_points:
+            voronoi_seed_points = [
+                available_points[int(len(available_points) * random.random())]
+            ]
+
+        voronoi_zones = generate_voronoi_l1(
+            width, height, voronoi_seed_points, zone_shift=self.global_zone_counter
+        )
+
+        return self._create_zones_from_voronoi(
+            voronoi_zones,
+            available_points,
+            top_left_corner,
+            map_layer_type,
+            point_collection,
+        )
+
+    def _generate_filtered_voronoi_seed_points(
+        self, width, height, interpoint_distance, available_points, top_left_corner
+    ) -> list[tuple[int, int]]:
+        """
+        Generates and filters voronoi seed points based on available points.
+
+        Args:
+            width (int): Width of the area.
+            height (int): Height of the area.
+            interpoint_distance (int): Minimum distance between points.
+            available_points (list): List of available points.
+            top_left_corner (tuple): Top left corner point.
+
+        Returns:
+            list: Filtered voronoi seed points.
+        """
+        voronoi_seed_points = self._generate_poisson_voronoi_point_distribution(
+            width, height, interpoint_distance
+        )
+
+        filtered_points = []
+        for point in voronoi_seed_points:
+            adjusted_point = (
+                point[0] + top_left_corner[0],
+                point[1] + top_left_corner[1],
+            )
+            if adjusted_point in available_points:
+                filtered_points.append(point)
+
+        return filtered_points
+
+    def _create_zones_from_voronoi(
+        self,
+        voronoi_zones,
+        available_points,
+        top_left_corner,
+        map_layer_type,
+        point_collection,
+    ) -> list[MapObject]:
+        """
+        Creates zones from voronoi zones and places them on the map.
+
+        Args:
+            voronoi_zones (list): Voronoi zones.
+            available_points (list): List of available points.
+            top_left_corner (tuple): Top left corner point.
+            map_layer_type (MapLayerType): Map layer type.
+            point_collection (PointCollection): Point collection.
+
+        Returns:
+            list: List of new zones.
+        """
+        new_zones = dict()
+
+        for point in available_points:
+            try:
+                x_voronoi = point[0] - top_left_corner[0]
+                y_voronoi = point[1] - top_left_corner[1]
+                zone_value = voronoi_zones[x_voronoi][y_voronoi]
+            except IndexError:
+                continue
+
+            self._place_single(
+                point_collection,
+                map_layer_type,
+                point,
+                zone_value,
+                PlayerId.GAIA,
+                0,
+            )
+
+            new_obj = MapObject(zone_value, PlayerId.GAIA)
+            if new_obj not in new_zones:
+                new_zones[new_obj] = ""
+
+        return list(new_zones.keys())
+
+    def manhattan_distance(self, point1, point2):
+        """
+        Calculates the manhattan distance between two points.
+        """
+        return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+
+    # ------------------------- HELPER METHODS ----------------------------------
+
+    def _generate_poisson_voronoi_point_distribution(
+        self, width: int, height: int, interpoint_distance: int
+    ) -> List[tuple[int, int]]:
+        """
+        Generates a list of points for creating a voronoi pattern
+
+        Args:
+            size: Size of the array.
+            interpoint_distance: Minimum distance between points.
+        """
+        k = 40
+
+        points = self._poisson_disk_sample(width, height, interpoint_distance, k)
+        points = np.ndarray.tolist(points)
+
+        for i, (a, b) in enumerate(points):
+            points[i] = [int(a), int(b)]
+
+        return list(points)
+
+    def _poisson_disk_sample(
+        self, width=1.0, height=1.0, radius=0.025, k=30
+    ) -> np.ndarray:
+        """
+        Generates random points with the poisson disk method
+
+        Args:
+            IDK what the variables are LMAO
+        """
+
+        # References: Fast Poisson Disk Sampling in Arbitrary Dimensions
+        #             Robert Bridson, SIGGRAPH, 2007
+        def squared_distance(p0, p1):
+            return (p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2
+
+        def random_point_around(p, k=1):
+            # WARNING: This is not uniform around p but we can live with it
+            R = np.random.uniform(radius, 2 * radius, k)
+            T = np.random.uniform(0, 2 * np.pi, k)
+            P = np.empty((k, 2))
+            P[:, 0] = p[0] + R * np.sin(T)
+            P[:, 1] = p[1] + R * np.cos(T)
+            return P
+
+        def in_limits(p):
+            return 0 <= p[0] < height and 0 <= p[1] < width
+
+        def neighborhood(shape, index, n=2):
+            row, col = index
+            row0, row1 = max(row - n, 0), min(row + n + 1, shape[0])
+            col0, col1 = max(col - n, 0), min(col + n + 1, shape[1])
+            I = np.dstack(np.mgrid[row0:row1, col0:col1])
+            I = I.reshape(I.size // 2, 2).tolist()
+            I.remove([row, col])
+            return I
+
+        def in_neighborhood(p):
+            i, j = int(p[0] / cellsize), int(p[1] / cellsize)
+            if m_array[i, j]:
+                return True
+            for i, j in n_dict[(i, j)]:
+                if (
+                    m_array[i, j]
+                    and squared_distance(p, p_array[i, j]) < squared_radius
+                ):
+                    return True
+            return False
+
+        def add_point(p):
+            points.append(p)
+            i, j = int(p[0] / cellsize), int(p[1] / cellsize)
+            p_array[i, j], m_array[i, j] = p, True
+
+        # Here `2` corresponds to the number of dimension
+        cellsize = radius / np.sqrt(2)
+        rows = int(np.ceil(height / cellsize))
+        cols = int(np.ceil(width / cellsize))
+
+        # Squared radius because we'll compare squared distance
+        squared_radius = radius * radius
+
+        # Positions cells
+        p_array = np.zeros((rows, cols, 2), dtype=np.float32)
+        m_array = np.zeros((rows, cols), dtype=bool)
+
+        # Cache generation for neighborhood
+        n_dict = {}
+        for i in range(rows):
+            for j in range(cols):
+                n_dict[(i, j)] = neighborhood(m_array.shape, (i, j), 2)
+
+        points: list = []
+        add_point((np.random.uniform(height), np.random.uniform(width)))
+        while len(points) > 0:
+            index: int = np.random.randint(len(points))
+            p = points[index]
+            del points[index]
+            Q = random_point_around(p, k)
+            for q in Q:
+                if in_limits(q) and not in_neighborhood(q):
+                    add_point(q)
+        return p_array[m_array]
+
+
+def generate_voronoi_l2(
+    grid_width: int, grid_height: int, seed_points: list[tuple[int, int]]
+) -> list[list[int]]:
+    """
+    Generate a Voronoi diagram on a cell grid.
+
+    Args:
+        grid_size (tuple): The size of the grid (rows, columns).
+        seed_points (list): List of (x, y) tuples representing seed points.
+
+    Returns:
+        np.ndarray: A 2D array with the same size as grid, where each cell contains the index of the nearest seed point.
+    """
+    rows, cols = grid_width, grid_height
+    seeds = np.array(seed_points)
+
+    # Initialize an array to hold the seed indices
+    grid = np.full((rows, cols), -1)
+
+    # Place seed indices on the grid
+    for idx, (y, x) in enumerate(seeds):
+        grid[x, y] = idx
+
+    # Create an array to hold the distances
+    distance_grid = np.full((rows, cols), np.inf)
+    indices_grid = np.zeros((rows, cols), dtype=int)
+
+    # Compute the Euclidean Distance Transform for each seed
+    for idx, (y, x) in enumerate(seeds):
+        mask = grid == idx
+        distances = distance_transform_edt(
+            ~mask, return_distances=True, return_indices=False
+        )
+        update_mask = distances < distance_grid
+        distance_grid[update_mask] = distances[update_mask]
+        indices_grid[update_mask] = idx
+
+    return indices_grid.tolist()
+
+
+def generate_voronoi_l1(
+    grid_width: int,
+    grid_height: int,
+    seed_points: list[tuple[int, int]],
+    zone_shift: int = 1,
+) -> list[list[int]]:
+    """
+    Generate a Voronoi diagram on a cell grid using L1 distance.
+
+    Args:
+        grid_width (int): The width of the grid.
+        grid_height (int): The height of the grid.
+        seed_points (list): List of (x, y) tuples representing seed points.
+
+    Returns:
+        list[list[int]]: A 2D list where each cell contains the index of the nearest seed point incremented by 1.
+    """
+    # rows, cols = grid_height, grid_width
+    rows, cols = grid_width, grid_height
+
+    seeds = np.array(seed_points)
+
+    # Create a coordinate grid
+    x, y = np.meshgrid(np.arange(cols), np.arange(rows))
+    coordinates = np.stack([x, y], axis=-1)
+
+    # Initialize distance and index grids
+    distance_grid = np.full((rows, cols), np.inf)
+    index_grid = np.full((rows, cols), -1)
+
+    # Compute L1 distance for each seed point and update grids
+    for idx, (sx, sy) in enumerate(seeds):
+        distances = np.abs(coordinates[..., 0] - sx) + np.abs(coordinates[..., 1] - sy)
+        update_mask = distances < distance_grid
+        distance_grid[update_mask] = distances[update_mask]
+        index_grid[update_mask] = idx
+
+    # Increment every element so we don't get overlapping zones
+    index_grid += zone_shift
+
+    return index_grid.transpose().tolist()
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/wallgenerators/perlin.py
+"""
+Perlin noise generator.
+"""
+
+import random
+
+import matplotlib.pyplot as plt
+import numpy as np
+from noise import pnoise2
+from src.map.map_object import MapObject
+
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.units.placers.placer_base import PlacerBase
+
+import random
+
+from typing import List
+import matplotlib.pyplot as plt
+from typing import Any, Union
+
+
+class PerlinGenerator(PlacerBase):
+    """
+    Class for generating perlin patterns.
+    """
+
+    def generate_perlin(
+        self,
+        point_collection: PointCollection,
+        sections: int,
+        octaves: List[int],
+        noise_size: float,
+    ) -> list[list[float]]:
+        """
+        Generates perlin pattern safely.
+
+        Args:
+            sections(int): Number of sections to split into.
+            seed(int): Seed for the perlin noise.
+
+        Returns:
+            list[MapObject]: List of map objects generated from the perlin pattern.
+        """
+
+        top_left_point = point_collection.get_theoretical_top_left_corner_point()
+        bottom_right_point = (
+            point_collection.get_theoretical_bottom_right_corner_point()
+        )
+
+        x_width = bottom_right_point[0] - top_left_point[0]
+        y_width = bottom_right_point[1] - top_left_point[1]
+
+        noise_matrix = self.__create_perlin_noise_matrix(
+            octaves, x_width, y_width, noise_size, sections
+        )
+
+        return noise_matrix
+
+    def display(self, image: List[List[float]], cmap: str = "gray") -> None:
+        """Plot the given image."""
+        plt.imshow(image, cmap=cmap)
+        plt.show()
+
+    def __create_perlin_noise_matrix(
+        self,
+        octaves: List[int],
+        x_width: int,
+        y_width: int,
+        noise_size: float,
+        splits: int,
+    ) -> List[List[float]]:
+        """
+        Main execution function to generate and plot Perlin noise.
+
+        Args:
+            octaves (List[int]): List of octaves to generate noise.
+            n (int): Size of the final picture.
+            size (int): Size of the noise.
+            splits (int): Number of sections to split the contrast.
+        """
+        seed = self.__generate_seed()
+        real_seed = seed * 10
+
+        combined_noise_matrix: List[List[float]] = [
+            [0 for _ in range(y_width)] for _ in range(x_width)
+        ]
+
+        for index, octave in enumerate(octaves):
+            self.__generate_perlin_noise(
+                combined_noise_matrix, noise_size, real_seed, octave
+            )
+
+        self.__contrast_split(combined_noise_matrix, splits)
+        return combined_noise_matrix
+
+    def __generate_perlin_noise(
+        self, matrix: List[List[float]], noise_size: float, real_seed: int, octave: int
+    ) -> List[List[float]]:
+        """
+        Generate Perlin noise for given parameters.
+
+        Args:
+            xpix (int): Number of pixels in x direction.
+            ypix (int): Number of pixels in y direction.
+            size (int): Size of the noise.
+            real_seed (int): Seed for the noise.
+            octave (int): Octave of the noise.
+        """
+        for i in range(len(matrix)):
+            for j in range(len(matrix[i])):
+                noise_val = pnoise2(
+                    (i / len(matrix)) * noise_size + real_seed,
+                    (j / len(matrix[i])) * noise_size + real_seed,
+                    octave,
+                    0.8,
+                )
+                matrix[i][j] += noise_val
+
+        return matrix
+
+    def __contrast_split(self, matrix: List[List[float]], sections: int = 2) -> None:
+        """
+        Split the contrast of the array into sections.
+
+        Args:
+            array (List[List[float]]): Array to split contrast.
+            sections (int): Number of sections to split the contrast.
+        """
+        min_val = np.min(matrix)
+        max_val = np.max(matrix)
+
+        for i in range(len(matrix)):
+            for j in range(len(matrix[i])):
+                matrix[i][j] = self.__contrast_split_single(
+                    matrix[i][j], min_val, max_val, sections
+                )
+
+    def __contrast_split_single(
+        self, value: float, min_val: float, max_val: float, sections: int = 2
+    ) -> float:
+        """
+        Split the contrast of a single value into sections. For example, if sections = 2, min_val = 0, max_val = 1,
+        then 0.25 will be categorized as 0.0 and 0.75 will be categorized as 1.0.
+
+        Args:
+            value (float): Value to split contrast.
+            min_val (float): Minimum value of the array.
+            max_val (float): Maximum value of the array.
+            sections (int): Number of sections to split the contrast.
+
+        Returns:
+            float: Value after contrast split.
+        """
+        diff = max_val - min_val
+        for i in range(sections):
+            if value < (min_val + (((i + 1) * diff) / sections)):
+                return i / sections
+        return i / sections
+
+    def __add_matrices(
+        self, a: List[List[float]], b: List[List[float]]
+    ) -> List[List[float]]:
+        """
+        Add two nested arrays element-wise.
+
+        Args:
+            a (List[List[float]]): First array.
+            b (List[List[float]]): Second array.
+
+        Returns:
+            List[List[float]]: Resultant array after addition.
+        """
+        final = []
+        for row_a, row_b in zip(a, b):
+            final.append([x + y for x, y in zip(row_a, row_b)])
+        return final
+
+    def __generate_seed(self) -> int:
+        """Generate a random seed."""
+        return random.randint(0, 100)
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/wallgenerators/polygon.py
+"""
+Generates a polygonal wall.
+"""
+
+import numpy as np
+from matplotlib.pylab import matshow
+import matplotlib.pyplot as plt
+from typing import List, Tuple
+from src.units.utils import connect_points
+
+
+def generate_polygonal_wall_points(
+    point: Tuple[int, int], number_of_sides: int, radius: float
+) -> List[Tuple[int, int]]:
+    """
+    Generates a polygonal wall centered around the x and y coordinates.
+
+    Args:
+        x: x coordinate center.
+        y: y coordinate center.
+        number_of_sides: Number of corners for polygon.
+        radius: Radius of the polygon.
+    """
+    points = generate_polygonal_wall_corner_points(point, number_of_sides, radius)
+    points = points + [points[0]]
+    points = connect_points(points)
+
+    return points
+
+
+def generate_polygonal_wall_corner_points(
+    point: Tuple[int, int], number_of_sides: int, radius: float
+) -> List[Tuple[int, int]]:
+    """
+    Generates only the corner points along the perimeter of the polygon.
+
+    Args:
+        x: x coordinate to center the wall.
+        y: y coordinate to center the wall.
+        number_of_sides: Number of corner points to create.
+        radius: radius of the walls.
+
+    Returns points to define the outer perimeter.
+    """
+    x, y = point
+    points: List[Tuple[int, int]] = []
+    angles = np.array(list(range(number_of_sides))) * (2 * np.pi) / number_of_sides
+
+    # Rotate all angles so that the shape aligns nicely on the grid for most cases
+    rotated_angles = angles + (np.pi / number_of_sides)
+
+    for i, rotated_angle in enumerate(rotated_angles):
+        px = np.cos(rotated_angle) * radius
+        py = np.sin(rotated_angle) * radius
+        px = int(px)
+        py = int(py)
+        points.append((x + px, y + py))
+
+    return points
+
+
+def valid(array: List[List[Tuple[int, int]]], x: int, y: int) -> bool:
+    """
+    Checks that point coordinates are valid
+    """
+    return (0 <= x < len(array)) and (0 <= y < len(array[0]))
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/wallgenerators/city.py
+from re import I
+import numpy as np
+from typing import Union, Callable
+
+def generate_city_map(
+        size,
+        array_space_type_list: Union[int, tuple],
+        ):
+    
+    """
+    TODO
+    """
+    # Initialize the array with zeros.
+    array = [[0 for i in range(size)] for j in range(size)]
+
+
+    
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/wallgenerators/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/wallgenerators/blocklord.py
+
+import random
+
+def blocklord(map,x,y,size,blockiness):
+    """
+    TODO
+    """
+
+def r(start, end):
+    """
+    TODO
+    """
+    return random.random()*(end-start)+start
+
+def start(x, y, size):
+    """
+    TODO
+    """
+    points = [
+        [x,y],
+        [x,y+size-1],
+        [x+size-1,y+size-1],
+        [x+size-1,y],
+    ]
+
+    return points
+
+
+# def grow(array, blockiness):
+#     """
+#     TODO
+#     """
+
+#     start_index = r(0, len(array)-1)
+#     (x1, y1) = array[start_index]
+#     (x2, y2) = array[(start_index+1)%len(array)]
+
+#     if y2-y1 > 0:
+#         new_point_one = [r(x1,x1-10), r(y1, (y2-y1)//2)]
+#         new_point_two = [new_point_one[0], r(new_point_one[1], y2)]
+#     elif x2-x1 > 0:
+#         new_point_one = [r(x1,x1-10), r(y1, (y2-y1)//2)]
+#         new_point_two = [new_point_one[0], r(new_point_one[1], y2)]
+#     elif y2-y1 < 0:
+#     elif x2-x1 < 0:
+#         ***************************** WIP
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/placer_base.py
+"""
+TODO: Add description.
+"""
+
+import random
+
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.enums.enum import (
+    MapLayerType,
+    CheckPlacementReturnTypes,
+)
+from src.units.placers.point_management.point_collection import (
+    PointCollection,
+)
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    GHOST_OBJECT_DISPLACEMENT_ID,
+)
+from src.map.map import Map
+from src.units.placers.object_info import ObjectInfo
+from src.common.types import AOE2ObjectType
+from typing import List
+from src.units.utils import manhattan_distance
+from src.map.map_object import MapObject
+from src.common.types import Point
+from src.units.placers.point_management.points_returned import PointPlacementResults
+
+
+class PlacerBase:
+    """
+    Base class for placing objects on a map.
+    """
+
+    points_removed_from_point_collection = 0
+    points_set_on_map = 0
+
+    def __init__(self, aoe2_map: Map):
+        self.map = aoe2_map
+
+    def place_closest_to_point(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        obj_type: AOE2ObjectType,
+        starting_point: tuple,
+        player_id: PlayerId,
+        margin: int = 0,
+    ) -> PointPlacementResults:
+        """
+        Places an object as close as possible to the starting point, while still being a valid placement.
+        Searches through nearby points within the point collection to find a valid placement.
+
+        Args:
+            point_collection (PointCollection): The point manager.
+            map_layer_type (MapLayerType): The map type.
+            obj_type (object): The type of object to be placed.
+            starting_point (tuple): The point to place the object.
+            player_id (PlayerId): Id of the player for the given object.
+            margin (int): Area around the object to be placed.
+        """
+
+        points: List[Point] = point_collection.get_point_list()
+        search_radius = 5
+
+        points = point_collection.get_nearby_points(starting_point, search_radius)
+
+        for x, y in sorted(
+            points,
+            key=lambda point: manhattan_distance(point, starting_point),
+        ):
+
+            status = self._check_placement(point_collection, (x, y), obj_type, margin)
+            if status == CheckPlacementReturnTypes.FAIL:
+                continue
+
+            self._place_single(
+                point_collection,
+                map_layer_type,
+                (x, y),
+                obj_type,
+                player_id,
+                margin,
+            )
+            return
+
+    def place_if_possible(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        obj_type: AOE2ObjectType,
+        starting_point: Point,
+        player_id: PlayerId,
+        margin: int = 0,
+    ) -> PointPlacementResults:
+        """
+        Places an object if a valid placement exists.
+
+        Args:
+            point_collection (PointCollection): The point manager.
+            map_layer_type (MapLayerType): The map type.
+            obj_type (object): The type of object to be placed.
+            player_id (PlayerId): Id of the player for the given object.
+            margin (int): Area around the object to be placed.
+        """
+
+        status = self._check_placement(
+            point_collection, starting_point, obj_type, margin
+        )
+
+        if status == CheckPlacementReturnTypes.SUCCESS:
+            self._place_single(
+                point_collection,
+                map_layer_type,
+                starting_point,
+                obj_type,
+                player_id,
+                margin,
+            )
+            return
+
+    def place_multiple(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        points: list[tuple[int, int]],
+        obj_type: AOE2ObjectType,
+        player_id: PlayerId,
+        margin: int = 0,
+    ) -> PointPlacementResults:
+        """
+        places multiple objects at the given points. Does not check for safe placement.
+
+        Args:
+            point_collection: The point manager.
+            map_layer_type: The map type.
+            points: Points to place objects.
+            obj_type: The type of object to be placed.
+            player_id: Id of the player for the given object.
+            margin: Area around the object to be placed.
+        """
+
+        for point in points:
+            self._place_single(
+                point_collection, map_layer_type, point, obj_type, player_id, margin
+            )
+
+        return
+
+    def fill(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        obj_type: AOE2ObjectType,
+        player_id: PlayerId,
+        margin: int = 0,
+    ) -> PointPlacementResults:
+        """
+        Fills the entire point collection with the given object.
+
+        Args:
+            point_collection: The point manager.
+            map_layer_type: The map type.
+            obj_type: The type of object to be placed.
+            player_id: Id of the player for the given object.
+            margin: Area around the object to be placed.
+        """
+
+        for point in point_collection.get_point_list_copy():
+            status = self._check_placement(point_collection, point, obj_type, margin)
+            if status == CheckPlacementReturnTypes.SUCCESS:
+                self._place_single(
+                    point_collection, map_layer_type, point, obj_type, player_id, margin
+                )
+
+    def _place_single(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        point: tuple[int, int],
+        obj_type: AOE2ObjectType,
+        player_id: PlayerId,
+        margin: int = 0,
+    ) -> PointPlacementResults:
+        """
+        Places a single object. Assumes placement has already been verified.
+
+        Args:
+            map_layer_type_list: The map type.
+            point: Point to place base of object.
+            obj_type: The type of object to be placed.
+            player_id: Id of the player for the given object.
+            margin: Area around the object to be placed.
+            ghost_margin: Option to include ghost margins, ie. change neighboring squares so nothing can use them.
+            height: Height of a given object.
+            width: Width of a given object.
+        """
+
+        rows = ObjectInfo.get_object_rows(obj_type)
+        columns = ObjectInfo.get_object_columns(obj_type)
+        eff_rows = ObjectInfo.get_object_effective_size(obj_type, margin)
+        eff_columns = ObjectInfo.get_object_effective_size(obj_type, margin)
+
+        row_x, row_y = point
+        x_shift, y_shift = rows // 2, columns // 2
+        # x_shift, y_shift = 0, 0
+
+        placements: PointPlacementResults = PointPlacementResults()
+
+        # Place the ghost objects since we only need to set one square to place
+        # objects which take up more than one square of space
+        for i in range(-margin, eff_rows):
+            for j in range(-margin, eff_columns):
+                if (
+                    0 - x_shift <= i - x_shift < rows
+                    and 0 - y_shift <= j - y_shift < columns
+                ):
+                    shifted_point = (row_x + i - x_shift, row_y + j - y_shift)
+                    self.__set_point_and_track_changes(
+                        point_collection,
+                        shifted_point,
+                        GHOST_OBJECT_DISPLACEMENT_ID,
+                        map_layer_type,
+                        PlayerId.GAIA,
+                    )
+
+        object_placement_point = (
+            row_x + rows // 2 - x_shift,
+            row_y + columns // 2 - y_shift,
+        )
+
+        placements.add_object(object_placement_point)
+        self.__set_point_and_track_changes(
+            point_collection,
+            object_placement_point,
+            obj_type,
+            map_layer_type,
+            player_id,
+        )
+
+        return placements
+
+    def _check_placement(
+        self,
+        point_collection: PointCollection,
+        goal_placement_point: tuple,
+        obj_type: AOE2ObjectType = None,
+        margin: int = 0,
+    ) -> None:
+        """
+        Checks if the given point is a valid placement for an object.
+
+        Args:
+            map_layer_type (MapLayerType): The map type.
+            point_collection (PointCollection): The point manager.
+            goal_placement_point (tuple): The point to place the object.
+            obj_type (object, optional): The type of object to be placed. Defaults to None.
+            margin (int, optional): The margin around the object. Defaults to 0.
+            width (int, optional): The width of the object. Defaults to -1.
+            height (int, optional): The height of the object. Defaults to -1.
+        """
+        x_range = ObjectInfo.get_object_rows(obj_type)
+        height = ObjectInfo.get_object_columns(obj_type)
+        eff_width = ObjectInfo.get_object_effective_size(obj_type, margin)
+        eff_height = ObjectInfo.get_object_effective_size(obj_type, margin)
+
+        x, y = goal_placement_point
+
+        x_shift, y_shift = x_range // 2, height // 2
+        # x_shift, y_shift = 0, 0
+
+        for i in range(-margin, eff_width):
+            for j in range(-margin, eff_height):
+                if not point_collection.check_point_exists(
+                    (x + i - x_shift, y + j - y_shift)
+                ):
+                    return CheckPlacementReturnTypes.FAIL
+
+        return CheckPlacementReturnTypes.SUCCESS
+
+    def __set_point_and_track_changes(
+        self,
+        point_collection: PointCollection,
+        point: tuple[int, int],
+        obj_type: AOE2ObjectType,
+        map_layer_type: MapLayerType,
+        player_id: PlayerId,
+    ) -> PointPlacementResults:
+        """
+        Safely sets a point on the map by removing it from the point manager and updating relevant static variables.
+        """
+        self.map.set_point(point, obj_type, map_layer_type, player_id)
+        PlacerBase.points_set_on_map += 1
+        point_collection.remove_point(point)
+        PlacerBase.points_removed_from_point_collection += 1
+        placements = PointPlacementResults()
+        placements.add_object(point)
+        return placements
+
+    # ---------------------------- SORTING FUNCTIONS ----------------------------
+
+    def _default_clumping_func(self, p1, p2, clumping):
+        """
+        Default clumping function.
+
+        Args:
+            p1: First point.
+            p2: Second point.
+            clumping: Factor to determine how clumped placed objects in a group are.
+        """
+        if clumping == -1:
+            clumping = 999
+
+        distance = (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+        return (distance) + random.random() * (clumping) ** 2
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/point_management/point_collection.py
+"""
+This module contains the PointCollection class, which is used to store points in a set and list.
+"""
+
+from typing import Union, List, Dict, Tuple
+from src.units.placers.point_management.points_returned import PointPlacementResults
+
+# The Point type is a tuple of two integers.
+Point = Tuple[int, int]
+# The PointDict maps a point tuple to the index of the point in the list.
+PointDict = Dict[Point, int]
+
+
+class PointCollection:
+    """
+    This is a class to store points in a set and list.
+    """
+
+    def __init__(self) -> None:
+        self.__points_list: List[Point] = []
+        self.__points_dict: PointDict = {}
+        self.points_removed: int = 0
+        self.name: str = ""
+
+    def add_point(self, point: Point) -> None:
+        """
+        Adds a point to the set and list
+
+        Args:
+            point (tuple): The point to add
+        """
+        if point not in self.__points_dict:
+            self.__points_list.append(point)
+            self.__points_dict[point] = len(self.__points_list) - 1
+
+    def add_points(self, points: Union[List[Point], set[Point]]) -> None:
+        """
+        Adds multiple points to the set and list
+
+        Args:
+            points (list): The points to add
+        """
+        for point in points:
+            self.add_point(point)
+
+    def remove_point(self, point: Point) -> None:
+        """
+        Removes a point from the set and list
+
+        Args:
+            point (tuple): The point to remove
+        """
+        if point in self.__points_dict:
+            # Get the index of the point to remove
+            index = self.__points_dict[point]
+            # Remove the point from the dictionary
+            del self.__points_dict[point]
+
+            # If the point is not the last element, swap with the last element
+            if index != len(self.__points_list) - 1:
+                # Get the last point
+                last_point = self.__points_list[-1]
+                # Swap the last point with the point to remove
+                self.__points_list[index] = last_point
+                # Update the dictionary to point to the new index
+                self.__points_dict[last_point] = index
+
+            # Remove the last element from the list
+            self.__points_list.pop()
+
+        self.points_removed += 1
+
+    def remove_points(self, points: Union[List[Point], set[Point]]) -> None:
+        """
+        Removes multiple points from the set and list
+
+        Args:
+            points (list): The points to remove
+        """
+        for point in points:
+            self.remove_point(point)
+
+    def clear_points(self) -> None:
+        """
+        Clears the points in the set and list
+        """
+        self.__points_list = []
+        self.__points_dict = {}
+
+    def intersect(
+        self, other: "PointCollection", edit_in_place: bool = False
+    ) -> "PointCollection":
+        """
+        Returns a new PointCollection with the intersection of this and another PointCollection
+
+        Args:
+            other (PointCollection): The other PointCollection to intersect with
+        """
+        if edit_in_place:
+            points_copy = self.get_point_list_copy()
+
+            for point in points_copy:
+                if point not in other.get_point_list():
+                    self.remove_point(point)
+            return self
+
+        new_point_collector = PointCollection()
+        new_point_collector.add_points(
+            set(self.get_point_list()).intersection(set(other.get_point_list()))
+        )
+        return new_point_collector
+
+    def check_point_exists(self, point: Point) -> bool:
+        """
+        Checks if a point exists in the set
+
+        Args:
+            point (tuple): The point to check
+        """
+        return point in self.__points_dict
+
+    def get_point_dict(self) -> PointDict:
+        """
+        Gets the dictionary of points
+
+        Args:
+            point (tuple): The point to check
+        """
+        return self.__points_dict
+
+    def get_point_list(self) -> List[Point]:
+        """
+        Gets the list of points
+
+        Returns:
+            list: The list of points
+
+        Note:
+            This often should not be used since this point list is a reference to a list,
+            which means that if we iterate over the points in this list, we will have an issue
+            where points are getting removed from the list as we are iterating over it.
+            This should only be used in cases where we are not modifying the list.
+        """
+        return self.__points_list
+
+    def get_point_list_copy(self) -> List[Point]:
+        """
+        Gets the list of points
+        """
+        return self.__points_list.copy()
+
+    def get_nearby_points(self, point: Point, search_distance: int) -> List[Point]:
+        """
+        Returns the k nearest points to the given point
+
+        Args:
+            point (tuple): The point to find the nearest points to
+        """
+        return self._get_points_within_distance(point, search_distance)
+
+    def _get_points_within_distance(self, point: Point, distance: float) -> List[Point]:
+        """
+        Returns all points within a certain distance of the given point
+
+        Args:
+            point (tuple): The point to find the nearest points to
+            distance (float): The maximum distance from the point to include
+        """
+        points: List[Point] = []
+
+        for i in range(-int(distance), int(distance) + 1):
+            for j in range(-int(distance), int(distance) + 1):
+                if i + j <= distance and self.check_point_exists(
+                    (point[0] + i, point[1] + j)
+                ):
+                    points.append((point[0] + i, point[1] + j))
+
+        return points
+
+    def get_leftmost_point(self) -> Point:
+        """
+        Gets the leftmost point in the set
+        """
+        return min(self.__points_list, key=lambda point: point[1])
+
+    def get_rightmost_point(self) -> Point:
+        """
+        Gets the rightmost point in the set
+        """
+        return max(self.__points_list, key=lambda point: point[1])
+
+    def get_topmost_point(self) -> Point:
+        """
+        Gets the topmost point in the set
+        """
+        return min(self.__points_list, key=lambda point: point[0])
+
+    def get_bottommost_point(self) -> Point:
+        """
+        Gets the bottommost point in the set
+        """
+        return max(self.__points_list, key=lambda point: point[0])
+
+    def get_theoretical_top_left_corner_point(self) -> Point:
+        """
+        Gets the theoretical top left corner point in the set
+        """
+        x = self.get_topmost_point()[0]
+        y = self.get_leftmost_point()[1]
+        return (x, y)
+
+    def get_theoretical_bottom_right_corner_point(self) -> Point:
+        """
+        Gets the theoretical bottom right corner point in the set
+        """
+        x = self.get_bottommost_point()[0]
+        y = self.get_rightmost_point()[1]
+        return (x, y)
+
+    def get_theoretical_top_right_corner_point(self) -> Point:
+        """
+        Gets the theoretical top right corner point in the set
+        """
+        x = self.get_topmost_point()[0]
+        y = self.get_rightmost_point()[1]
+        return (x, y)
+
+    def get_theoretical_bottom_left_corner_point(self) -> Point:
+        """
+        Gets the theoretical bottom left corner point in the set
+        """
+        x = self.get_bottommost_point()[0]
+        y = self.get_leftmost_point()[1]
+        return (x, y)
+
+    def get_maximal_points(
+        self,
+    ) -> Tuple[Point, Point, Point, Point]:
+        """
+        Gets the maximal points in the set
+        """
+        return (
+            self.get_leftmost_point(),
+            self.get_rightmost_point(),
+            self.get_topmost_point(),
+            self.get_topmost_point(),
+        )
+
+    def get_y_point_range(self) -> int:
+        """
+        Gets the range of x values in the set
+        """
+        return 1 + abs(self.get_leftmost_point()[1] - self.get_rightmost_point()[1])
+
+    def get_x_point_range(self) -> int:
+        """
+        Gets the range of y values in the set
+        """
+        return 1 + abs(self.get_topmost_point()[0] - self.get_bottommost_point()[0])
+
+    def get_neighbors(self, point: tuple[int, int]) -> list[tuple[int, int]]:
+        """
+        Gets the neighbors of a point
+
+        Args:
+            point (tuple[int, int]): The point to get the neighbors of
+        """
+        x, y = point
+
+        neighbors = [
+            (x - 1, y),
+            (x + 1, y),
+            (x, y - 1),
+            (x, y + 1),
+        ]
+
+        return [neighbor for neighbor in neighbors if self.check_point_exists(neighbor)]
+
+    def clear(self) -> None:
+        """
+        Clears the point collector
+        """
+        self.__points_list = []
+        self.__points_dict = {}
+        self.points_removed = 0
+
+    def copy(self) -> "PointCollection":
+        """
+        Copies the point collector
+        """
+        new_point_collector = PointCollection()
+        new_point_collector.add_points(self.get_point_list())
+        return new_point_collector
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/point_management/point_selector.py
+"""
+Docsting
+"""
+
+import functools
+from typing import List
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_object import MapObject
+from src.units.placers.placer_configs import (
+    PointSelectorConfig,
+    PointSelectorInRangeConfig,
+)
+from src.units.utils import manhattan_distance
+from src.units.placers.point_management.point_collection import PointCollection
+
+
+class PointSelector:
+    """
+    Class for selecting a set of points from the map.
+    """
+
+    def __init__(self, aoe2_map: Map):
+        self.map = aoe2_map
+
+    def get_points_from_map_layer(
+        self,
+        configuration: PointSelectorConfig,
+    ) -> list[tuple[int, int]]:
+        """
+        Gets the points from a map layer.
+
+        Args:
+            map_layer_type (MapLayerType): Type of map layer to use.
+            object_type (MapObject): Type of object to use.
+        """
+        map_layer_type = configuration.map_layer_type
+        object_type = configuration.object_type
+        return list(self.map.get_set_with_map_object(map_layer_type, object_type))
+
+    def get_points_in_range(
+        self, configuration: PointSelectorInRangeConfig
+    ) -> list[tuple[int, int]]:
+        """
+        Gets the points from a map layer.
+
+        Args:
+            map_layer_type (MapLayerType): Type of map layer to use.
+            object_type (MapObject): Type of object to use.
+            min_range (int): Minimum range to select points from.
+            max_range (int): Maximum range to select points from.
+            points_to_be_in_range_of (list[tuple[int, int]]): Points to be in range of.
+        """
+        map_layer_type = configuration.map_layer_type
+        object_type = configuration.object_type
+        min_range = configuration.min_range
+        max_range = configuration.max_range
+        points_to_be_in_range_of = configuration.points_to_be_in_range_of
+
+        points = set()
+        for point in points_to_be_in_range_of:
+            points.update(
+                self.get_points_in_range_of_point(
+                    point,
+                    map_layer_type,
+                    object_type,
+                    min_range,
+                    max_range,
+                )
+            )
+
+        return list(points)
+
+    def get_points_in_range_of_point(
+        self,
+        point: tuple[int, int],
+        map_layer_type: MapLayerType,
+        object_type: MapObject,
+        min_range: int,
+        max_range: int,
+    ) -> set[tuple[int, int]]:
+        """
+        Gets the points from a map layer.
+
+        Args:
+            point (tuple[int, int]): Point to be in range of.
+            map_layer_type (MapLayerType): Type of map layer to use.
+            object_type (MapObject): Type of object to use.
+            min_range (int): Minimum range to select points from.
+            max_range (int): Maximum range to select points from.
+        """
+        points = self.get_points_from_map_layer(
+            PointSelectorConfig(map_layer_type, object_type)
+        )
+
+        return {
+            potential_point
+            for potential_point in points
+            if min_range <= manhattan_distance(potential_point, point) <= max_range
+        }
+
+    def get_connected_points(
+        self,
+        point_collection: PointCollection,
+        starting_point: tuple[int, int],
+        map_layer_type: MapLayerType,
+        object_type: MapObject,
+    ) -> set[tuple[int, int]]:
+        """
+        Gets all contiguous points of the same type.
+
+        Args:
+            point (tuple[int, int]): The starting point.
+            map_layer_type (MapLayerType): The type of map layer to use.
+            object_type (MapObject): The type of object to use.
+        """
+        visited = set()
+        to_visit = [starting_point]
+
+        while to_visit:
+            current_point = to_visit.pop()
+            if current_point in visited:
+                continue
+
+            visited.add(current_point)
+            neighbors = point_collection.get_neighbors(current_point)
+
+            for neighbor in neighbors:
+                if (
+                    neighbor not in visited
+                    and self.map.get_map_layer(
+                        map_layer_type=map_layer_type
+                    ).get_object_at_point(neighbor)
+                    == object_type
+                ):
+                    to_visit.append(neighbor)
+
+        return visited
+
+    # def get_all_points_in_range(
+    #     self, point: tuple[int, int], point_manager: PointManager
+    # ) -> List[tuple[int, int]]:
+    #     """
+    #     Gets all points in range of a point.
+    #     """
+    #     potential_points =
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/point_management/point_manager.py
+"""
+This module contains the PointManager class, which is used to manage points in a set and list.
+"""
+
+from src.map.map import Map
+from src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
+from src.units.placers.point_management.point_collection import (
+    PointCollection,
+)
+from typing import Tuple
+
+# The Point type is a tuple of two integers.
+Point = tuple[int, int]
+# The PointDict maps a point tuple to the index of the point in the list.
+PointDict = dict[Point, int]
+
+
+class PointManager:
+    """
+    Class to manage points in a dict and list
+    """
+
+    def __init__(self, aoe2map: Map):
+
+        self.map: Map = aoe2map
+        self.point_selector = PointSelector(self.map)
+
+        self.__point_collections: dict[str, PointCollection] = {}
+        self.points_removed: int = 0
+
+    def add_point_collection(
+        self, name: str, points: list[Point] = [], make_unique=False
+    ) -> PointCollection:
+        """
+        Adds a point collection to the list
+
+        Args:
+            name (str): The name of the point collection
+            points (list[Point]): The list of points to add to the collection
+
+        Returns: Name of the point collection
+        """
+        if make_unique:
+            name = self.__make_unique_name(name)
+
+        if name in self.__point_collections:
+            raise ValueError(
+                f"A point collection with the name '{name}' already exists."
+            )
+
+        point_collection = PointCollection()
+        point_collection.add_points(points)
+
+        point_collection.name = name
+        self.__point_collections[name] = point_collection
+
+        return point_collection
+
+    def remove_point_collection(self, name: str) -> None:
+        """
+        Removes a point collection from the list
+
+        Args:
+            name (str): The name of the point collection
+        """
+        if name not in self.__point_collections:
+            raise ValueError(
+                f"A point collection with the name '{name}' does not exist."
+            )
+
+        del self.__point_collections[name]
+
+    def get_point_collection(self, name: str) -> PointCollection:
+        """
+        Gets a point collection from the list
+
+        Args:
+            name (str): The name of the point collection
+        """
+        if name not in self.__point_collections:
+            raise ValueError(
+                f"A point collection with the name '{name}' does not exist."
+            )
+        return self.__point_collections[name]
+
+    def list_point_collections(self) -> list[str]:
+        """
+        Lists all the point collections
+        """
+        return list(self.__point_collections.keys())
+
+    def __make_unique_name(self, name: str) -> str:
+        """
+        Makes a unique name for the point collection
+        """
+        i = 1
+        new_name = name
+        while new_name in self.__point_collections:
+            new_name = f"{name}_{i}"
+            i += 1
+        return new_name
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/point_management/points_returned.py
+from src.map.map_object import MapObject
+from src.common.types import Point
+
+
+class PointPlacementResults:
+
+    def __init__(self) -> None:
+        """
+        Pass
+        """
+        self.object_dict: dict[MapObject, set[Point]] = {}
+
+    def add_object(self, point: tuple, object_type: MapObject) -> None:
+        """
+        Adds a placed object to the results.
+
+        Args:
+            point (tuple): Point where the object was placed.
+            object_type (MapObject): Type of object placed.
+        """
+        if object_type not in self.object_dict:
+            self.object_dict[object_type] = []
+
+        self.object_dict[object_type].add(point)
+
+    def add_objects(self, points: list[tuple], object_type: MapObject) -> None:
+        """
+        Adds multiple placed objects to the results.
+
+        Args:
+            points (list[tuple]): Points where the objects were placed.
+            object_type (MapObject): Type of object placed.
+        """
+        for point in points:
+            self.add_object(point, object_type)
+
+    def remove_object(self, point: tuple, object_type: MapObject) -> None:
+        """
+        Removes a placed object from the results.
+
+        Args:
+            point (tuple): Point where the object was placed.
+            object_type (MapObject): Type of object placed.
+        """
+        if object_type in self.object_dict:
+
+            if point in self.object_dict[object_type]:
+                self.object_dict[object_type].remove(point)
+                if not self.object_dict[object_type]:
+                    del self.object_dict[object_type]
+
+    def remove_objects(self, points: list[tuple], object_type: MapObject) -> None:
+        """
+        Removes multiple placed objects from the results.
+
+        Args:
+            points (list[tuple]): Points where the objects were placed.
+            object_type (MapObject): Type of object placed.
+        """
+        for point in points:
+            self.remove_object(point, object_type)
+
+    def combine_results(self, other_results: "PointPlacementResults") -> None:
+        """
+        Combines the results of another PointPlacementResults object.
+
+        Args:
+            other_results (PointPlacementResults): Other results to combine.
+        """
+        for object_type, points in other_results.object_dict.items():
+            if object_type not in self.object_dict:
+                self.object_dict[object_type] = set()
+            self.object_dict[object_type].update(points)
+
+    def clear_objects(self) -> None:
+        """
+        Clears all placed objects from the results.
+        """
+        self.object_dict.clear()
+
+    def get_objects(self, object_type: MapObject) -> set[Point]:
+        """
+        Gets all placed objects of a specific type.
+
+        Args:
+            object_type (MapObject): Type of object to get.
+
+        Returns:
+            set[tuple]: Set of points where the objects were placed.
+        """
+        return self.object_dict.get(object_type, set())
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/statictemplate.py
+"""
+TODO: Add module description
+"""
+
+from src.map.map import Map
+
+
+class TemplateCreator:
+    """
+    Class to create a template from a map
+    """
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/placer_configs.py
+"""
+Configuration for the methods for various placers
+"""
+
+from dataclasses import dataclass
+
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.enums.enum import (
+    MapLayerType,
+    CheckPlacementReturnTypes,
+)
+from src.units.placers.point_management.point_collection import (
+    PointCollection,
+)
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    GHOST_OBJECT_DISPLACEMENT_ID,
+)
+from src.common.types import AOE2ObjectType
+
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.enums.enum import MapLayerType
+from src.common.constants.constants import DEFAULT_PLAYER
+from src.common.types import AOE2ObjectType
+from typing import Callable
+from src.map.map_object import MapObject
+from src.units.utils import default_clumping_func
+from src.common.constants.constants import LINUX_PROJECT_PATH
+
+
+@dataclass
+class AddBordersConfig:
+    """
+    Configuration for adding borders to a map.
+
+    Args:
+        point_manager (PointManager): Manages the points to be placed.
+        map_layer_type (MapLayerType): The map type.
+        obj_type (AOE2ObjectType): The type of object to be placed.
+        player_id (PlayerId = DEFAULT_PLAYER): Id of the objects being placed.
+        margin (int = 1): Margin between each object and any other object.
+    """
+
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    player_id: PlayerId = DEFAULT_PLAYER
+    border_width: int = 1
+
+
+@dataclass
+class PlaceGroupsConfig:
+    """
+    Configuration for placing groups of objects on a map.
+
+    Args:
+        point_collection (PointCollection): Manages the points to be placed.
+        map_layer_type (MapLayerType): The map type.
+        obj_type (AOE2ObjectType): The type of object to be placed.
+        player_id (PlayerId = DEFAULT_PLAYER): Id of the objects being placed.
+        groups (int = 1): Number of groups to be placed.
+        group_size (int = 1): Number of members per group.
+        group_density (int = None): Percentage of available points to be used for the group.
+        groups_density (int = None): Percentage of available points to be used for the groups.
+        clumping (int = 0): How clumped the group members are. 0 is totally clumped. Higher numbers spread members out.
+        clumping_func (Callable = None): Function used to calculate the clumping score.
+        margin (int = 0): Margin between each object and any other object.
+        start_point (tuple = None): The starting point to place the group.
+    """
+
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    object_type: AOE2ObjectType
+    player_id: PlayerId = DEFAULT_PLAYER
+    groups: int = 1
+    group_size: int = 1
+    group_density: float | None = None
+    groups_density: float | None = None
+    clumping: int = 0
+    clumping_func: Callable = default_clumping_func
+    margin: int = 0
+    start_point: tuple | None = None
+
+
+@dataclass
+class VoronoiGeneratorConfig:
+    """
+    Configuration for generating Voronoi diagrams.
+
+    Args:
+        point_manager (PointManager): Manages the points to be placed.
+        map_layer_type (MapLayerType): The map type.
+        obj_type (AOE2ObjectType): The type of object to be placed.
+    """
+
+    point_collection: PointCollection
+    interpoint_distance: int
+    map_layer_type: MapLayerType
+
+
+@dataclass
+class VisualizeMapConfig:
+    """
+    Configuration for visualizing the map.
+
+    Args:
+        map_layer_type: (MapLayerType): Type of value to visualize.
+        include_zones (bool = False): Whether to include zones in the visualization.
+        transpose (bool = False): Whether to transpose the map.
+        fig_size ((int, int) = (5, 5)): The size of the figure.
+        include_legend (bool = False): Whether to include a legend in the visualization.
+        anchor ((int, int) = (0, 0)): The anchor point for the legend.
+    """
+
+    map_layer_type: MapLayerType
+    include_zones: bool = False
+    transpose: bool = False
+    fig_size: tuple[int, int] = (15, 15)
+    include_legend: bool = True
+    anchor: tuple[float, float] = (1.25, 1)
+    save_figure: bool = False
+    file_name: str = "map_visualization.png"
+    file_path: str = LINUX_PROJECT_PATH
+
+
+@dataclass
+class PointSelectorConfig:
+    """
+    Configuration for selecting points on a map.
+
+    Args:
+        map_layer_type (MapLayerType): Type of map layer to use.
+        object_type (MapObject): Type of object to use.
+    """
+
+    map_layer_type: MapLayerType
+    object_type: MapObject
+
+
+@dataclass
+class PointSelectorInRangeConfig:
+    """
+    Configuration for selecting points on a map.
+
+    Args:
+        map_layer_type (MapLayerType): Type of map layer to use.
+        object_type (MapObject): Type of object to use.
+        min_range (int): Minimum range to select points from.
+        max_range (int): Maximum range to select points from.
+        points_to_be_in_range_of (list[tuple[int, int]]): Points to be in range of.
+    """
+
+    map_layer_type: MapLayerType
+    object_type: MapObject
+    min_range: int
+    max_range: int
+    points_to_be_in_range_of: list[tuple[int, int]]
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/gate_placer.py
+"""
+TODO: 
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+
+from src.common.enums.enum import (
+    Directions,
+    MapLayerType,
+    GateType,
+    CheckPlacementReturnTypes,
+)
+from src.units.placers.point_management.point_collection import (
+    PointCollection,
+)
+from src.common.constants.constants import DEFAULT_PLAYER
+from src.units.placers.placer_base import PlacerBase
+from src.map.map_object import AOE2ObjectType
+from src.common.enums.enum import GateObject
+from src.common.constants.constants import (
+    GHOST_OBJECT_DISPLACEMENT_ID,
+)
+from src.units.utils import manhattan_distance
+
+
+class GatePlacer(PlacerBase):
+    """
+    Class for placing gates on a map.
+    """
+
+    def place_gate_on_four_sides(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        gate_type: GateType,
+        player_id: PlayerId = DEFAULT_PLAYER,
+    ):
+        """
+        Takes the average location of points in the given array space, and places gates on four sides.
+
+        Args:
+            map_layer_type: The map type.
+            array_space_type: Array space id to get points for.
+            gate_type: Type of the gate being placed
+            playerId: Id of the objects being placed.
+        """
+
+        if len(point_collection.get_point_list()) == 0:
+            return
+
+        avg_point = self._get_average_point_position(point_collection)
+
+        for direction in [
+            Directions.EAST,
+            Directions.WEST,
+            Directions.NORTH,
+            Directions.SOUTH,
+        ]:
+
+            point = self._get_first_point_in_given_direction(
+                point_collection, avg_point, direction
+            )
+
+            if point is None:
+                continue
+
+            self._place_gate_closest_to_point(
+                point_collection=point_collection,
+                map_layer_type=map_layer_type,
+                gate_type=gate_type,
+                goal_placement_point=point,
+                player_id=player_id,
+            )
+
+    def place_gate_on_eight_sides(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        gate_type: GateType,
+        player_id: PlayerId = DEFAULT_PLAYER,
+    ):
+        """
+        Takes the average location of points in the given array space, and places gates on four sides.
+
+        Args:
+            map_layer_type: The map type.
+            array_space_type: Array space id to get points for.
+            gate_type: Type of the gate being placed
+            playerId: Id of the objects being placed.
+        """
+
+        if len(point_collection.get_point_list()) == 0:
+            return
+
+        avg_point = self._get_average_point_position(point_collection)
+
+        for direction in [
+            Directions.NORTH,
+            Directions.SOUTH,
+            Directions.EAST,
+            Directions.WEST,
+            Directions.NORTHEAST,
+            Directions.NORTHWEST,
+            Directions.SOUTHEAST,
+            Directions.SOUTHWEST,
+        ]:
+
+            point = self._get_first_point_in_given_direction(
+                point_collection, avg_point, direction
+            )
+
+            if point is None:
+                continue
+
+            self._place_gate_closest_to_point(
+                point_collection=point_collection,
+                map_layer_type=map_layer_type,
+                gate_type=gate_type,
+                goal_placement_point=point,
+                player_id=player_id,
+            )
+
+    # --------------------------- GATE HELPER METHODS ---------------------------------
+
+    def _get_gate_objects(self, gate_type: GateType) -> list[GateObject]:
+        """
+        Gets the object type for the gate.
+        """
+        return GateType.get_gate_objects_from_gate_type(gate_type)
+
+    def _place_gate_closest_to_point(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        gate_type: GateType,
+        goal_placement_point: tuple,
+        player_id: PlayerId,
+    ):
+        """
+        Places a gate as close as possible to the starting point.
+
+        Args:
+            points_manager: The point manager.
+            map_layer_type: The map type.
+            gate_type: The type of gate to be placed.
+            starting_point: The point to place the gate.
+            player_id: Id of the player for the given gate.
+        """
+
+        points = point_collection.get_point_list()
+
+        gate_objects = self._get_gate_objects(gate_type)
+
+        for x, y in sorted(
+            points,
+            key=lambda point: manhattan_distance(point, goal_placement_point),
+        ):
+            for gate_object in gate_objects:
+                status = self._check_placement_for_gate(
+                    point_collection, gate_object, (x, y)
+                )
+
+                if status == CheckPlacementReturnTypes.FAIL:
+                    continue
+
+                if status == CheckPlacementReturnTypes.SUCCESS:
+                    self._place_gate(
+                        point_collection, map_layer_type, (x, y), gate_object, player_id
+                    )
+                    return
+
+    def _get_average_point_position(self, point_collection: PointCollection):
+        """
+        Gets the location of the average point from the given value type and array space lists.
+        """
+        total_points = 0
+        totx = 0
+        toty = 0
+
+        smallest_set = point_collection.get_point_list()
+
+        for point in smallest_set:
+            status = self._check_placement(point_collection, point, None, 0)
+
+            if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
+                return (0, 0)
+
+            if status == CheckPlacementReturnTypes.SUCCESS:
+                total_points += 1
+                totx += point[0]
+                toty += point[1]
+
+        return (totx // total_points, toty // total_points)
+
+    def _get_first_point_in_given_direction(
+        self,
+        points_manager: PointCollection,
+        starting_point: tuple,
+        direction: Directions,
+    ):
+        """
+        Finds the first point in the matching array space type with the given direction.
+
+        Args:
+            map_layer_type: The map type.
+            array_space_type: Array space id to get points for.
+            starting_point: Point to start searching from.
+            direciton: Direction to search in.
+        """
+
+        iteration_point = starting_point
+
+        # NOTE THIS CAN BE OPTIMIZED BY STARTING AT THE GIVEN POINT AND NOT GOING BEYOND MAP BOUNDARIES
+        # IT CURRENTLY RUNS THE FULL LENGTH OF THE MAP NO MATTER WHAT.
+        for i in range(self.map.size):
+
+            if not points_manager.check_point_exists(iteration_point):
+                direction_tuple = direction.value
+                iteration_point = (
+                    iteration_point[0] + direction_tuple[0],
+                    iteration_point[1] + direction_tuple[1],
+                )
+            else:
+                return iteration_point
+
+        return None
+
+    def _check_placement_for_gate(
+        self,
+        point_collection: PointCollection,
+        gate_object: GateObject,
+        goal_placement_point: tuple,
+    ):
+        """
+        Checks if the given point is a valid placement for a gate.
+
+        Args:
+            point_collection: The point manager.
+            goal_placement_point: The point to place the object.
+            obj_type: The type of object to be placed.
+            margin: The margin around the object.
+        """
+
+        points_to_check = gate_object.get_gate_dimensions()
+
+        for point in points_to_check:
+            goal_x, goal_y = goal_placement_point
+            x, y = point
+            x_actual, y_actual = x + goal_x, y + goal_y
+            point = (x_actual, y_actual)
+
+            if not point_collection.check_point_exists(point):
+                return CheckPlacementReturnTypes.FAIL
+
+        return CheckPlacementReturnTypes.SUCCESS
+
+    def _place_gate(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        point_to_place: tuple[int, int],
+        gate_object: GateObject,
+        player_id: PlayerId,
+    ):
+        """
+        Places a gate on the map.
+
+        Args:
+            points_manager: The point manager.
+            map_layer_type: The map type.
+            gate_type: The type of gate being placed.
+            player_id: Id of the objects being placed.
+        """
+
+        gate_dimensions = GateObject.get_gate_dimensions(gate_object)
+        points_to_place = [
+            (point_to_place[0] + x, point_to_place[1] + y) for x, y in gate_dimensions
+        ]
+
+        for i, point in enumerate(points_to_place):
+            aoe2_object: AOE2ObjectType = BuildingInfo[gate_object.value]
+
+            if i == 2:
+                self.map.set_point(point, aoe2_object, map_layer_type, player_id)
+            else:
+                self.map.set_point(
+                    point,
+                    GHOST_OBJECT_DISPLACEMENT_ID,
+                    map_layer_type,
+                    player_id,
+                )
+
+            point_collection.remove_point(point_to_place)
+            self.points_set_on_map += 1
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/group_placer.py
+"""
+This file contains the GroupPlacerManager class which is used to place groups of objects on the map.
+"""
+
+import random
+from typing import Callable
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+from typing import List
+from src.common.enums.enum import (
+    MapLayerType,
+    CheckPlacementReturnTypes,
+)
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.common.constants.constants import (
+    DEFAULT_PLAYER,
+)
+from src.map.map import Map
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.object_info import ObjectInfo
+from src.common.types import AOE2ObjectType
+from src.units.placers.placer_configs import PlaceGroupsConfig
+from src.common.types import Point
+
+
+class GroupPlacerManager(PlacerBase):
+    """
+    Class for placing groups of objects on a map.
+    """
+
+    points_iterated = 0
+
+    def place_groups(
+        self,
+        configuration: PlaceGroupsConfig,
+    ) -> dict[str, List[tuple[int, int]]]:
+        """
+        Places multiple groups of objects.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
+
+        Returns:
+            dict[str, List[tuple[int, int]]]: Dictionary containing group centers, objects, and displacements.
+        """
+        all_placements = self._initialize_placements()
+        groups = self._determine_group_count(configuration)
+
+        for _ in range(groups):
+            placements = self._place_group(configuration)
+            if placements:
+                self._update_all_placements(all_placements, placements)
+
+        return all_placements
+
+    def _initialize_placements(self) -> dict[str, List[tuple[int, int]]]:
+        """
+        Initializes the placements dictionary.
+
+        Returns:
+            dict[str, List[tuple[int, int]]]: Initialized placements dictionary.
+        """
+        return {
+            "group_centers": [],
+            "objects": [],
+            "displacements": [],
+        }
+
+    def _determine_group_count(self, configuration: PlaceGroupsConfig) -> int:
+        """
+        Determines the number of groups to place based on the configuration.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
+
+        Returns:
+            int: Number of groups to place.
+        """
+        if configuration.groups_density is not None:
+            size = ObjectInfo.get_object_size(configuration.object_type)
+            groups = int(
+                configuration.groups_density
+                * len(configuration.point_collection.get_point_list())
+                // size
+            )
+            configuration.groups = groups
+        return configuration.groups
+
+    def _update_all_placements(
+        self,
+        all_placements: dict[str, List[tuple[int, int]]],
+        placements: dict[str, List[tuple[int, int]]],
+    ) -> None:
+        """
+        Updates the all_placements dictionary with new placements.
+
+        Args:
+            all_placements (dict[str, List[tuple[int, int]]]): Dictionary containing all placements.
+            placements (dict[str, List[tuple[int, int]]]): Dictionary containing new placements.
+        """
+        all_placements["group_centers"].extend(placements["group_center"])
+        all_placements["objects"].extend(placements["objects"])
+        all_placements["displacements"].extend(placements["displacements"])
+
+    def _place_group(
+        self,
+        configuration: PlaceGroupsConfig,
+    ) -> dict[str, List[tuple[int, int]]] | None:
+        """
+        Places a single group of units on a specific array space.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+
+        Returns:
+            dict[str, List[tuple[int, int]]] | None: Dictionary containing group center, objects, and displacements or None if no points are available.
+        """
+        player_id = configuration.player_id or DEFAULT_PLAYER
+        points_list = configuration.point_collection.get_point_list()
+
+        if not points_list:
+            return None
+
+        group_size: int = self._adjust_group_size(configuration, points_list)
+        start_point: Point = self._choose_start_point(configuration, points_list)
+        points_list = self._prepare_points_list(configuration, points_list, start_point)
+
+        return self._place_objects(
+            configuration, points_list, start_point, group_size, player_id
+        )
+
+    def _adjust_group_size(
+        self, configuration: PlaceGroupsConfig, points_list: List[tuple[int, int]]
+    ) -> int:
+        """
+        Adjusts the group size based on the configuration and points list.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+
+        Returns:
+            int: Adjusted group size.
+        """
+        if configuration.group_density is not None:
+            return int(configuration.group_density * len(points_list) // 100)
+        return configuration.group_size
+
+    def _choose_start_point(
+        self, configuration: PlaceGroupsConfig, points_list: List[tuple[int, int]]
+    ) -> tuple[int, int]:
+        """
+        Chooses a start point for placing the group.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+
+        Returns:
+            tuple[int, int]: Chosen start point.
+        """
+        if configuration.start_point is None:
+            return points_list[int(random.random() * len(points_list))]
+        return configuration.start_point
+
+    def _prepare_points_list(
+        self,
+        configuration: PlaceGroupsConfig,
+        points_list: List[Point],
+        start_point: Point,
+    ) -> List[Point]:
+        """
+        Prepares the points list based on the configuration and start point.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+            start_point (tuple[int, int]): Chosen start point.
+
+        Returns:
+            List[tuple[int, int]]: Prepared points list.
+        """
+        if configuration.clumping == -1:
+            random.shuffle(points_list)
+        else:
+            total_size = sum(
+                ObjectInfo.get_object_effective_size(
+                    configuration.object_type, configuration.margin
+                )
+                for _ in range(configuration.group_size)
+            )
+            points_list = configuration.point_collection.get_nearby_points(
+                start_point, (total_size**0.5) * 2
+            )
+            if 1 < configuration.group_size < len(points_list):
+                points_list = sorted(
+                    points_list,
+                    key=lambda point: configuration.clumping_func(
+                        point, start_point, configuration.clumping
+                    ),
+                )
+        return points_list
+
+    def _place_objects(
+        self,
+        configuration: PlaceGroupsConfig,
+        points_list: List[tuple[int, int]],
+        start_point: tuple[int, int],
+        group_size: int,
+        player_id: PlayerId,
+    ) -> dict[str, List[tuple[int, int]]]:
+        """
+        Places objects on the map based on the configuration and points list.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+            start_point (tuple[int, int]): Chosen start point.
+            group_size (int): Size of the group to be placed.
+            player_id (PlayerId): ID of the player placing the objects.
+
+        Returns:
+            dict[str, List[tuple[int, int]]]: Dictionary containing group center, objects, and displacements.
+        """
+        placed = 0
+        all_placements = {
+            "group_center": [start_point],
+            "objects": [],
+            "displacements": [],
+        }
+
+        for x, y in points_list:
+            GroupPlacerManager.points_iterated += 1
+            if placed >= group_size:
+                break
+
+            status = self._check_placement(
+                configuration.point_collection,
+                (x, y),
+                configuration.object_type,
+                configuration.margin,
+            )
+
+            if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
+                break
+
+            if status == CheckPlacementReturnTypes.SUCCESS:
+                placements = self._place_single(
+                    configuration.point_collection,
+                    configuration.map_layer_type,
+                    (x, y),
+                    configuration.object_type,
+                    player_id,
+                    configuration.margin,
+                )
+                all_placements["objects"].extend(placements["objects"])
+                all_placements["displacements"].extend(placements["displacements"])
+                placed += 1
+
+        return all_placements
+
+    # ---------------------------- HELPER METHODS ----------------------------------
+
+    def __distance_to_edge(self, points, point):
+        """
+        Finds distance to edge blocks.
+
+        Args:
+            points: Set of all points in space.
+            point: single point to find distance for.
+        """
+        x, y = point
+
+        for dist in range(1, 100):
+            for i in range(-dist, dist + 1):
+                for j in range(-dist, dist + 1):
+                    if not (x + i, y + j) in points:
+                        return dist
+
+        return 100
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/wall_placer.py
+"""
+WallPlacer class for placing walls on a map.
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.enums.enum import MapLayerType
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.common.constants.constants import DEFAULT_PLAYER
+from src.units.placers.placer_base import PlacerBase
+from src.common.types import AOE2ObjectType
+from src.units.placers.placer_configs import AddBordersConfig
+import random
+
+
+class WallPlacer(PlacerBase):
+    """
+    Class for placing walls on a map.
+    """
+
+    # ****************************************************************************************
+    # Doesn't correctly account for objects with a size greater than 1
+    def add_borders(
+        self,
+        configuration: AddBordersConfig,
+    ):
+        """
+        Adds borders to a cell based on border margin size and type.
+
+        Args:
+            configuration (AddBordersConfig): Configuration for adding borders to
+        """
+        point_collection = configuration.point_collection
+        map_layer_type = configuration.map_layer_type
+        obj_type: AOE2ObjectType = configuration.obj_type
+        player_id = configuration.player_id
+        border_width = configuration.border_width
+
+        if player_id is None:
+            player_id = DEFAULT_PLAYER
+
+        points = point_collection.get_point_list_copy()
+
+        # As points are added to the original point manager
+        # They get removed, however that interferes with the loop
+        # that calculates whether or not a point is on the border.
+        copy_point_collection = point_collection.copy()
+
+        for point in points:
+            if self.__is_on_border(copy_point_collection, point, border_width):
+
+                # margin 0 since each wall is placed next to other wall pieces
+                self.place_if_possible(
+                    point_collection=point_collection,
+                    map_layer_type=map_layer_type,
+                    obj_type=obj_type,
+                    starting_point=point,
+                    player_id=player_id,
+                    margin=0,
+                )
+
+        return
+
+    def create_block_like_borders(
+        self,
+        point_collection: PointCollection,
+        map_layer_type: MapLayerType,
+        obj_type: AOE2ObjectType,
+        player_id: PlayerId,
+    ) -> None:
+        """
+        Incomplete ****
+        """
+        points_list = point_collection.get_point_list()
+
+        points_away_from_border = []
+
+        for point in points_list:
+            if self.__is_on_border(point_collection, point, 5):
+                continue
+            points_away_from_border.append(point)
+
+        random_point = points_away_from_border[
+            random.randint(0, len(points_away_from_border) - 1)
+        ]
+
+    def __is_on_border(
+        self,
+        point_collection: PointCollection,
+        point: tuple[int, int],
+        border_width: int,
+    ):
+        """
+        Checks if given point is on a border.
+
+        Args:
+            points: Set of all points in space.
+            point: single point to find distance for.
+            border_width: Number of squares to fill in along the edge.
+        """
+        x, y = point
+
+        for i in range(-border_width, border_width + 1):
+            for j in range(-abs(abs(i) - border_width), abs(abs(i) - border_width) + 1):
+                neighbor_point = (x + i, y + j)
+                point_exists = point_collection.check_point_exists(neighbor_point)
+                if not point_exists:
+                    return True
+
+        return False
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/units/placers/object_info.py
+"""
+TODO: Add module description.
+"""
+
+from src.common.enums.enum import ObjectSize
+from AoE2ScenarioParser.datasets.support.info_dataset_base import InfoDatasetBase
+from src.common.types import AOE2ObjectType
+
+
+class ObjectInfo:
+    """
+    Class for the Age of Empires 2 Object Information.
+    """
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_object_rows(aoe2_object: AOE2ObjectType):
+        """
+        Returns the effective width of an object.
+        """
+        if not isinstance(aoe2_object, InfoDatasetBase):
+            return 1
+
+        return ObjectSize(aoe2_object._name_).value
+
+    @staticmethod
+    def get_object_columns(aoe2_object: AOE2ObjectType):
+        """
+        Returns the effective height of an object.
+        """
+        if not isinstance(aoe2_object, InfoDatasetBase):
+            return 1
+
+        return ObjectSize(aoe2_object._name_).value
+
+    @staticmethod
+    def get_object_size(aoe2_object: AOE2ObjectType):
+        """
+        Returns the effective size of an object.
+        """
+        if not isinstance(aoe2_object, InfoDatasetBase):
+            return 1
+
+        return ObjectSize(aoe2_object._name_).value
+
+    @staticmethod
+    def get_object_effective_width(aoe2_object: AOE2ObjectType, margin: int = 0):
+        """
+        Returns the effective width of an object.
+        """
+        if not isinstance(aoe2_object, InfoDatasetBase):
+            return 1
+
+        return ObjectSize(aoe2_object._name_).value + margin
+
+    @staticmethod
+    def get_object_effective_height(aoe2_object: AOE2ObjectType, margin: int = 0):
+        """
+        Returns the effective height of an object.
+        """
+        if not isinstance(aoe2_object, InfoDatasetBase):
+            return 1
+
+        return ObjectSize(aoe2_object._name_).value + margin
+
+    @staticmethod
+    def get_object_effective_size(aoe2_object: AOE2ObjectType, margin: int = 0):
+        """
+        Returns the effective size of an object.
+        """
+        if not isinstance(aoe2_object, InfoDatasetBase):
+            return 1
+
+        return ObjectSize(aoe2_object._name_).value + margin
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/triggers/triggers.py
+from AoE2ScenarioParser.objects.support.new_effect import NewEffectSupport
+from AoE2ScenarioParser.objects.data_objects.trigger import Trigger
+from AoE2ScenarioParser.datasets.effects import EffectId
+from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+
+class TriggerManager:
+    """
+    Class to create triggers
+    """
+
+    def __init__(self, scenario: AoE2DEScenario) -> None:
+        """
+        Args:
+            scenario (AoE2DEScenario): scenario to which the triggers will be added
+        """
+        self.scenario = scenario
+        self.trigger_manager = scenario.trigger_manager
+
+    def create_objects_in_area(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        object: UnitInfo,
+        player_id: PlayerId,
+        looping: bool = True,
+    ):
+        """
+        Creates objects from the x1, y1, x2, y2 area
+        """
+        trigger = self.trigger_manager.add_trigger("Create Objects In Area")
+
+        for i in range(x1, x2 + 1):
+            for j in range(y1, y2 + 1):
+                trigger.new_effect.create_object(
+                    object_list_unit_id=object.ID,
+                    source_player=player_id,
+                    location_x=i,
+                    location_y=j,
+                )
+
+        trigger.looping = looping
+
+    def teleport_object_to_point(
+        self,
+        x: int,
+        y: int,
+        target_x: int,
+        target_y: int,
+        player_id: PlayerId,
+        looping: bool = True,
+    ):
+        """
+        Teleports object from the x, y point to the target_x, target_y point
+
+        Args:
+            x (int): x coordinate of the source point
+            y (int): y coordinate of the source point
+            target_x (int): x coordinate of the target point
+            target_y (int): y coordinate of the target point
+            player_id (PlayerId): player id of the object
+            looping (bool, optional): if the trigger should loop. Defaults to True.
+        """
+        trigger = self.trigger_manager.add_trigger("Teleport Object To Point")
+
+        trigger.new_effect.teleport_object(
+            source_player=player_id,
+            location_x=target_x,
+            location_y=target_y,
+            area_x1=x,
+            area_y1=y,
+            area_x2=x,
+            area_y2=y,
+        )
+
+        trigger.looping = looping
+
+    def teleport_objects_in_area(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        target_x: int,
+        target_y: int,
+        player_id: PlayerId,
+        looping=True,
+    ):
+        """
+        Teleports objects from the x1, y1, x2, y2 area to the target_x, target_y point
+
+        Args:
+            x1 (int): x1 coordinate of the source area
+            y1 (int): y1 coordinate of the source area
+            x2 (int): x2 coordinate of the source area
+            y2 (int): y2 coordinate of the source area
+            target_x (int): x coordinate of the target point
+            target_y (int): y coordinate of the target point
+            player_id (PlayerId): player id of the object
+            looping (bool, optional): if the trigger should loop. Defaults to True.
+        """
+        trigger = self.trigger_manager.add_trigger("Teleport Objects In Area")
+
+        trigger.new_effect.teleport_object(
+            source_player=player_id,
+            location_x=target_x,
+            location_y=target_y,
+            area_x1=x1,
+            area_y1=y1,
+            area_x2=x2,
+            area_y2=y2,
+        )
+
+        trigger.looping = looping
+
+    def teleport_objects_from_area_to_area(
+        self,
+        x11: int,
+        y11: int,
+        x21: int,
+        y21: int,
+        x12: int,
+        y12: int,
+        x22: int,
+        y22: int,
+        player_id: PlayerId,
+        looping: bool = True,
+    ):
+        """
+        Teleports objects from the x11, y11, x21, y21 area to the x12, y12, x22, y22 area
+
+        Args:
+            x11 (int): x11 coordinate of the source area
+            y11 (int): y11 coordinate of the source area
+            x21 (int): x21 coordinate of the source area
+            y21 (int): y21 coordinate of the source area
+            x12 (int): x12 coordinate of the target area
+            y12 (int): y12 coordinate of the target area
+            x22 (int): x22 coordinate of the target area
+            y22 (int): y22 coordinate of the target area
+            player_id (PlayerId): player id of the object
+            looping (bool, optional): if the trigger should loop. Defaults to True."""
+        trigger = self.trigger_manager.add_trigger("Teleport Objects From Area To Area")
+
+        for i in range(x12, x22 + 1):
+            for j in range(y12, y22 + 1):
+                trigger.new_effect.teleport_object(
+                    source_player=player_id,
+                    location_x=i,
+                    location_y=j,
+                    area_x1=x11,
+                    area_y1=y11,
+                    area_x2=x21,
+                    area_y2=y21,
+                )
+
+        trigger.looping = looping
+
+    def spawn_infinite_waves(
+        self,
+        x11: int,
+        y11: int,
+        x21: int,
+        y21: int,
+        x12: int,
+        y12: int,
+        x22: int,
+        y22: int,
+        target_x: int,
+        target_y: int,
+        object: UnitInfo,
+        player_id: PlayerId,
+        looping: bool = True,
+    ):
+        """
+        Spawns infinite waves of objects from the x11, y11, x21, y21 area to the x12, y12, x22, y22 area
+
+        Args:
+            x11 (int): x11 coordinate of the source area
+            y11 (int): y11 coordinate of the source area
+            x21 (int): x21 coordinate of the source area
+            y21 (int): y21 coordinate of the source area
+            x12 (int): x12 coordinate of the target area
+            y12 (int): y12 coordinate of the target area
+            x22 (int): x22 coordinate of the target area
+            y22 (int): y22 coordinate of the target area
+            object (UnitInfo): object to be spawned
+            player_id (PlayerId): player id of the object
+            looping (bool, optional): if the trigger should loop. Defaults to True.
+        """
+        spawn = self.trigger_manager.add_trigger("Spawn")
+        teleport = self.trigger_manager.add_trigger("Teleport")
+        attack_move = self.trigger_manager.add_trigger("Attack Move")
+        timer = self.trigger_manager.add_trigger("Timer")
+
+        spawn.enabled = True
+        teleport.enabled = False
+        attack_move.enabled = False
+        timer.enabled = False
+
+        # Spawn troops
+        self.create_objects_in_area(x11, y11, x21, y21, object, player_id)
+        spawn.new_effect.activate_trigger(trigger_id=teleport.ID)
+
+        # Teleport troops to the target area
+        for i in range(0, 1 + x12 - x11):
+            for j in range(0, 1 + y12 - y11):
+                # This teleports objects from the x1, y1 area to the x2, y2 area
+                # The absolute values and modulo operations are used to make the objects stay within the target area
+                teleport.new_effect.teleport_object(
+                    source_player=player_id,
+                    location_x=x21 + (i % (abs(x22 - x21))),
+                    location_y=y21 + (j % (abs(y22 - y21))),
+                    area_x1=x11 + i,
+                    area_y1=y11 + j,
+                    area_x2=x11 + i,
+                    area_y2=y11 + j,
+                )
+        teleport.new_effect.activate_trigger(trigger_id=attack_move.ID)
+
+        # Attack move to the target point
+        attack_move.new_effect.attack_move(
+            source_player=player_id,
+            location_x=target_x,
+            location_y=target_y,
+            area_x1=x12,
+            area_y1=y12,
+            area_x2=x22,
+            area_y2=y22,
+        )
+
+    def patrol(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        player_id: PlayerId,
+        x_target: int,
+        y_target: int,
+        looping: bool = True,
+    ):
+        """
+        Patrols objects from the x1, y1, x2, y2 area
+
+        Args:
+            x1 (int): x1 coordinate of the source area
+            y1 (int): y1 coordinate of the source area
+            x2 (int): x2 coordinate of the source area
+            y2 (int): y2 coordinate of the source area
+            player_id (PlayerId): player id of the object
+            looping (bool, optional): if the trigger should loop. Defaults to True.
+        """
+        trigger = self.trigger_manager.add_trigger("Patrol")
+
+        trigger.new_effect.patrol(
+            area_x1=x1,
+            area_y1=y1,
+            area_x2=x2,
+            area_y2=y2,
+            source_player=player_id,
+            location_x=x_target,
+            location_y=y_target,
+        )
+
+        trigger.looping = looping
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/terrain/terrain.py
+
+
+def terrain():
+    """
+    TODO
+    """
+    return
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/conftest.py
+import pytest
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--should-visualize",
+        action="store",
+        default="false",
+        help="Enable or disable visualization in tests (true/false)",
+    )
+
+
+@pytest.fixture
+def should_visualize(request):
+    return request.config.getoption("--should-visualize").lower() == "true"
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/add_borders_test.py
+"""
+Tests adding borders to a map.
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_manager import MapManager
+from src.map.map_object import MapObject
+from src.units.placers.placer_configs import (
+    VoronoiGeneratorConfig,
+    AddBordersConfig,
+)
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.common.constants.constants import (
+    LINUX_PROJECT_PATH,
+    LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+)
+import os
+import pytest
+from src.utils.utils import current_function_name, combine_test_name_and_function_name
+
+FILE_NAME = os.path.basename(__file__).replace(".py", "")
+
+
+def test_border(should_visualize):
+    """
+    Tests the creation of a map with size 500.
+    """
+
+    n = 10
+    map_manager = MapManager(n)
+
+    map_manager.point_manager.add_point_collection("base_points")
+    map_manager.point_manager.get_point_collection("base_points").add_points(
+        [(i, j) for i in range(n) for j in range(n)]
+    )
+
+    configuration = AddBordersConfig(
+        point_collection=map_manager.point_manager.get_point_collection("base_points"),
+        map_layer_type=MapLayerType.UNIT,
+        obj_type=BuildingInfo.CITY_WALL,
+        player_id=PlayerId.THREE,
+    )
+
+    map_manager.place_borders(configuration)
+
+    values = map_manager.get_set_with_map_object(
+        map_layer_type=MapLayerType.UNIT,
+        obj=MapObject(BuildingInfo.CITY_WALL, PlayerId.THREE),
+    )
+
+    if should_visualize:
+        # Visualize the map
+        visualize_config = VisualizeMapConfig(
+            map_layer_type=MapLayerType.UNIT,
+            include_zones=True,
+            transpose=False,
+            save_figure=True,
+            file_name=combine_test_name_and_function_name(FILE_NAME),
+            file_path=LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+        )
+
+        map_manager.visualize_map(visualize_config)
+
+    assert len(values) == 36
+
+
+def test_border_2(should_visualize):
+    """
+    Tests the creation of a map with size 500.
+    """
+
+    n = 10
+    map_manager = MapManager(n)
+
+    map_manager.point_manager.add_point_collection("base_points")
+    map_manager.point_manager.get_point_collection("base_points").add_points(
+        [(i, j) for i in range(n) for j in range(n)]
+    )
+
+    configuration = AddBordersConfig(
+        point_collection=map_manager.point_manager.get_point_collection("base_points"),
+        map_layer_type=MapLayerType.UNIT,
+        obj_type=BuildingInfo.CITY_WALL,
+        player_id=PlayerId.THREE,
+        border_width=2,
+    )
+
+    map_manager.place_borders(configuration)
+
+    values = map_manager.get_set_with_map_object(
+        map_layer_type=MapLayerType.UNIT,
+        obj=MapObject(BuildingInfo.CITY_WALL, PlayerId.THREE),
+    )
+
+    if should_visualize:
+        # Visualize the map
+        visualize_config = VisualizeMapConfig(
+            map_layer_type=MapLayerType.UNIT,
+            include_zones=True,
+            transpose=False,
+            save_figure=True,
+            file_name=combine_test_name_and_function_name(FILE_NAME),
+            file_path=LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+        )
+
+        map_manager.visualize_map(visualize_config)
+
+    assert len(values) == 64
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/serialization_test.py
+"""
+TODO: Add module description.
+"""
+
+import time
+
+import pytest
+import numpy as np
+
+
+from src.map.map import Map
+from src.map.map_manager import MapManager
+from src.map.map_object import MapObject
+from src.common.enums.enum import MapLayerType
+from src.units.placers.placer_configs import PlaceGroupsConfig
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+
+from src.units.placers.point_management import point_collection
+
+
+def test_serialize():
+    """
+    Tests the creation of a map with size 500.
+    """
+    n = 200
+    start_time = time.time()
+
+    map_manager = MapManager(n)
+
+    map_manager.point_manager.add_point_collection("base_points")
+    map_manager.point_manager.get_point_collection("base_points").add_points(
+        [(i, j) for i in range(n) for j in range(n)]
+    )
+
+    groups = 10
+    group_size = 10
+    total = groups * group_size
+
+    configuration = PlaceGroupsConfig(
+        point_collection=map_manager.point_manager.get_point_collection("base_points"),
+        map_layer_type=MapLayerType.UNIT,
+        object_type=UnitInfo.ALFRED_THE_ALPACA,
+        player_id=PlayerId.ONE,
+        groups=groups,
+        group_size=group_size,
+    )
+    map_manager.place_groups(configuration)
+
+    serialized = map_manager.map.serialize()
+    deserialized = Map.deserialize(serialized)
+    reserialized = deserialized.serialize()
+
+    assert serialized == reserialized
+
+    end_time = time.time()
+    total_time = end_time - start_time
+
+    assert (
+        total_time < 2
+    ), f"Performance test failed: total time {total_time:.4f} seconds"
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/voronoi_test.py
+"""
+Tests the voronoi algorithm.
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_manager import MapManager
+from src.map.map_object import MapObject
+from src.units.placers.placer_configs import VoronoiGeneratorConfig
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.common.constants.constants import (
+    LINUX_PROJECT_PATH,
+    LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+)
+import os
+from src.utils.utils import current_function_name, combine_test_name_and_function_name
+
+FILE_NAME = os.path.basename(__file__).replace(".py", "")
+
+
+def test_voronoi(should_visualize):
+    """
+    Tests the creation of a map with size 500.
+    """
+
+    n = 50
+    map_manager = MapManager(n)
+
+    map_manager.point_manager.add_point_collection("base_points")
+    map_manager.point_manager.get_point_collection("base_points").add_points(
+        [(i, j) for i in range(n) for j in range(n)]
+    )
+
+    configuration = VoronoiGeneratorConfig(
+        point_collection=map_manager.point_manager.get_point_collection("base_points"),
+        interpoint_distance=10,
+        map_layer_type=MapLayerType.UNIT,
+    )
+
+    zones = map_manager.place_voronoi_zones(configuration)
+
+    if should_visualize:
+        # Visualize the map
+        visualize_config = VisualizeMapConfig(
+            map_layer_type=MapLayerType.UNIT,
+            include_zones=True,
+            transpose=False,
+            save_figure=True,
+            file_name=combine_test_name_and_function_name(FILE_NAME),
+            file_path=LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+        )
+
+        map_manager.visualize_map(visualize_config)
+
+    assert len(zones) > 3
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/place_groups_test.py
+"""
+TODO: Add module description.
+"""
+
+import time
+
+import pytest
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_object import MapObject
+from src.units.placers.group_placer import GroupPlacerManager
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.units.placers.placer_configs import PlaceGroupsConfig
+from src.map.map_manager import MapManager
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.common.constants.constants import (
+    LINUX_PROJECT_PATH,
+    LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+)
+import os
+from src.utils.utils import current_function_name, combine_test_name_and_function_name
+
+FILE_NAME = os.path.basename(__file__).replace(".py", "")
+
+
+def test_place_groups(should_visualize):
+    """
+    Tests the creation of a map with size 500.
+    """
+    n = 200
+    start_time = time.time()
+
+    map_manager = MapManager(n)
+
+    map_manager.point_manager.add_point_collection("base_points")
+    map_manager.point_manager.get_point_collection("base_points").add_points(
+        [(i, j) for i in range(n) for j in range(n)]
+    )
+    groups = 10
+    group_size = 10
+    total = groups * group_size
+
+    configuration = PlaceGroupsConfig(
+        point_collection=map_manager.point_manager.get_point_collection("base_points"),
+        map_layer_type=MapLayerType.UNIT,
+        object_type=UnitInfo.ALFRED_THE_ALPACA,
+        player_id=PlayerId.ONE,
+        groups=groups,
+        group_size=group_size,
+    )
+    map_manager.place_groups(configuration)
+
+    values = map_manager.get_set_with_map_object(
+        map_layer_type=MapLayerType.UNIT,
+        obj=MapObject(UnitInfo.ALFRED_THE_ALPACA, PlayerId.ONE),
+    )
+
+    if should_visualize:
+        # Visualize the map
+        visualize_config = VisualizeMapConfig(
+            map_layer_type=MapLayerType.UNIT,
+            include_zones=True,
+            transpose=False,
+            save_figure=True,
+            file_name=combine_test_name_and_function_name(FILE_NAME),
+            file_path=LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+        )
+
+        map_manager.visualize_map(visualize_config)
+
+    end_time = time.time()
+    total_time = end_time - start_time
+
+    assert len(values) == total, f"Expected {total} values, got {len(values)}"
+
+    assert (
+        total_time < 1.5
+    ), f"Performance test failed: total time {total_time:.4f} seconds"
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/map_test.py
+"""
+TODO: Add module description.
+"""
+
+import time
+
+import pytest
+import numpy as np
+
+
+from src.map.map import Map
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.common.constants.constants import (
+    LINUX_PROJECT_PATH,
+    LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+)
+import os
+from src.utils.utils import current_function_name, combine_test_name_and_function_name
+
+FILE_NAME = os.path.basename(__file__).replace(".py", "")
+
+
+@pytest.mark.order(1)
+def test_create_map_10():
+    """
+    Tests the creation of a map with size 500.
+    """
+    n = 10
+    start_time = time.time()
+    Map(n)
+    end_time = time.time()
+    total_time = end_time - start_time
+
+    print(f"Total time: {total_time:.4f} seconds")
+
+    assert (
+        total_time < 0.5
+    ), f"Performance test failed: total time {total_time:.4f} seconds"
+
+
+@pytest.mark.order(2)
+def test_create_map_500():
+    """
+    Tests the creation of a map with size 500.
+    """
+    n = 500
+    start_time = time.time()
+    Map(n)
+    end_time = time.time()
+    total_time = end_time - start_time
+
+    assert (
+        total_time < 1.5
+    ), f"Performance test failed: total time {total_time:.4f} seconds"
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/serializer/base_serializer.py
+from typing import Any
+from enum import Enum
+from abc import ABC, abstractmethod
+from src.serializer.serialization_utils import (
+    serialize_enum,
+    deserialize_enum,
+)
+from src.common.enums.enum import *
+from src.common.enums.enum import GateType
+import ujson as json
+from typing import Any, Dict, List, Callable, Type, get_type_hints
+import inspect
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from functools import partial
+
+
+# region Function Serialization
+class Serializable(ABC):
+
+    @abstractmethod
+    def serialize(self) -> Any:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def deserialize(json_string: str | dict) -> Any:
+        pass
+
+    @abstractmethod
+    def to_dict(self) -> dict:
+        pass
+
+    def dump(self, dictionary: dict) -> str:
+        return json.dumps(dictionary)
+
+    @staticmethod
+    def serialize_prim(primitive: Any) -> str:
+        if isinstance(primitive, Enum):
+            return serialize_enum(primitive)
+
+        return json.dumps(primitive)
+
+    @staticmethod
+    def deserialize_prim(primitive_string: str) -> Any:
+        try:
+            return json.loads(primitive_string)
+        except:
+            return deserialize_enum(primitive_string)
+
+
+class SerializationRegistry:
+    """Registry for serializable types"""
+
+    def __init__(self) -> None:
+        self._types: Dict[str, Type[Serializable]] = {}
+
+    def register_type(self, cls: Type[Serializable]) -> None:
+        """Register a serializable type"""
+        if not issubclass(cls, Serializable):
+            raise ValueError(f"Class {cls.__name__} must inherit from Serializable")
+        self._types[cls.__name__] = cls
+
+    def deserialize(self, data: Dict[str, Any]) -> Serializable:
+        """Deserialize a dictionary into an object"""
+        if "_type" not in data:
+            raise ValueError("Serialized data missing '_type' field")
+
+        type_name = data["_type"]
+        if type_name not in self._types:
+            raise ValueError(f"Unknown type: {type_name}")
+
+        return self._types[type_name].deserialize(data)
+
+
+class FunctionRunner:
+    """
+    A class that executes functions based on JSON configuration,
+    with support for custom serializable objects.
+    """
+
+    def __init__(self) -> None:
+        self._function_registry: Dict[str, Callable] = {}
+        self._serialization_registry = SerializationRegistry()
+
+    def register_function(self, name: str, func: Callable) -> None:
+        """Register a function with a given name"""
+        self._function_registry[name] = func
+
+    def register_serializable(self, cls: Type[Serializable]) -> None:
+        """Register a serializable type"""
+        self._serialization_registry.register_type(cls)
+
+    def _deserialize_arg(self, value: Any, param_type: Type) -> Any:
+        """
+        Deserialize a single argument based on its type hint.
+        Handles nested lists and dictionaries containing serializable objects.
+        """
+        if isinstance(value, dict) and "_type" in value:
+            return self._serialization_registry.deserialize(value)
+
+        if isinstance(value, list):
+            # Handle List[SomeType] annotations
+            if hasattr(param_type, "__origin__") and param_type.__origin__ is list:
+                item_type = param_type.__args__[0]
+                return [self._deserialize_arg(item, item_type) for item in value]
+
+        if isinstance(value, dict):
+            # Handle Dict[str, SomeType] annotations
+            if hasattr(param_type, "__origin__") and param_type.__origin__ is dict:
+                key_type, value_type = param_type.__args__
+                return {
+                    key: self._deserialize_arg(val, value_type)
+                    for key, val in value.items()
+                }
+
+        return value
+
+    def _deserialize_args(
+        self, func: Callable, args: List[Any], kwargs: Dict[str, Any]
+    ) -> tuple[List[Any], Dict[str, Any]]:
+        """Deserialize all arguments based on function type hints"""
+        type_hints = get_type_hints(func)
+
+        # Get parameter names in order
+        sig = inspect.signature(func)
+        param_names = list(sig.parameters.keys())
+
+        # Deserialize positional arguments
+        deserialized_args = [
+            self._deserialize_arg(arg, type_hints[param_names[i]])
+            for i, arg in enumerate(args)
+        ]
+
+        # Deserialize keyword arguments
+        deserialized_kwargs = {
+            key: self._deserialize_arg(value, type_hints[key])
+            for key, value in kwargs.items()
+            if key in type_hints
+        }
+
+        return deserialized_args, deserialized_kwargs
+
+    def execute_from_json(self, json_config: str) -> List[Any]:
+        """
+        Execute functions based on JSON configuration.
+        Automatically deserializes arguments based on type hints.
+
+        Expected JSON format:
+        {
+            "functions": [
+                {
+                    "name": "function_name",
+                    "args": [...],
+                    "kwargs": {...}
+                }
+            ]
+        }
+        """
+        try:
+            config = json.loads(json_config)
+            results = []
+
+            for func_config in config["functions"]:
+                name = func_config["name"]
+                args = func_config.get("args", [])
+                kwargs = func_config.get("kwargs", {})
+
+                if name not in self._function_registry:
+                    raise ValueError(f"Function '{name}' not found in registry")
+
+                func = self._function_registry[name]
+                deserialized_args, deserialized_kwargs = self._deserialize_args(
+                    func, args, kwargs
+                )
+
+                result = func(*deserialized_args, **deserialized_kwargs)
+                results.append(result)
+
+            return results
+
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON format: {str(e)}")
+        except KeyError as e:
+            raise ValueError(f"Missing required key in JSON: {str(e)}")
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/serializer/serialization_manager.py
+from typing import Any
+from enum import Enum
+from abc import ABC, abstractmethod
+from src.serializer.serialization_utils import (
+    serialize_enum,
+    deserialize_enum,
+)
+from src.common.enums.enum import *
+from src.common.enums.enum import GateType
+import ujson as json
+from typing import Any, Dict, List, Callable, Type, get_type_hints
+import inspect
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from functools import partial
+
+
+from src.serializer.base_serializer import Serializable, SerializationRegistry
+
+
+class SerializationManager:
+    """
+    Class for managing serialization of objects.
+    """
+
+    def __init__(self):
+        self._registry = SerializationRegistry()
+
+    def register_all(self) -> None:
+        """
+        Register all serializable types.
+        """
+        for cls in Serializable.__subclasses__():
+            if not inspect.isabstract(cls):
+                self.register_type(cls)  # type: ignore[type-abstract]
+
+    def register_type(self, cls: Type[Serializable]) -> None:
+        """
+        Register a serializable type.
+        """
+        self._registry.register_type(cls)
+
+    def serialize(self, obj: Serializable) -> str:
+        """
+        Serialize an object.
+        """
+        return obj.serialize()
+
+    def deserialize(self, json_string: str | dict) -> Any:
+        """
+        Deserialize a string.
+        """
+        return self._registry.deserialize(json_string)
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/serializer/serialization_utils.py
+from enum import Enum
+from src.common.enums.enum import *
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+
+
+def serialize_enum(enum_instance: Enum) -> str:
+    """
+    Converts an enum instance to a string.
+
+    Args:
+        enum_instance (Enum): Enum instance to convert to string.
+
+    Returns:
+        str: String representation of the enum instance.
+    """
+    try:
+        instance_name = enum_instance.name
+        enum_name = enum_instance.__class__.__name__
+    except:
+        raise ValueError("Error parsing enum instance")
+
+    return f"{enum_name}.{instance_name}"
+
+
+def deserialize_enum(enum_string: str) -> Enum:
+    """
+        Deserializes an enum.
+    def serialize_enum():
+
+        Args:
+            enum_instance (Enum): Enum instance to convert to string.
+
+        Returns:
+            str: String representation of the enum instance.
+    """
+    try:
+        enum_name, instance_name = enum_string.split(".")
+    except:
+        raise ValueError("Error parsing enum string")
+
+    try:
+        enum = globals()[enum_name]
+    except:
+        try:
+            enum = locals()[enum_name]
+        except:
+            raise ValueError(f"Error parsing enum string: {enum_string}")
+
+    return enum[instance_name]
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/testing.py
+import time
+import sys
+
+
+
+def awesome_function(n: int):
+    cool_list = []
+
+    start_time = time.time()  # Start the timer
+
+    for i in range(n):
+        cool_list.append(i)
+
+    end_time = time.time()  # Stop the timer
+
+    elapsed_time = end_time - start_time
+    print("Elapsed time:", elapsed_time, "seconds")
+
+if __name__=="__main__":
+    awesome_function(int(sys.argv[1]))
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/scenario/gate.py
+"""
+Manages the placement of gates in the scenario. 
+"""
+
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
+
+from src.common.constants.constants import (
+    BASE_SCENARIO_NAME,
+    BASE_SCENE_DIR_LINUX,
+    X_SHIFT,
+    Y_SHIFT,
+)
+from src.common.enums.enum import (
+    GateType,
+    MapLayerType,
+    ObjectRotation,
+    ObjectSize,
+)
+from src.map.map import Map
+from src.common.types import AOE2ObjectType
+from src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
+from src.units.placers.placer_configs import PointSelectorConfig
+from src.common.enums.enum import GateObject
+
+
+def get_gate_x_shift(gate_object_string: str):
+    """
+    Gets the x shift for the given gate object.
+
+    Args:
+        gate_object (GateObject): Gate object to get the x shift for.
+
+    WARNING: City gates do not follow the same directions as the rest of the gates.
+    North for a city gate is not North for the other gates.
+    """
+    if gate_object_string in [
+        GateObject.CITY_GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.PALISADE_GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.SEA_GATE_SOUTHWEST_TO_NORTHEAST.value,
+    ]:
+        return 0
+    if gate_object_string in [
+        GateObject.CITY_GATE_WEST_TO_EAST.value,
+        GateObject.FORTIFIED_GATE_WEST_TO_EAST.value,
+        GateObject.GATE_WEST_TO_EAST.value,
+        GateObject.PALISADE_GATE_WEST_TO_EAST.value,
+        GateObject.SEA_GATE_WEST_TO_EAST.value,
+    ]:
+        return 0
+    if gate_object_string in [
+        GateObject.CITY_GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.PALISADE_GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.SEA_GATE_NORTHWEST_TO_SOUTHEAST.value,
+    ]:
+        return X_SHIFT
+    if gate_object_string in [
+        GateObject.CITY_GATE_NORTH_TO_SOUTH.value,
+        GateObject.FORTIFIED_GATE_NORTH_TO_SOUTH.value,
+        GateObject.GATE_NORTH_TO_SOUTH.value,
+        GateObject.PALISADE_GATE_NORTH_TO_SOUTH.value,
+        GateObject.SEA_GATE_NORTH_TO_SOUTH.value,
+    ]:
+        return 0
+    return 0
+
+
+def get_gate_y_shift(gate_object_string: str):
+    """
+    Gets the x shift for the given gate object.
+
+    Args:
+        gate_object (GateObject): Gate object to get the x shift for.
+
+    WARNING: City gates do not follow the same directions as the rest of the gates.
+    North for a city gate is not North for the other gates.
+    """
+    if gate_object_string in [
+        GateObject.CITY_GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.PALISADE_GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.SEA_GATE_SOUTHWEST_TO_NORTHEAST.value,
+    ]:
+        return Y_SHIFT
+    if gate_object_string in [
+        GateObject.CITY_GATE_WEST_TO_EAST.value,
+        GateObject.FORTIFIED_GATE_WEST_TO_EAST.value,
+        GateObject.GATE_WEST_TO_EAST.value,
+        GateObject.PALISADE_GATE_WEST_TO_EAST.value,
+        GateObject.SEA_GATE_WEST_TO_EAST.value,
+    ]:
+        return 0
+    if gate_object_string in [
+        GateObject.CITY_GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.GATE_NORTHWEST_TO_SOUTHEAST.value,
+        GateObject.PALISADE_GATE_SOUTHWEST_TO_NORTHEAST.value,
+        GateObject.SEA_GATE_NORTHWEST_TO_SOUTHEAST.value,
+    ]:
+        return 0
+    if gate_object_string in [
+        GateObject.CITY_GATE_NORTH_TO_SOUTH.value,
+        GateObject.FORTIFIED_GATE_NORTH_TO_SOUTH.value,
+        GateObject.GATE_NORTH_TO_SOUTH.value,
+        GateObject.PALISADE_GATE_NORTH_TO_SOUTH.value,
+        GateObject.SEA_GATE_NORTH_TO_SOUTH.value,
+    ]:
+        return 2 * Y_SHIFT
+    return 0
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/scenario/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/scenario/scenario.py
+"""
+Manages writing the internal map type to the AOE2 scenario file.
+"""
+
+import os
+import random
+
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
+
+from src.common.constants.constants import (
+    BASE_SCENARIO_NAME,
+    BASE_SCENE_DIR_LINUX,
+    X_SHIFT,
+    Y_SHIFT,
+)
+from src.common.enums.enum import (
+    GateType,
+    MapLayerType,
+    ObjectRotation,
+    ObjectSize,
+)
+from src.map.map import Map
+from src.common.types import AOE2ObjectType
+from src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
+from src.units.placers.placer_configs import PointSelectorConfig
+from src.scenario.gate import get_gate_x_shift, get_gate_y_shift
+from src.common.enums.enum import GateObject
+from src.map.maplayer import MapLayerDictionary
+from typing import List
+
+
+class Scenario:
+    """
+    Handles creating and writing to the AOE2 scenario file.
+    """
+
+    def __init__(
+        self,
+        aoe2_map: Map,
+        base_scenario_full_path: str = os.path.join(
+            BASE_SCENE_DIR_LINUX, BASE_SCENARIO_NAME
+        ),
+    ) -> None:
+        """
+        Creates a scenario with the given name.
+
+        Args:
+            map (Map): Map object to write to the scenario.
+            base_scenario_full_path (str, optional): Path to the base scenario file. Defaults to BASE_SCENARIO_FULL_PATH.
+        """
+        self.scenario = self._get_scenario(base_scenario_full_path)
+        self.map = aoe2_map
+
+    def _get_scenario(self, file_full_path: str) -> AoE2DEScenario:
+        """
+        Loads a scenario from the given file name.
+
+        Args:
+            file_full_path (str): Full path to the scenario file.
+        """
+        return AoE2DEScenario.from_file(file_full_path)
+
+    def write_map(self) -> None:
+        """
+        Writes to all map layers.
+        """
+        self._write_any_type(MapLayerType.UNIT)
+        self._write_any_type(MapLayerType.TERRAIN)
+        self._write_any_type(MapLayerType.DECOR)
+
+    def _write_any_type(self, map_layer_type: MapLayerType) -> None:
+        """
+        Writes to any type of map layer. Points are retrieved from the scenario's map object
+
+        Args:
+            map_layer_type (MapLayerType): Type of map layer to write to.
+        """
+        d: MapLayerDictionary = self.map.get_dictionary_from_map_layer_type(
+            map_layer_type
+        )
+        point_selector: PointSelector = PointSelector(self.map)
+
+        for map_object in d:
+            aoe2_object: AOE2ObjectType = map_object.get_obj_type()
+            player_id: int = map_object.get_player_id()
+
+            points: List[tuple[int, int]] = point_selector.get_points_from_map_layer(
+                PointSelectorConfig(map_layer_type, map_object)
+            )
+
+            if isinstance(aoe2_object, TerrainId):
+                self._write_terrain(points, aoe2_object)
+            if isinstance(aoe2_object, (BuildingInfo, OtherInfo, UnitInfo)):
+                self._write_units(points, aoe2_object, player_id)
+
+    def _write_units(
+        self,
+        points: set | List[tuple[int, int]],
+        aoe2_object: AOE2ObjectType,
+        player: int,
+        rotation: int = -1,
+    ) -> None:
+        """
+        Takes a scenario and a list of points to create units in the corresponding positions.
+
+        Args:
+            scenario (Scenario): Scenario object to place units.
+            points (set): Point positions to place objects.
+            unit_const (UnitInfo): AOE2 constant representing unit.
+            player (int): Player id of the unit.
+            rotation (int, optional): Rotation of the unit. Defaults to -1.
+        """
+        # HOUSE ROTATION STILL DOES NOT WORK. IDK WHY
+        unit_manager = self.scenario.unit_manager
+        rotation = 0
+
+        for i, (x, y) in enumerate(points):
+            # Adds a random rotation to each unit
+            rotation = random.random() * (ObjectRotation(aoe2_object._name_).value)
+
+            # WANKY JANKY CODING. WANT TO IMPROVE.
+            if ObjectSize(aoe2_object._name_).value % 2 == 0:
+                unit_manager.add_unit(
+                    player=player,
+                    unit_const=aoe2_object.ID,
+                    x=x,
+                    y=y,
+                    rotation=rotation,
+                )
+            elif any(
+                gate_object.value == aoe2_object._name_ for gate_object in GateObject
+            ):
+                unit_manager.add_unit(
+                    player=player,
+                    unit_const=aoe2_object.ID,
+                    x=x + get_gate_x_shift(aoe2_object._name_),
+                    y=y + get_gate_y_shift(aoe2_object._name_),
+                    rotation=rotation,
+                )
+            else:
+                unit_manager.add_unit(
+                    player=player,
+                    unit_const=aoe2_object.ID,
+                    x=x + X_SHIFT,
+                    y=y + Y_SHIFT,
+                    rotation=rotation,
+                )
+
+    def _write_terrain(
+        self, points: set | List[tuple[int, int]], terrain_const: TerrainId
+    ) -> None:
+        """
+        Takes a scenario and a list of points to create units in the corresponding positions.
+
+        Args:
+            points (set): Point positions to place objects.
+            terrain_const (TerrainId): AOE2 constant representing unit.
+        """
+        map_manager = self.scenario.map_manager
+
+        for i, (x, y) in enumerate(points):
+            tile = map_manager.get_tile(x, y)
+            tile.terrain_id = terrain_const.value
+
+    def _change_map_size(self, map_size: int) -> None:
+        """
+        Changes the map size.
+
+        Args:
+            map_size (int): Size of the map.
+        """
+        map_manager = self.scenario.map_manager
+
+        map_manager.map_size = map_size
+
+    def save_file(
+        self,
+        file_name: str = "test.aoe2scenario",
+        output_file_dir: str = BASE_SCENE_DIR_LINUX,
+    ) -> None:
+        """
+        Saves the scenario to the given output file name.
+
+        Args:
+            output_file_full_path (str): Full path to the output file.
+        """
+        file_name = (
+            file_name
+            if file_name.endswith(".aoe2scenario")
+            else file_name + ".aoe2scenario"
+        )
+        file_name = self._generate_unique_filename(file_name, output_file_dir)
+        self.scenario.write_to_file(os.path.join(output_file_dir, file_name))
+        print(f"File saved to {os.path.join(output_file_dir, file_name)}")
+
+    def _generate_unique_filename(self, file_name: str, output_file_dir: str) -> str:
+        """
+        Generates a unique filename by appending a number if the file already exists.
+
+        Args:
+            file_name (str): Desired file name.
+            output_file_dir (str): Directory to check for existing files.
+
+        Returns:
+            str: Unique file name.
+        """
+        base_name, extension = os.path.splitext(file_name)
+        counter = 1
+        unique_file_name = file_name
+
+        while os.path.exists(os.path.join(output_file_dir, unique_file_name)):
+            unique_file_name = f"{base_name}_{counter}{extension}"
+            counter += 1
+
+        return unique_file_name
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/enums/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/enums/enum.py
+"""
+Enum file for the different enums used in the project.
+"""
+
+from enum import Enum
+import numpy as np
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from AoE2ScenarioParser.datasets.support.info_dataset_base import InfoDatasetBase
+
+
+class MapLayerType(Enum):
+    """
+    Enum defining the what type a certain value is.
+    """
+
+    UNIT = 0
+    TERRAIN = 1
+    DECOR = 2
+    ZONE = 3
+    ELEVATION = 4
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in cls.__members__:
+            return cls.__members__[value]
+        return cls.UNIT
+
+
+class ObjectSize(Enum):
+    """
+    Enum defining the size of the given object.
+    """
+
+    # DEFAULT
+    DEFAULT_OBJECT_SIZE = 1
+
+    # TERRAIN ASSUMED TO HAVE SIZE 1 VIA DEFAULT
+
+    # BUILDINGS
+    CASTLE = 4
+    HOUSE = 2
+    BARRACKS = 3
+    ARCHERY_RANGE = 3
+    STABLE = 3
+    TOWN_CENTER = 4
+    FARM = 3
+    MILL = 2
+    BURNED_BUILDING = 3
+    DONJON = 2
+    FORTRESS = 4
+    MONASTERY = 3
+
+    SNOW_MOUNTAIN_1 = 5
+    SNOW_MOUNTAIN_2 = 5
+    SNOW_MOUNTAIN_3 = 5
+
+    # MISC
+    ROMAN_RUINS = 2
+
+    # DECOR OBJECTS
+    GRASS_PATCH_GREEN = 3
+    FLOWER_BED = 2
+    FLOWERS_1 = 5
+    FLOWERS_2 = 5
+    FLOWERS_3 = 5
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in cls.__members__:
+            return cls.__members__[value]
+        return cls.DEFAULT_OBJECT_SIZE
+
+
+class ObjectRotation(Enum):
+    """
+    Gives the number of rotations an object can have.
+    """
+
+    BASIC = 0
+    DEFAULT_OBJECT_ROTATION = 2 * np.pi
+
+    # TREES and BUSHES
+    TREE_DEFAULT = 42
+    TREE_SNOW_PINE = 26
+    BUSH_DEFAULT = 4
+    FORAGE_BUSH = 4
+
+    # HOUSE ROTATION STILL NOT WORKING! AHSDFHASGHHASDHFAHSDHFAHSDF!?!?!?!
+    HOUSE = 3
+    BURNED_BUILDING = 12
+
+    @classmethod
+    def _missing_(cls, value):
+
+        if value in cls.__members__:
+            return cls.__members__[value]
+
+        if "TREE" in value:
+            return cls.TREE_DEFAULT
+
+        return cls.DEFAULT_OBJECT_ROTATION
+
+
+class TemplateSize(Enum):
+    """
+    Enum defining the size of a given template.
+    """
+
+
+class Directions(Enum):
+    """
+    Enum of different directions.
+    """
+
+    # I DONT THINK THESE ACTUALLY MATCH WHATS GOING ON IN AOE2. I PICKED THEM RANDOMLY.
+    NORTH: tuple[int, int] = (-1, 0)
+    SOUTH: tuple[int, int] = (1, 0)
+    EAST: tuple[int, int] = (0, 1)
+    WEST: tuple[int, int] = (0, -1)
+    NORTHEAST: tuple[int, int] = (-1, 1)
+    NORTHWEST: tuple[int, int] = (-1, -1)
+    SOUTHEAST: tuple[int, int] = (1, 1)
+    SOUTHWEST: tuple[int, int] = (1, -1)
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in cls.__members__:
+            return cls.__members__[value]
+        return cls.NORTH
+
+
+# Endings for different gate types. This is ugly at the moment. Should probably be improved later on.
+def add_endings(gate_name) -> tuple[str, ...]:
+    """
+    Adds the different endings to the gate type.
+    """
+    endings: list[str] = [
+        "WEST_TO_EAST",
+        "NORTH_TO_SOUTH",
+        "NORTHWEST_TO_SOUTHEAST",
+        "SOUTHWEST_TO_NORTHEAST",
+    ]
+    result = tuple((f"{gate_name}_{ending}" for ending in endings))
+    return result
+
+
+class GateType(Enum):
+    """
+    Enum to match gate types with their different versions.
+    """
+
+    CITY_GATE = "CITY_GATE"
+    FORTIFIED_GATE = "FORTIFIED_GATE"
+    PALISADE_GATE = "PALISADE_GATE"
+    SEA_GATE = "SEA_GATE"
+    STONE_GATE = "STONE_GATE"
+
+    def get_building_info_wall(
+        self,
+    ) -> BuildingInfo:
+        """
+        Gets the building info for the wall.
+
+        Args:
+            gate_type: The gate type.
+        """
+        if self == GateType.CITY_GATE:
+            return BuildingInfo.CITY_WALL
+        if self == GateType.FORTIFIED_GATE:
+            return BuildingInfo.FORTIFIED_WALL
+        if self == GateType.PALISADE_GATE:
+            return BuildingInfo.PALISADE_WALL
+        if self == GateType.SEA_GATE:
+            return BuildingInfo.SEA_WALL
+        if self == GateType.STONE_GATE:
+            return BuildingInfo.STONE_WALL
+        else:
+            raise ValueError(f"Unknown gate type: {self}")
+
+    @staticmethod
+    def get_gate_objects_from_gate_type(
+        gate_type: "GateType",
+    ) -> list["GateObject"]:
+        """
+        Gets the different gate names from the gate type.
+
+        Args:
+            gate_type: The gate type.
+        """
+        if gate_type == GateType.CITY_GATE:
+            return [
+                GateObject.CITY_GATE_NORTH_TO_SOUTH,
+                GateObject.CITY_GATE_WEST_TO_EAST,
+                GateObject.CITY_GATE_NORTHWEST_TO_SOUTHEAST,
+                GateObject.CITY_GATE_SOUTHWEST_TO_NORTHEAST,
+            ]
+        if gate_type == GateType.FORTIFIED_GATE:
+            return [
+                GateObject.FORTIFIED_GATE_NORTH_TO_SOUTH,
+                GateObject.FORTIFIED_GATE_WEST_TO_EAST,
+                GateObject.FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST,
+                GateObject.FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST,
+            ]
+        if gate_type == GateType.PALISADE_GATE:
+            return [
+                GateObject.PALISADE_GATE_NORTH_TO_SOUTH,
+                GateObject.PALISADE_GATE_WEST_TO_EAST,
+                GateObject.PALISADE_GATE_NORTHWEST_TO_SOUTHEAST,
+                GateObject.PALISADE_GATE_SOUTHWEST_TO_NORTHEAST,
+            ]
+        if gate_type == GateType.SEA_GATE:
+            return [
+                GateObject.SEA_GATE_NORTH_TO_SOUTH,
+                GateObject.SEA_GATE_WEST_TO_EAST,
+                GateObject.SEA_GATE_NORTHWEST_TO_SOUTHEAST,
+                GateObject.SEA_GATE_SOUTHWEST_TO_NORTHEAST,
+            ]
+        if gate_type == GateType.STONE_GATE:
+            return [
+                GateObject.GATE_NORTH_TO_SOUTH,
+                GateObject.GATE_WEST_TO_EAST,
+                GateObject.GATE_NORTHWEST_TO_SOUTHEAST,
+                GateObject.GATE_SOUTHWEST_TO_NORTHEAST,
+            ]
+        else:
+            raise ValueError(f"Unknown gate type: {gate_type}")
+
+
+class GateObject(Enum):
+    """
+    Enum to match gate types with their different versions.
+    """
+
+    CITY_GATE_NORTH_TO_SOUTH = "CITY_GATE_NORTH_TO_SOUTH"
+    CITY_GATE_WEST_TO_EAST = "CITY_GATE_WEST_TO_EAST"
+    CITY_GATE_NORTHWEST_TO_SOUTHEAST = "CITY_GATE_NORTHWEST_TO_SOUTHEAST"
+    CITY_GATE_SOUTHWEST_TO_NORTHEAST = "CITY_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    FORTIFIED_GATE_NORTH_TO_SOUTH = "FORTIFIED_GATE_NORTH_TO_SOUTH"
+    FORTIFIED_GATE_WEST_TO_EAST = "FORTIFIED_GATE_WEST_TO_EAST"
+    FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST = "FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST"
+    FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST = "FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    PALISADE_GATE_NORTH_TO_SOUTH = "PALISADE_GATE_NORTH_TO_SOUTH"
+    PALISADE_GATE_WEST_TO_EAST = "PALISADE_GATE_WEST_TO_EAST"
+    PALISADE_GATE_NORTHWEST_TO_SOUTHEAST = "PALISADE_GATE_NORTHWEST_TO_SOUTHEAST"
+    PALISADE_GATE_SOUTHWEST_TO_NORTHEAST = "PALISADE_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    SEA_GATE_NORTH_TO_SOUTH = "SEA_GATE_NORTH_TO_SOUTH"
+    SEA_GATE_WEST_TO_EAST = "SEA_GATE_WEST_TO_EAST"
+    SEA_GATE_NORTHWEST_TO_SOUTHEAST = "SEA_GATE_NORTHWEST_TO_SOUTHEAST"
+    SEA_GATE_SOUTHWEST_TO_NORTHEAST = "SEA_GATE_SOUTHWEST_TO_NORTHEAST"
+
+    # Stone walls and gates don't have STONE in front for some stupid reason
+    GATE_NORTH_TO_SOUTH = "GATE_NORTH_TO_SOUTH"
+    GATE_WEST_TO_EAST = "GATE_WEST_TO_EAST"
+    GATE_NORTHWEST_TO_SOUTHEAST = "GATE_NORTHWEST_TO_SOUTHEAST"
+    GATE_SOUTHWEST_TO_NORTHEAST = "GATE_SOUTHWEST_TO_NORTHEAST"
+
+    """
+    The city gates are the only ones that follow a different pattern for directions than the rest.
+    E.G. north for a city gate is not north for palisade gates, etc.
+    """
+
+    def get_gate_dimensions(self) -> tuple[tuple[int, int], ...]:
+        """
+        Gets the dimensions of the gate object.
+
+        Args:
+            gate_object: The gate object.
+        """
+        if self in [
+            GateObject.CITY_GATE_NORTH_TO_SOUTH,
+            GateObject.FORTIFIED_GATE_NORTH_TO_SOUTH,
+            GateObject.PALISADE_GATE_NORTH_TO_SOUTH,
+            GateObject.SEA_GATE_NORTH_TO_SOUTH,
+            GateObject.GATE_NORTH_TO_SOUTH,
+        ]:
+            return ((-1, 1), (0, 0), (1, -1), (2, -2))
+        if self in [
+            GateObject.CITY_GATE_WEST_TO_EAST,
+            GateObject.FORTIFIED_GATE_WEST_TO_EAST,
+            GateObject.PALISADE_GATE_WEST_TO_EAST,
+            GateObject.SEA_GATE_WEST_TO_EAST,
+            GateObject.GATE_WEST_TO_EAST,
+        ]:
+            return ((-1, -1), (0, 0), (1, 1), (2, 2))
+        if self in [
+            GateObject.CITY_GATE_NORTHWEST_TO_SOUTHEAST,
+            GateObject.FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST,
+            GateObject.PALISADE_GATE_SOUTHWEST_TO_NORTHEAST,
+            GateObject.SEA_GATE_NORTHWEST_TO_SOUTHEAST,
+            GateObject.GATE_NORTHWEST_TO_SOUTHEAST,
+        ]:
+            return ((0, -1), (0, 0), (0, 1), (0, 2))
+
+        if self in [
+            GateObject.CITY_GATE_SOUTHWEST_TO_NORTHEAST,
+            GateObject.FORTIFIED_GATE_SOUTHWEST_TO_NORTHEAST,
+            GateObject.PALISADE_GATE_NORTHWEST_TO_SOUTHEAST,
+            GateObject.SEA_GATE_SOUTHWEST_TO_NORTHEAST,
+            GateObject.GATE_SOUTHWEST_TO_NORTHEAST,
+        ]:
+            return ((-1, 0), (0, 0), (1, 0), (2, 0))
+
+        raise ValueError(f"Unknown gate type: {self}")
+
+
+class TemplateTypes(Enum):
+    """
+    Enum representing the different types of templates.
+    """
+
+    DYNAMIC = 0
+    STATIC = 1
+    MIXED = 2
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in cls.__members__:
+            return cls.__members__[value]
+        return cls.DYNAMIC
+
+
+class YamlReplacementKeywords(Enum):
+    """
+    Enum of the yaml keywords that get replaced with python varibles.
+    """
+
+    # ARRAY SPACE REPLACEMENT VARIABLES
+    UNIT = "$UNIT"
+    TERRAIN = "$TERRAIN"
+    ZONE = "$ZONE"
+    DECOR = "$DECOR"
+    ELEVATION = "$ELEVATION"
+
+    # PLAYER ID
+    PLAYER_ID = "$PLAYER_ID"
+
+    # GATE TYPES
+    GATE_TYPE = "$GATE_TYPE"
+
+
+class CheckPlacementReturnTypes(Enum):
+    """
+    Return types from the check placement function
+    """
+
+    FAIL = 0
+    SUCCESS = 1
+    SUCCESS_IMPOSSIBLE = 2
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/dataclasses.py
+from dataclasses import dataclass
+
+from src.map.map_object import MapObject
+from src.units.placers.point_management.point_collection import PointCollection
+
+
+@dataclass
+class ObjectPlacement:
+    """
+    Class for object placement.
+    """
+
+    objects_placed: int
+    objects: dict[MapObject, PointCollection]
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/constants/constants.py
+"""
+This file contains the constants that are used throughout the project.
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+
+BASE_SCENARIO_NAME = "BASE_SCENARIO.aoe2scenario"
+
+# Windows Paths
+BASE_SCENE_DIR_WINDOWS = "C:\\Users\\josep\\Games\\Age of Empires 2 DE\\76561198242754748\\resources\\_common\\scenario\\"
+TEMPLATE_DIR_WINDOWS = "C:\\Users\\josep\\OneDrive\\Documents\\GitHub\\aoe2mapgenerator\\aoe2mapgenerator\\templates\\example_templates"
+
+# Linux Paths
+BASE_SCENE_DIR_LINUX = "/home/joseph/.steam/steam/steamapps/compatdata/813780/pfx/dosdevices/c:/users/steamuser/Games/Age of Empires 2 DE/76561198242754748/resources/_common/scenario/"
+TEMPLATE_DIR_LINUX = (
+    "/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/example_templates"
+)
+LINUX_PROJECT_PATH = "/home/joseph/Documents/Projects/aoe2mapgenerator/"
+
+# Unit Test PAths
+LINUX_PROJECT_UNIT_TEST_PATH = (
+    "/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/"
+)
+LINUX_PROJECT_UNIT_TEST_IMAGES_PATH = "/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/unit_test_result_images"
+
+GHOST_OBJECT_DISPLACEMENT_ID = 999
+GHOST_OBJECT_MARGIN_ID = 998
+
+"""
+These are used for the displacements for objects that take multiple spaces
+
+For example, a castle has a size of 4x4, but the center of the castle is not in the center of the 4x4 square.
+Instead, the center of the castle is one of the middle squares of the 4x4 square - Which is very annoying :(
+
+This is used to displace the squares around the single square on the grid which actually holds the castle object
+If every square was filled with the castle object, they you would spawn in 16 castles instead of one castle  
+"""
+DEFAULT_OBJECT_TYPES = [UnitInfo.LEGIONARY]
+DEFAULT_EMPTY_VALUE = 0
+DEFAULT_PLAYER = PlayerId.GAIA
+DEFAULT_OBJECT_AND_PLAYER = (DEFAULT_EMPTY_VALUE, DEFAULT_PLAYER)
+
+X_SHIFT = 0.5
+Y_SHIFT = 0.5
+
+DisplacementType = int
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/constants/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/constants/default_objects.py
+"""
+TODO:
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    GHOST_OBJECT_DISPLACEMENT_ID,
+    GHOST_OBJECT_MARGIN_ID,
+)
+from src.map.map_object import MapObject
+
+GHOST_OBJECT_DISPLACEMENT = MapObject(GHOST_OBJECT_DISPLACEMENT_ID, PlayerId.GAIA)
+GHOST_OBJECT_MARGIN = MapObject(GHOST_OBJECT_MARGIN_ID, PlayerId.GAIA)
+DEFAULT_EMPTY_OBJECT = MapObject(0, PlayerId.GAIA)
+
+
+def get_default_map_object():
+    """
+    Returns the default map object.
+    """
+    return MapObject(DEFAULT_EMPTY_VALUE, PlayerId.GAIA)
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/common/types.py
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.support.info_dataset_base import InfoDatasetBase
+
+
+AOE2ObjectType = PlayerId | BuildingInfo | UnitInfo | TerrainId | OtherInfo | int
+Point = tuple[int, int]
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/maingenerator.py
+# Generator base
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from src.common.enums.enum import (
+    MapLayerType,
+    ObjectSize,
+    GateType,
+    TemplateTypes,
+    ObjectRotation,
+    YamlReplacementKeywords,
+    CheckPlacementReturnTypes,
+)
+
+from src.scenario.scenario import Scenario
+import numpy as np
+import random
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    BASE_SCENE_DIR_LINUX,
+    BASE_SCENARIO_NAME,
+    TEMPLATE_DIR_LINUX,
+)
+from src.common.constants.default_objects import (
+    GHOST_OBJECT_DISPLACEMENT,
+)
+from src.common.enums.enum import GateType
+import multiprocessing as mp
+from src.map.map import Map
+import os
+from src.triggers.triggers import TriggerManager
+import inspect
+import ast
+import json
+from enum import Enum
+from src.units.wallgenerators.voronoi import VoronoiGenerator
+from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
+from src.units.placers.statictemplate import TemplateCreator
+from src.units.placers.group_placer import GroupPlacerManager
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.testing import awesome_function
+from src.map.map_object import MapObject
+from src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
+from src.visualizer.visualizer import Visualizer
+from src.units.placers.gate_placer import GatePlacer
+from src.units.placers.wall_placer import WallPlacer
+from src.map.map_manager import MapManager
+from src.units.placers.placer_configs import *
+from src.units.placers.placer_configs import PlaceGroupsConfig
+import dataclasses
+import json
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/map/map_object.py
+"""
+TODO: Add module description
+"""
+
+from typing import Any
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.types import AOE2ObjectType
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    DisplacementType,
+)
+
+from src.serializer.base_serializer import Serializable
+import ujson as json
+
+
+class MapObject(Serializable):
+    """
+    Class for the Age of Empires Map Object
+    """
+
+    def __init__(
+        self,
+        obj_type: AOE2ObjectType | DisplacementType = DEFAULT_EMPTY_VALUE,
+        player_id: PlayerId = PlayerId.GAIA,
+    ):
+        self._obj_type = obj_type
+        self._player_id = player_id
+
+    def __hash__(self):
+        return hash((self._obj_type, self._player_id))
+
+    def __eq__(self, other):
+        # Ensure the other object is an instance of CustomObject
+        if isinstance(other, MapObject):
+            return (self._obj_type, self._player_id) == (
+                other._obj_type,
+                other._player_id,
+            )
+        return False
+
+    def get_obj_type(self) -> AOE2ObjectType | DisplacementType:
+        """
+        Gets the object type.
+        """
+        return self._obj_type
+
+    def get_player_id(self) -> PlayerId:
+        """
+        Gets the player id.
+        """
+        return self._player_id
+
+    def to_dict(self):
+        return {
+            "_type": self.__class__.__name__,
+            "_obj_type": self.serialize_prim(self._obj_type),
+            "_player_id": self.serialize_prim(self._player_id),
+        }
+
+    def serialize(self) -> Any:
+        return self.dump(self.to_dict())
+
+    @staticmethod
+    def deserialize(json_string: str | dict) -> Any:
+        json_dict: dict
+        if isinstance(json_string, dict):
+            json_dict = json_string
+        else:
+            json_dict = json.loads(json_string)
+
+        obj_prim = Serializable.deserialize_prim(json_dict["_obj_type"])
+        player_id_prim = Serializable.deserialize_prim(json_dict["_player_id"])
+
+        return MapObject(obj_type=obj_prim, player_id=player_id_prim)
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/map/map_manager.py
+"""
+Handles all map generation and manipulation.
+"""
+
+from typing import Union
+
+from src.map.map import Map
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from src.common.enums.enum import (
+    MapLayerType,
+    ObjectSize,
+    GateType,
+    TemplateTypes,
+    ObjectRotation,
+    YamlReplacementKeywords,
+    CheckPlacementReturnTypes,
+)
+
+from src.scenario.scenario import Scenario
+import numpy as np
+import random
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    BASE_SCENE_DIR_LINUX,
+    BASE_SCENARIO_NAME,
+    TEMPLATE_DIR_LINUX,
+)
+from src.common.constants.default_objects import (
+    GHOST_OBJECT_DISPLACEMENT,
+)
+import multiprocessing as mp
+from src.map.map import Map
+import os
+from src.triggers.triggers import TriggerManager
+import inspect
+import ast
+import ujson as json
+from enum import Enum
+from src.units.wallgenerators.voronoi import VoronoiGenerator
+from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
+from src.units.placers.statictemplate import TemplateCreator
+from src.units.placers.group_placer import GroupPlacerManager
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.testing import awesome_function
+from src.map.map_object import MapObject
+from src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
+from src.visualizer.visualizer import Visualizer
+from src.units.placers.gate_placer import GatePlacer
+from src.units.placers.wall_placer import WallPlacer
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    GHOST_OBJECT_DISPLACEMENT_ID,
+    DEFAULT_PLAYER,
+)
+from typing import Callable
+from src.map.map import Map
+from src.units.placers.object_info import ObjectInfo
+from src.common.types import AOE2ObjectType
+from src.units.placers.placer_configs import (
+    PlaceGroupsConfig,
+    AddBordersConfig,
+    VoronoiGeneratorConfig,
+    VisualizeMapConfig,
+    PointSelectorConfig,
+)
+from src.units.placers.point_management.point_manager import (
+    PointManager,
+)
+from src.scenario.scenario import Scenario
+
+
+class MapManager:
+    """
+    Class to manage the map and its layers.
+    """
+
+    def __init__(self, map_size: int):
+        self.map: Map = Map(map_size)
+        self.templates: list = []
+        self.scenario: Scenario | None = None
+
+        # Initialize the placers
+        self.base_placer: PlacerBase = PlacerBase(self.map)
+        self.wall_placer: WallPlacer = WallPlacer(self.map)
+        self.gate_placer: GatePlacer = GatePlacer(self.map)
+        self.group_placer: GroupPlacerManager = GroupPlacerManager(self.map)
+        self.voronoi_generator: VoronoiGenerator = VoronoiGenerator(self.map)
+
+        # Initialize the point selector and manager
+        self.point_manager: PointManager = PointManager(self.map)
+
+        # Initialize the visualizer
+        self.visualizer: Visualizer = Visualizer(self.map)
+
+    def write_map_and_save(self, file_name: str):
+        """
+        Writes the map and saves it to a file.
+        """
+        if self.scenario is None:
+            self.scenario = Scenario(self.map)
+
+        self.scenario._change_map_size(self.map.size)
+        self.scenario.write_map()
+        self.scenario.save_file(file_name)
+
+    def place_groups(
+        self,
+        configuration: PlaceGroupsConfig,
+    ) -> dict[str, list[tuple[int, int]]]:
+        """
+        Places groups of objects on the map.
+        """
+        return self.group_placer.place_groups(configuration)
+
+    def place_borders(
+        self,
+        configuration: AddBordersConfig,
+    ):
+        """
+        Adds borders to the map.
+        """
+        self.wall_placer.add_borders(configuration)
+
+    def place_voronoi_zones(
+        self,
+        configuration: VoronoiGeneratorConfig,
+    ) -> list[MapObject]:
+        """
+        Generates the voronoi zones.
+        """
+        return self.voronoi_generator.generate_voronoi_cells(configuration)
+
+    def visualize_map(self, configuration: VisualizeMapConfig):
+        """
+        Visualizes the map.
+        """
+        self.visualizer.visualize_mat(configuration)
+
+    def select_points(
+        self, configuration: PointSelectorConfig
+    ) -> list[tuple[int, int]]:
+        """
+        Selects points on the map.
+        """
+        return self.point_manager.point_selector.get_points_from_map_layer(
+            configuration
+        )
+
+    def get_map(self):
+        """
+        Returns the map object.
+        """
+        return self.map
+
+    def get_map_layer(self, map_layer_type: MapLayerType):
+        """
+        Returns the map layer object.
+        """
+        return self.map.get_map_layer(map_layer_type)
+
+    def get_dictionary(self, map_layer_type: MapLayerType) -> dict:
+        """
+        Returns the dictionary of the map layer.
+        """
+        return self.map.get_map_layer(map_layer_type).get_dict()
+
+    def get_array(self, map_layer_type: MapLayerType) -> list:
+        """
+        Returns the array of the map layer.
+        """
+        return self.map.get_map_layer(map_layer_type).get_array()
+
+    def get_set_with_map_object(self, map_layer_type: MapLayerType, obj: MapObject):
+        """
+        Returns the set of points with the object.
+        """
+        return self.map.get_map_layer(map_layer_type).get_set_with_map_object(obj)
+
+    def get_points_from_map_layer(
+        self,
+        configuration: PointSelectorConfig,
+    ) -> list[tuple[int, int]]:
+        """
+        Gets the points from a map layer.
+        """
+        return self.point_manager.point_selector.get_points_from_map_layer(
+            configuration
+        )
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/map/maplayer.py
+"""
+TODO: Add module documentation.
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from typing import Any, List
+
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    DEFAULT_PLAYER,
+)
+from src.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
+from src.common.enums.enum import MapLayerType
+from src.common.types import AOE2ObjectType
+from src.map.map_object import MapObject
+from src.serializer.base_serializer import Serializable
+import ujson as json
+
+MapLayerArray = List[List[MapObject]]
+"""
+MapLayerArray: 2D array representation of the map layer. Each element is a MapObject.
+"""
+MapLayerDictionary = dict[MapObject, set[tuple[int, int]]]
+"""
+MapLayerDictionary: Dictionary representation of the map layer. Each key is a MapObject and each value is a set of points.
+"""
+
+
+class MapLayer(Serializable):
+    """
+    Single Map type constructor.
+    """
+
+    def __init__(self, map_layer_type: MapLayerType, size: int = 100) -> None:
+
+        self.map_layer_type = map_layer_type
+        self.size = size
+        # Create a 2D array of the given size.
+        # These objects will all reference the same default object.
+        # This is done to save memory.
+        self.array = [[DEFAULT_EMPTY_OBJECT for i in range(size)] for j in range(size)]
+        self.dict = _create_dict(self.array)
+
+    def set_point(
+        self,
+        point: tuple[int, int],
+        new_value: AOE2ObjectType,
+        player_id: PlayerId = PlayerId.GAIA,
+    ) -> None:
+        """
+        Takes an x and y coordinate and updates both the array and set representation.
+
+        Args:
+            point: Tuple of x and y coordinates.
+            new_value: New value to set.
+            player_id: Player ID to set.
+        """
+        x, y = point
+
+        new_obj = MapObject(new_value, player_id)
+        old_obj = self.array[x][y]
+
+        # Retrieve correct dictionary and array.
+        dictionary = self.dict
+        array = self.array
+
+        # Remove element from the dictionary.
+        dictionary[old_obj].remove((x, y))
+
+        # Remove entire dictionary entry if there are not elements left.
+        if len(dictionary[old_obj]) == 0:
+            dictionary.pop(old_obj, None)
+
+        # Assign new value to the array.
+        array[x][y] = new_obj
+
+        # Add the value to the dictionary.
+        if new_obj in dictionary:
+            dictionary[new_obj].add((x, y))
+        else:
+            dictionary[new_obj] = {(x, y)}
+
+    def get_array_of_points(self, map_object: MapObject) -> set[tuple[int, int]]:
+        """
+        Gets the set of points that have the object.
+        """
+        return self.dict[map_object]
+
+    def get_array(self) -> MapLayerArray:
+        """
+        Returns the array representation of the map layer.
+        """
+        return self.array
+
+    def get_dict(self) -> MapLayerDictionary:
+        """
+        Returns the dictionary representation of the map layer.
+        """
+        return self.dict
+
+    def get_set_with_map_object(self, obj: MapObject) -> set[tuple[int, int]]:
+        """
+        Returns the array representation of the map layer with the object.
+        """
+        if obj not in self.dict:
+            return set()
+        return self.dict[obj]
+
+    def get_object_at_point(self, point: tuple[int, int]) -> MapObject:
+        """
+        Returns the object at the given point.
+        """
+        return self.array[point[0]][point[1]]
+
+    def to_dict(self):
+        return {
+            "_type": self.__class__.__name__,
+            "layer": self.serialize_prim(self.map_layer_type),
+            "size": self.serialize_prim(self.size),
+            "array": [[cell.to_dict() for cell in row] for row in self.array],
+        }
+
+    def serialize(self) -> Any:
+        return self.dump(self.to_dict())
+
+    @staticmethod
+    def deserialize(json_string: str | dict) -> "MapLayer":
+
+        json_data: dict
+
+        if isinstance(json_string, dict):
+            json_data = json_string
+        else:
+            json_data = json.loads(json_string)
+
+        new_layer = MapLayer(
+            MapLayer.deserialize_prim(json_data["layer"]),
+            int(json_data["size"]),
+        )
+
+        for i, row in enumerate(json_data["array"]):
+            for j, cell in enumerate(json_data["array"][i]):
+                map_object = MapObject.deserialize(cell)
+
+                new_layer.set_point(
+                    (i, j), map_object.get_obj_type(), map_object.get_player_id()
+                )
+
+        return new_layer
+
+
+def _create_dict(array: list[list[MapObject]]) -> MapLayerDictionary:
+    """
+    Creates a set representation from the array.
+    """
+
+    new_dict: MapLayerDictionary = {}
+
+    for i, row in enumerate(array):
+        for j, cell in enumerate(row):
+            if cell in new_dict:
+                new_dict[cell].add((i, j))
+            else:
+                new_dict[cell] = {(i, j)}
+
+    return new_dict
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/map/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/map/map.py
+"""
+TODO: Add module docstring.
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from src.common.enums.enum import MapLayerType
+from src.map.maplayer import MapLayer, MapLayerDictionary
+from src.common.types import AOE2ObjectType
+from src.map.map_object import MapObject
+from src.common.constants.constants import DisplacementType
+from src.serializer.base_serializer import Serializable
+import ujson as json
+
+
+class Map(Serializable):
+    """
+    Class for the Age of Empires Map layers
+    """
+
+    def __init__(self, size: int = 100):
+        """
+        Initializes map object for internal map representation.
+
+        Args:
+            size: Size of the map.
+        """
+        # TEMPLATE NAMES, MULTIPLE INHERITANCE, init, AAHGHG
+        self.template_names: dict = {}
+        self.size = size
+
+        self.unit_map_layer = MapLayer(MapLayerType.UNIT, self.size)
+        self.zone_map_layer = MapLayer(MapLayerType.ZONE, self.size)
+        self.terrain_map_layer = MapLayer(MapLayerType.TERRAIN, self.size)
+        self.decor_map_layer = MapLayer(MapLayerType.DECOR, self.size)
+        self.elevation_map_layer = MapLayer(MapLayerType.ELEVATION, self.size)
+
+    def get_map_layer(self, map_layer_type: MapLayerType):
+        """
+        Gets the corresponding map layer from a map layer type.
+        """
+
+        if not isinstance(map_layer_type, MapLayerType):
+            raise ValueError("Map layer type is not a MapLayerType.")
+
+        if map_layer_type == MapLayerType.ZONE:
+            return self.zone_map_layer
+        elif map_layer_type == MapLayerType.TERRAIN:
+            return self.terrain_map_layer
+        elif map_layer_type == MapLayerType.UNIT:
+            return self.unit_map_layer
+        elif map_layer_type == MapLayerType.DECOR:
+            return self.decor_map_layer
+        elif map_layer_type == MapLayerType.ELEVATION:
+            return self.elevation_map_layer
+
+        raise ValueError("Retrieving map layer from map layer type failed.")
+
+    def get_all_map_layers(self) -> list[MapLayer]:
+        """
+        Gets all map layers.
+        """
+        return [
+            self.unit_map_layer,
+            self.zone_map_layer,
+            self.terrain_map_layer,
+            self.decor_map_layer,
+            self.elevation_map_layer,
+        ]
+
+    def set_point(
+        self,
+        point: tuple[int, int],
+        new_value: AOE2ObjectType | DisplacementType,
+        map_layer_type: MapLayerType,
+        player_id: PlayerId = PlayerId.GAIA,
+    ):
+        """
+        Takes an x and y coordinate and updates both the array and set representation.
+
+        Args:
+            x: X coordinate.
+            y: Y coordinate.
+            new_value: Value to set the point to.
+        """
+        layer = self.get_map_layer(map_layer_type)
+        layer.set_point(point, new_value, player_id)
+
+    def get_dictionary_from_map_layer_type(
+        self, map_layer_type: MapLayerType
+    ) -> MapLayerDictionary:
+        """
+        Gets the dictionary from a map layer type.
+        """
+        return self.get_map_layer(map_layer_type).get_dict()
+
+    def get_array_from_map_layer_type(self, map_layer_type: MapLayerType):
+        """
+        Gets the array from a map layer type.
+        """
+        return self.get_map_layer(map_layer_type).get_array()
+
+    def get_set_with_map_object(
+        self,
+        map_layer_type: MapLayerType,
+        obj: MapObject,
+    ):
+        """
+        Returns the array representation of the map layer with the object.
+        """
+        return self.get_map_layer(map_layer_type).get_set_with_map_object(obj)
+
+    def to_dict(self):
+        return {
+            "_type": self.__class__.__name__,
+            "unit_map_layer": self.unit_map_layer.to_dict(),
+            "zone_map_layer": self.zone_map_layer.to_dict(),
+            "terrain_map_layer": self.terrain_map_layer.to_dict(),
+            "decor_map_layer": self.decor_map_layer.to_dict(),
+            "elevation_map_layer": self.elevation_map_layer.to_dict(),
+        }
+
+    def serialize(self):
+        return self.dump(self.to_dict())
+
+    @staticmethod
+    def deserialize(json_string: str | dict) -> "Map":
+        json_dict: dict
+        if isinstance(json_string, dict):
+            json_dict = json_string
+        else:
+            json_dict = json.loads(json_string)
+
+        new_map = Map()
+
+        new_map.unit_map_layer = MapLayer.deserialize(json_dict["unit_map_layer"])
+        new_map.zone_map_layer = MapLayer.deserialize(json_dict["zone_map_layer"])
+        new_map.terrain_map_layer = MapLayer.deserialize(json_dict["terrain_map_layer"])
+        new_map.decor_map_layer = MapLayer.deserialize(json_dict["decor_map_layer"])
+        new_map.elevation_map_layer = MapLayer.deserialize(
+            json_dict["elevation_map_layer"]
+        )
+
+        return new_map
+
+    def __eq__(self, other):
+        return self.serialize() == other.serialize()
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/Cpython/Csetup.py
+from setuptools import setup, Extension
+
+module = Extension('knn', sources=['knn.c'])
+
+setup(name='knn',
+      version='1.0',
+      description='KNN C extension',
+      ext_modules=[module])
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/village.py
+"""
+Defines classes which places villages on the map
+"""
+
+from src.templates.abstract_template import AbstractTemplate
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+
+
+class Village(AbstractTemplate):
+    """
+    Class to generate villages on the map
+    """
+
+    @staticmethod
+    def generate(map_manager: MapManager, point_collection: PointCollection) -> None:
+        """
+        Generates a village
+        """
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/decor.py
+"""
+Defines classes which place decor on the map
+"""
+
+from src.templates.abstract_template import AbstractTemplate
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.units.placers.placer_configs import PlaceGroupsConfig
+import dataclasses
+import ujson as json
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from src.common.enums.enum import (
+    MapLayerType,
+)
+from src.units.placers.placer_configs import (
+    PointSelectorConfig,
+    PointSelectorInRangeConfig,
+)
+
+
+class AutumnDecor(AbstractTemplate):
+    """
+    Class for placing decor on the map.
+    """
+
+    @staticmethod
+    def generate(map_manager: MapManager, point_collection: PointCollection) -> None:
+        """
+        Places Autumn decor on the map.
+
+        Args:
+            point_manager (PointManager): Manager holding all potential points available for placement
+            map_manager (MapManager): Manages the map.
+        """
+
+        map_layer_type = MapLayerType.UNIT
+
+        decor_objects = [
+            OtherInfo.BUSH_A,
+            OtherInfo.BUSH_B,
+            OtherInfo.BUSH_C,
+            OtherInfo.FORAGE_BUSH,
+            OtherInfo.FRUIT_BUSH,
+            OtherInfo.PLANT_BUSH_GREEN,
+            OtherInfo.ROCK_1,
+            OtherInfo.ROCK_2,
+            OtherInfo.FLOWERS_1,
+            OtherInfo.FLOWERS_2,
+            OtherInfo.FLOWERS_3,
+            OtherInfo.FLOWERS_4,
+            OtherInfo.GRASS_GREEN,
+            OtherInfo.STONE_MINE,
+            OtherInfo.GOLD_MINE,
+            UnitInfo.DEER,
+            UnitInfo.SHEEP,
+        ]
+
+        # Place the trees
+        map_manager.place_groups(
+            PlaceGroupsConfig(
+                point_collection=point_collection,
+                map_layer_type=map_layer_type,
+                object_type=OtherInfo.TREE_OAK_AUTUMN,
+                player_id=PlayerId.GAIA,
+                group_size=15,
+                groups_density=0.01,
+                clumping=15,
+            )
+        )
+
+        map_manager.place_groups(
+            PlaceGroupsConfig(
+                point_collection=point_collection,
+                map_layer_type=map_layer_type,
+                object_type=OtherInfo.TREE_OAK_AUTUMN,
+                player_id=PlayerId.GAIA,
+                group_size=50,
+                groups_density=0.001,
+                clumping=15,
+            )
+        )
+
+        map_manager.place_groups(
+            PlaceGroupsConfig(
+                point_collection=point_collection,
+                map_layer_type=map_layer_type,
+                object_type=OtherInfo.TREE_OAK_AUTUMN,
+                player_id=PlayerId.GAIA,
+                group_size=250,
+                groups_density=0.0001,
+                clumping=15,
+            )
+        )
+
+        for decor_object in decor_objects:
+            map_manager.place_groups(
+                PlaceGroupsConfig(
+                    point_collection=point_collection,
+                    map_layer_type=map_layer_type,
+                    object_type=decor_object,
+                    player_id=PlayerId.GAIA,
+                    group_size=5,
+                    groups_density=0.001,
+                    clumping=10,
+                )
+            )
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/template_holder.py
+"""
+Template Holder class which holders objects of the Template class.
+"""
+
+from src.templates.abstract_template import AbstractTemplate
+from typing import List
+
+
+class TemplateHolder:
+    """
+    Holds the Template objects with generation functions.
+    """
+
+    def __init__(self) -> None:
+        self.templates: List[AbstractTemplate] = []
+
+    def get_templates(self) -> List[AbstractTemplate]:
+        """
+        Lists the templates.
+        """
+        return self.templates
+
+    def load_templates_from_directory(self, directory: str) -> None:
+        """
+        Loads the templates from a directory.
+        """
+        pass
+
+    def add_template(self, template: AbstractTemplate) -> "TemplateHolder":
+        """
+        Adds a template to the list.
+        """
+        self.templates.append(template)
+        return self
+
+    def call_template(self, template: AbstractTemplate) -> None:
+        """
+        Calls the template.
+        """
+        pass
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/templates_manager.py
+"""
+Template class for placing objects on a map.
+"""
+
+
+class Template:
+    """
+    Class for storing templates.
+    """
+
+    def __init__(self):
+        self.templates = {}
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/abstract_template.py
+"""
+This file contains the base class for all the generation scripts.
+"""
+
+from abc import ABC, abstractmethod
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+
+
+class AbstractTemplate(ABC):
+    """
+    Base class for all generation scripts.
+    """
+
+    @abstractmethod
+    def __init__(self, name: str, description: str):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def generate(map_manager: MapManager, point_collection: PointCollection):
+        """
+        Generate the map.
+        """
+        pass
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/gate_utility.py
+from typing import List, Tuple
+from AoE2ScenarioParser.datasets.players import PlayerId
+from src.common.enums.enum import (
+    MapLayerType,
+    GateType,
+)
+from src.map.map_manager import MapManager
+from src.units.placers.placer_configs import PointSelectorConfig
+from src.units.placers.point_management.point_collection import PointCollection
+from src.map.map_object import MapObject
+from src.units.wallgenerators.polygon import generate_polygonal_wall_points
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+
+
+def generate_polygon_walls_with_gates(
+    map_manager: MapManager,
+    point_collection: PointCollection,
+    point: Tuple[int, int],
+    sides: int,
+    radius: float,
+    gate_type: GateType,
+    player_id: PlayerId = PlayerId.ONE,
+) -> None:
+    """
+    Generates a polygonal wall with gates.
+
+    Args:
+        map_manager (MapManager): The map manager.
+        x (int): The x coordinate.
+        y (int): The y coordinate.
+        sides (int): The number of sides of the polygon.
+        radius (int): The radius of the polygon.
+        gate_type (GateType): The type of gate.
+    """
+    points: List[Tuple[int, int]] = generate_polygonal_wall_points(point, sides, radius)
+
+    wall_point_collection: PointCollection = (
+        map_manager.point_manager.add_point_collection("wall_points", points, True)
+    )
+
+    intersection_points: PointCollection = point_collection.intersect(
+        wall_point_collection
+    )
+
+    intersection_points_editable: PointCollection = intersection_points.copy()
+
+    wall_type: BuildingInfo = gate_type.get_building_info_wall()
+    place_wall_points(map_manager, point_collection, points, wall_type, player_id)
+    place_gates(map_manager, intersection_points_editable, gate_type, player_id)
+
+
+def place_wall_points(
+    map_manager: MapManager,
+    wp_collection: PointCollection,
+    points: List[Tuple[int, int]],
+    wall_type: str,
+    player_id: PlayerId = PlayerId.ONE,
+) -> None:
+    for point in points:
+        map_manager.base_placer.place_if_possible(
+            point_collection=wp_collection,
+            map_layer_type=MapLayerType.UNIT,
+            obj_type=wall_type,
+            starting_point=point,
+            player_id=player_id,
+        )
+
+
+def place_gates(
+    map_manager: MapManager,
+    point_collection: PointCollection,
+    gate_type: GateType,
+    player_id: PlayerId = PlayerId.ONE,
+) -> None:
+    map_manager.gate_placer.place_gate_on_eight_sides(
+        point_collection=point_collection,
+        map_layer_type=MapLayerType.UNIT,
+        gate_type=gate_type,
+        player_id=player_id,
+    )
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/fort.py
+"""
+Defines classes which place decor on the map
+"""
+
+from src.templates.abstract_template import AbstractTemplate
+from src.map.map_manager import MapManager
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.units.placers.placer_configs import PlaceGroupsConfig
+import dataclasses
+import ujson as json
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
+from src.common.enums.enum import (
+    MapLayerType,
+)
+from src.units.placers.placer_configs import (
+    PointSelectorConfig,
+    PointSelectorInRangeConfig,
+)
+from src.templates.gate_utility import generate_polygon_walls_with_gates
+from src.common.enums.enum import GateType
+from src.templates.decor import AutumnDecor
+from typing import Tuple
+
+
+class FortTemplate(AbstractTemplate):
+    """
+    Class for placing decor on the map.
+    """
+
+    @staticmethod
+    def generate(
+        map_manager: MapManager,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int],
+        sides: int = 8,
+        radius: int = 12,
+    ) -> None:
+        """
+        Places Autumn decor on the map.
+
+        Args:
+            point_manager (PointManager): Manager holding all potential points available for placement
+            map_manager (MapManager): Manages the map.
+        """
+
+        distance_from_center = 10
+        map_layer_type = MapLayerType.UNIT
+
+        generate_polygon_walls_with_gates(
+            map_manager=map_manager,
+            point_collection=point_collection,
+            point=center_point,
+            sides=sides,
+            radius=radius,
+            gate_type=GateType.FORTIFIED_GATE,
+        )
+
+        inside_collection = (
+            map_manager.point_manager.point_selector.get_connected_points(
+                point_collection=point_collection,
+                starting_point=center_point,
+                map_layer_type=map_layer_type,
+                object_type=map_manager.get_map_layer(
+                    map_layer_type
+                ).get_object_at_point(center_point),
+            )
+        )
+
+        map_manager.base_placer.place_closest_to_point(
+            point_collection=inside_collection,
+            map_layer_type=map_layer_type,
+            starting_point=center_point,
+            obj_type=BuildingInfo.CASTLE,
+            player_id=PlayerId.ONE,
+        )
+
+        map_manager.base_placer.place_closest_to_point(
+            point_collection=inside_collection,
+            map_layer_type=map_layer_type,
+            starting_point=(center_point[0], center_point[1] + distance_from_center),
+            obj_type=BuildingInfo.BARRACKS,
+            player_id=PlayerId.ONE,
+        )
+
+        map_manager.base_placer.place_closest_to_point(
+            point_collection=inside_collection,
+            map_layer_type=map_layer_type,
+            starting_point=(center_point[0], center_point[1] - distance_from_center),
+            obj_type=BuildingInfo.BARRACKS,
+            player_id=PlayerId.ONE,
+        )
+
+        map_manager.base_placer.place_closest_to_point(
+            point_collection=inside_collection,
+            map_layer_type=map_layer_type,
+            starting_point=(center_point[0] + distance_from_center, center_point[1]),
+            obj_type=BuildingInfo.BARRACKS,
+            player_id=PlayerId.ONE,
+        )
+
+        map_manager.base_placer.place_closest_to_point(
+            point_collection=inside_collection,
+            map_layer_type=map_layer_type,
+            starting_point=(center_point[0] - distance_from_center, center_point[1]),
+            obj_type=BuildingInfo.BARRACKS,
+            player_id=PlayerId.ONE,
+        )
+
+        # AutumnDecor.generate(map_manager, point_collection)
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/templates/python_templates/__pycache__/base.py
+from src.map.map_manager import MapManager
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/visualizer/__init__.py
+
+
+
+/home/joseph/Documents/Projects/aoe2mapgenerator/src/visualizer/visualizer.py
+"""
+TODO: Add description
+"""
+
+from copy import deepcopy
+
+import matplotlib.pyplot as plt
+import numpy as np
+from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+
+from src.common.constants.constants import DEFAULT_EMPTY_VALUE
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.utils.utils import unique_value_list
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.map.map_object import MapObject
+import os
+
+
+class Visualizer:
+    """
+    TODO
+    """
+
+    def __init__(self, aoe2_map: Map):
+        self.map = aoe2_map
+
+    def visualize_points(self, mapsize, points):
+        """
+        Visualizes a list of points.
+
+        Args:
+            mapsize: Size of the map.
+            points: Points to plot in (x,y) form.
+            mapping: Maps points to object ids.
+            colors: TBD
+        """
+        mapping = []
+
+        c = {BuildingInfo.FORTIFIED_WALL: (255, 255, 255)}
+
+        if len(mapping) < len(points):
+            mapping.extend([BuildingInfo.FORTIFIED_WALL] * (len(points) - len(mapping)))
+
+        mat = [[(0, 0, 0) for i in range(mapsize)] for j in range(mapsize)]
+
+        for i, (x, y) in enumerate(points):
+            mat[x][y] = c[mapping[i]]
+
+        fig, ax = plt.subplots(1, 1, facecolor="white", figsize=(20, 20))
+
+        # Transposes the matrix
+        mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
+
+        ax.matshow(mat)
+
+    def visualize_mat(
+        self,
+        configuration: VisualizeMapConfig,
+    ):
+        """
+        Visualizes a matrix.
+
+        Args:
+            map_layer_type: Type of value to visualize.
+        """
+        map_layer_type = configuration.map_layer_type
+        include_zones = configuration.include_zones
+        transpose = configuration.transpose
+        fig_size = configuration.fig_size
+        include_legend = configuration.include_legend
+        anchor = configuration.anchor
+
+        # Creat the figure
+        fig, ax = plt.subplots(1, 1, facecolor="white", figsize=fig_size)
+
+        # Make a copy of the matrix since we will be modifying it
+        mat = deepcopy(self.map.get_array_from_map_layer_type(map_layer_type))
+
+        # Get the unique values in the matrix
+        unique_values: list[MapObject] = unique_value_list(mat)
+        # Creates a map from unique values to integers
+        remap = dict(zip(unique_values, range(len(unique_values))))
+
+        # Create a colormap
+        cmap = plt.get_cmap("viridis", len(unique_values))
+        colors = [cmap(remap[val]) for val in remap]
+
+        for i, row in enumerate(mat):
+            for j, value in enumerate(row):
+                mat[i][j] = colors[remap[value]]
+
+        ax.hlines(
+            y=np.arange(0, len(mat)) + 0.5,
+            xmin=np.full(len(mat), 0) - 0.5,
+            xmax=np.full(len(mat), len(mat)) - 0.5,
+            color="black",
+        )
+        ax.vlines(
+            x=np.arange(0, len(mat)) + 0.5,
+            ymin=np.full(len(mat), 0) - 0.5,
+            ymax=np.full(len(mat), len(mat)) - 0.5,
+            color="black",
+        )
+
+        if include_legend:
+            handles = [
+                plt.Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    markerfacecolor=colors[remap[value]],
+                    markersize=10,
+                )
+                for value in unique_values
+            ]
+            labels = [
+                f"Name: {v.get_obj_type()}, Player: {v.get_player_id()}"
+                for v in unique_values
+            ]
+            ax.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=anchor,
+                fancybox=True,
+                shadow=True,
+            )
+
+        # Transposes the matrix to match aoe2 map
+        if transpose:
+            mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
+
+        ax.matshow(mat)
+
+        if configuration.save_figure:
+            plt.savefig(
+                os.path.join(configuration.file_path, configuration.file_name),
+                bbox_inches="tight",
+            )
+
+    def visualize_map(self):
+        """
+        Visualizes a map.
+
+        Args:
+            map: Map to visualize
+        """
+        fig, ax = plt.subplots(1, 1, facecolor="white", figsize=(25, 25))
+        terrain_matrix = deepcopy(self.get_map_layer(MapLayerType.TERRAIN).array)
+        object_matrix = deepcopy(self.get_map_layer(MapLayerType.UNIT).array)
+
+        mat = terrain_matrix
+
+        values = set()
+
+        for i, row in enumerate(mat):
+            for j, _ in enumerate(row):
+                if isinstance(mat[i][j], int) and mat[i][j] < 0:
+                    mat[i][j] = DEFAULT_EMPTY_VALUE
+
+                values.add(terrain_matrix[i][j])
+                values.add(object_matrix[i][j])
+
+        for i, row in enumerate(mat):
+            for j, _ in enumerate(row):
+                if object_matrix[i][j] != DEFAULT_EMPTY_VALUE:
+                    mat[i][j] = object_matrix[i][j]
+
+        values = list(values)
+        remap = dict(zip(values, range(len(values))))
+
+        for i, row in enumerate(mat):
+            for j, _ in enumerate(row):
+                mat[i][j] = remap[mat[i][j]]
+
+        ax.hlines(
+            y=np.arange(0, len(mat)) + 0.5,
+            xmin=np.full(len(mat), 0) - 0.5,
+            xmax=np.full(len(mat), len(mat)) - 0.5,
+            color="black",
+        )
+        ax.vlines(
+            x=np.arange(0, len(mat)) + 0.5,
+            ymin=np.full(len(mat), 0) - 0.5,
+            ymax=np.full(len(mat), len(mat)) - 0.5,
+            color="black",
+        )
+
+        # Transposes the matrix
+        mat = [[mat[j][i] for j in range(len(mat))] for i in range(len(mat[0]))]
+
+        ax.matshow(mat)
+
+
+

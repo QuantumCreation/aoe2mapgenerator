@@ -9,8 +9,8 @@ from typing import List, Tuple
 from src.units.utils import connect_points
 
 
-def generate_polygonal_wall(
-    x: int, y: int, number_of_sides: int, radius: int
+def generate_polygonal_wall_points(
+    point: Tuple[int, int], number_of_sides: int, radius: float
 ) -> List[Tuple[int, int]]:
     """
     Generates a polygonal wall centered around the x and y coordinates.
@@ -21,18 +21,18 @@ def generate_polygonal_wall(
         number_of_sides: Number of corners for polygon.
         radius: Radius of the polygon.
     """
-    points = generate_polygonal_wall_points(x, y, number_of_sides, radius)
+    points = generate_polygonal_wall_corner_points(point, number_of_sides, radius)
     points = points + [points[0]]
     points = connect_points(points)
 
     return points
 
 
-def generate_polygonal_wall_points(
-    x: int, y: int, number_of_sides: int, radius: int
+def generate_polygonal_wall_corner_points(
+    point: Tuple[int, int], number_of_sides: int, radius: float
 ) -> List[Tuple[int, int]]:
     """
-    Generates sequential points forming the outer perimeter of a wall.
+    Generates only the corner points along the perimeter of the polygon.
 
     Args:
         x: x coordinate to center the wall.
@@ -42,6 +42,7 @@ def generate_polygonal_wall_points(
 
     Returns points to define the outer perimeter.
     """
+    x, y = point
     points: List[Tuple[int, int]] = []
     angles = np.array(list(range(number_of_sides))) * (2 * np.pi) / number_of_sides
 

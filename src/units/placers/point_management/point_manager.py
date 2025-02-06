@@ -9,6 +9,7 @@ from src.units.placers.point_management.point_selector import (
 from src.units.placers.point_management.point_collection import (
     PointCollection,
 )
+from typing import Tuple
 
 # The Point type is a tuple of two integers.
 Point = tuple[int, int]
@@ -31,7 +32,7 @@ class PointManager:
 
     def add_point_collection(
         self, name: str, points: list[Point] = [], make_unique=False
-    ) -> str:
+    ) -> PointCollection:
         """
         Adds a point collection to the list
 
@@ -52,9 +53,10 @@ class PointManager:
         point_collection = PointCollection()
         point_collection.add_points(points)
 
+        point_collection.name = name
         self.__point_collections[name] = point_collection
 
-        return name
+        return point_collection
 
     def remove_point_collection(self, name: str) -> None:
         """

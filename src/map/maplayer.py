@@ -99,13 +99,19 @@ class MapLayer(Serializable):
         """
         return self.dict
 
-    def get_set_with_map_object(self, obj: MapObject):
+    def get_set_with_map_object(self, obj: MapObject) -> set[tuple[int, int]]:
         """
         Returns the array representation of the map layer with the object.
         """
         if obj not in self.dict:
             return set()
         return self.dict[obj]
+
+    def get_object_at_point(self, point: tuple[int, int]) -> MapObject:
+        """
+        Returns the object at the given point.
+        """
+        return self.array[point[0]][point[1]]
 
     def to_dict(self):
         return {

@@ -60,19 +60,6 @@ class AutumnDecor(AbstractTemplate):
             UnitInfo.SHEEP,
         ]
 
-        for decor_object in decor_objects:
-            map_manager.place_groups(
-                PlaceGroupsConfig(
-                    point_collection=point_collection,
-                    map_layer_type=map_layer_type,
-                    object_type=decor_object,
-                    player_id=PlayerId.GAIA,
-                    group_size=5,
-                    groups_density=0.001,
-                    clumping=10,
-                )
-            )
-
         # Place the trees
         map_manager.place_groups(
             PlaceGroupsConfig(
@@ -109,3 +96,16 @@ class AutumnDecor(AbstractTemplate):
                 clumping=15,
             )
         )
+
+        for decor_object in decor_objects:
+            map_manager.place_groups(
+                PlaceGroupsConfig(
+                    point_collection=point_collection,
+                    map_layer_type=map_layer_type,
+                    object_type=decor_object,
+                    player_id=PlayerId.GAIA,
+                    group_size=5,
+                    groups_density=0.001,
+                    clumping=10,
+                )
+            )

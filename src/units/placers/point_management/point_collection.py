@@ -3,6 +3,7 @@ This module contains the PointCollection class, which is used to store points in
 """
 
 from typing import Union, List, Dict, Tuple
+from src.units.placers.point_management.points_returned import PointPlacementResults
 
 # The Point type is a tuple of two integers.
 Point = Tuple[int, int]
@@ -19,6 +20,7 @@ class PointCollection:
         self.__points_list: List[Point] = []
         self.__points_dict: PointDict = {}
         self.points_removed: int = 0
+        self.name: str = ""
 
     def add_point(self, point: Point) -> None:
         """
@@ -78,6 +80,36 @@ class PointCollection:
         for point in points:
             self.remove_point(point)
 
+    def clear_points(self) -> None:
+        """
+        Clears the points in the set and list
+        """
+        self.__points_list = []
+        self.__points_dict = {}
+
+    def intersect(
+        self, other: "PointCollection", edit_in_place: bool = False
+    ) -> "PointCollection":
+        """
+        Returns a new PointCollection with the intersection of this and another PointCollection
+
+        Args:
+            other (PointCollection): The other PointCollection to intersect with
+        """
+        if edit_in_place:
+            points_copy = self.get_point_list_copy()
+
+            for point in points_copy:
+                if point not in other.get_point_list():
+                    self.remove_point(point)
+            return self
+
+        new_point_collector = PointCollection()
+        new_point_collector.add_points(
+            set(self.get_point_list()).intersection(set(other.get_point_list()))
+        )
+        return new_point_collector
+
     def check_point_exists(self, point: Point) -> bool:
         """
         Checks if a point exists in the set
@@ -86,15 +118,6 @@ class PointCollection:
             point (tuple): The point to check
         """
         return point in self.__points_dict
-
-    def get_sorted_points(self) -> List[Point]:
-        """
-        Gets the list of points sorted
-
-        Args:
-            point (tuple): The point to check
-        """
-        return sorted(self.__points_list)
 
     def get_point_dict(self) -> PointDict:
         """
@@ -234,6 +257,24 @@ class PointCollection:
         Gets the range of y values in the set
         """
         return 1 + abs(self.get_topmost_point()[0] - self.get_bottommost_point()[0])
+
+    def get_neighbors(self, point: tuple[int, int]) -> list[tuple[int, int]]:
+        """
+        Gets the neighbors of a point
+
+        Args:
+            point (tuple[int, int]): The point to get the neighbors of
+        """
+        x, y = point
+
+        neighbors = [
+            (x - 1, y),
+            (x + 1, y),
+            (x, y - 1),
+            (x, y + 1),
+        ]
+
+        return [neighbor for neighbor in neighbors if self.check_point_exists(neighbor)]
 
     def clear(self) -> None:
         """

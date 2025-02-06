@@ -279,7 +279,7 @@ class GateObject(Enum):
             GateObject.SEA_GATE_NORTH_TO_SOUTH,
             GateObject.GATE_NORTH_TO_SOUTH,
         ]:
-            return ((0, 0), (1, -1), (2, -2), (3, -3))
+            return ((-1, 1), (0, 0), (1, -1), (2, -2))
         if self in [
             GateObject.CITY_GATE_WEST_TO_EAST,
             GateObject.FORTIFIED_GATE_WEST_TO_EAST,
@@ -287,7 +287,7 @@ class GateObject(Enum):
             GateObject.SEA_GATE_WEST_TO_EAST,
             GateObject.GATE_WEST_TO_EAST,
         ]:
-            return ((0, 0), (1, 1), (2, 2), (3, 3))
+            return ((-1, -1), (0, 0), (1, 1), (2, 2))
         if self in [
             GateObject.CITY_GATE_NORTHWEST_TO_SOUTHEAST,
             GateObject.FORTIFIED_GATE_NORTHWEST_TO_SOUTHEAST,
@@ -295,7 +295,7 @@ class GateObject(Enum):
             GateObject.SEA_GATE_NORTHWEST_TO_SOUTHEAST,
             GateObject.GATE_NORTHWEST_TO_SOUTHEAST,
         ]:
-            return ((0, 0), (0, 1), (0, 2), (0, 3))
+            return ((0, -1), (0, 0), (0, 1), (0, 2))
 
         if self in [
             GateObject.CITY_GATE_SOUTHWEST_TO_NORTHEAST,
@@ -304,7 +304,7 @@ class GateObject(Enum):
             GateObject.SEA_GATE_SOUTHWEST_TO_NORTHEAST,
             GateObject.GATE_SOUTHWEST_TO_NORTHEAST,
         ]:
-            return ((0, 0), (1, 0), (2, 0), (3, 0))
+            return ((-1, 0), (0, 0), (1, 0), (2, 0))
 
         raise ValueError(f"Unknown gate type: {self}")
 

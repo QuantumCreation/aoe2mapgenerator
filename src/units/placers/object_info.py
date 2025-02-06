@@ -16,7 +16,7 @@ class ObjectInfo:
         pass
 
     @staticmethod
-    def get_object_width(aoe2_object: AOE2ObjectType):
+    def get_object_rows(aoe2_object: AOE2ObjectType):
         """
         Returns the effective width of an object.
         """
@@ -26,7 +26,7 @@ class ObjectInfo:
         return ObjectSize(aoe2_object._name_).value
 
     @staticmethod
-    def get_object_height(aoe2_object: AOE2ObjectType):
+    def get_object_columns(aoe2_object: AOE2ObjectType):
         """
         Returns the effective height of an object.
         """
