@@ -26,6 +26,12 @@ from src.units.utils import manhattan_distance
 from src.map.map_object import MapObject
 from src.common.types import Point
 from src.units.placers.point_management.points_returned import PointPlacementResults
+from src.units.placers.placer_configs import (
+    PlaceClosestToPointConfig,
+    PlaceIfPossibleConfig,
+    PlaceMultipleConfig,
+    FillConfig,
+)
 
 
 class PlacerBase:
@@ -40,139 +46,59 @@ class PlacerBase:
         self.map = aoe2_map
         self.point_placement_record = PointPlacementResults()
 
-    def place_closest_to_point(
-        self,
-        point_collection: PointCollection,
-        map_layer_type: MapLayerType,
-        obj_type: AOE2ObjectType,
-        starting_point: tuple,
-        player_id: PlayerId,
-        margin: int = 0,
-    ) -> None:
-        """
-        Places an object as close as possible to the starting point, while still being a valid placement.
-        Searches through nearby points within the point collection to find a valid placement.
-
-        Args:
-            point_collection (PointCollection): The point manager.
-            map_layer_type (MapLayerType): The map type.
-            obj_type (object): The type of object to be placed.
-            starting_point (tuple): The point to place the object.
-            player_id (PlayerId): Id of the player for the given object.
-            margin (int): Area around the object to be placed.
-        """
-
-        points: List[Point] = point_collection.get_point_list()
+    def place_closest_to_point(self, config: PlaceClosestToPointConfig) -> None:
+        points: List[Point] = config.point_collection.get_point_list()
         search_radius = 5
 
-        points = point_collection.get_nearby_points(starting_point, search_radius)
+        points = config.point_collection.get_nearby_points(config.starting_point, search_radius)
 
         for x, y in sorted(
             points,
-            key=lambda point: manhattan_distance(point, starting_point),
+            key=lambda point: manhattan_distance(point, config.starting_point),
         ):
-
-            status = self._check_placement(point_collection, (x, y), obj_type, margin)
+            status = self._check_placement(config.point_collection, (x, y), config.obj_type, config.margin)
             if status == CheckPlacementReturnTypes.FAIL:
                 continue
 
             self._place_single(
-                point_collection,
-                map_layer_type,
+                config.point_collection,
+                config.map_layer_type,
                 (x, y),
-                obj_type,
-                player_id,
-                margin,
+                config.obj_type,
+                config.player_id,
+                config.margin,
             )
             return
 
-    def place_if_possible(
-        self,
-        point_collection: PointCollection,
-        map_layer_type: MapLayerType,
-        obj_type: AOE2ObjectType,
-        starting_point: Point,
-        player_id: PlayerId,
-        margin: int = 0,
-    ) -> None:
-        """
-        Places an object if a valid placement exists.
-
-        Args:
-            point_collection (PointCollection): The point manager.
-            map_layer_type (MapLayerType): The map type.
-            obj_type (object): The type of object to be placed.
-            player_id (PlayerId): Id of the player for the given object.
-            margin (int): Area around the object to be placed.
-        """
-
+    def place_if_possible(self, config: PlaceIfPossibleConfig) -> None:
         status = self._check_placement(
-            point_collection, starting_point, obj_type, margin
+            config.point_collection, config.starting_point, config.obj_type, config.margin
         )
 
         if status == CheckPlacementReturnTypes.SUCCESS:
             self._place_single(
-                point_collection,
-                map_layer_type,
-                starting_point,
-                obj_type,
-                player_id,
-                margin,
+                config.point_collection,
+                config.map_layer_type,
+                config.starting_point,
+                config.obj_type,
+                config.player_id,
+                config.margin,
             )
             return
 
-    def place_multiple(
-        self,
-        point_collection: PointCollection,
-        map_layer_type: MapLayerType,
-        points: list[tuple[int, int]],
-        obj_type: AOE2ObjectType,
-        player_id: PlayerId,
-        margin: int = 0,
-    ) -> None:
-        """
-        places multiple objects at the given points. Does not check for safe placement.
-
-        Args:
-            point_collection: The point manager.
-            map_layer_type: The map type.
-            points: Points to place objects.
-            obj_type: The type of object to be placed.
-            player_id: Id of the player for the given object.
-            margin: Area around the object to be placed.
-        """
-
-        for point in points:
+    def place_multiple(self, config: PlaceMultipleConfig) -> None:
+        for point in config.points:
             self._place_single(
-                point_collection, map_layer_type, point, obj_type, player_id, margin
+                config.point_collection, config.map_layer_type, point, config.obj_type, config.player_id, config.margin
             )
-
         return
 
-    def fill(
-        self,
-        point_collection: PointCollection,
-        map_layer_type: MapLayerType,
-        obj_type: AOE2ObjectType,
-        player_id: PlayerId,
-        margin: int = 0,
-    ) -> None:
-        """
-        Fills the entire point collection with the given object.
-
-        Args:
-            point_collection: The point manager.
-            map_layer_type: The map type.
-            obj_type: The type of object to be placed.
-            player_id: Id of the player for the given object.
-            margin: Area around the object to be placed.
-        """
-
-        for point in point_collection.get_point_list_copy():
-            status = self._check_placement(point_collection, point, obj_type, margin)
+    def fill(self, config: FillConfig) -> None:
+        for point in config.point_collection.get_point_list_copy():
+            status = self._check_placement(config.point_collection, point, config.obj_type, config.margin)
             if status == CheckPlacementReturnTypes.SUCCESS:
                 self._place_single(
-                    point_collection, map_layer_type, point, obj_type, player_id, margin
+                    config.point_collection, config.map_layer_type, point, config.obj_type, config.player_id, config.margin
                 )
 
     def _place_single(
@@ -283,13 +209,25 @@ class PlacerBase:
         player_id: PlayerId,
     ) -> None:
         """
-        Safely sets a point on the map by removing it from the point manager and updating relevant static variables.
+        Directly sets a point on the map and tracks changes as necessary.
+
+        Args:
+            point_collection: The point manager.
+            point: Point to place base of object.
+            obj_type: The type of object to be placed.
+            map_layer_type: The map type.
+            player_id: Id of the player for the given object.
         """
+        # Set the point on the map
         self.map.set_point(point, obj_type, map_layer_type, player_id)
-        PlacerBase.points_set_on_map += 1
         point_collection.remove_point(point)
-        PlacerBase.points_removed_from_point_collection += 1
+        
+        # Add the object to the point placement record
         self.point_placement_record.add_object(point, MapObject(obj_type, player_id))
+
+        # Update the point collection
+        PlacerBase.points_set_on_map += 1
+        PlacerBase.points_removed_from_point_collection += 1
 
     # ---------------------------- SORTING FUNCTIONS ----------------------------
 

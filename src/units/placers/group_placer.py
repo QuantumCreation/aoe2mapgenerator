@@ -26,7 +26,7 @@ from src.common.types import Point
 from src.units.placers.point_management.points_returned import PointPlacementResults
 
 
-class GroupPlacerManager(PlacerBase):
+class GroupPlacer(PlacerBase):
     """
     Class for placing groups of objects on a map.
     """
@@ -50,26 +50,6 @@ class GroupPlacerManager(PlacerBase):
 
         for _ in range(groups):
             self._place_group(configuration)
-
-    def _determine_group_count(self, configuration: PlaceGroupsConfig) -> int:
-        """
-        Determines the number of groups to place based on the configuration.
-
-        Args:
-            configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
-
-        Returns:
-            int: Number of groups to place.
-        """
-        if configuration.groups_density is not None:
-            size = ObjectInfo.get_object_size(configuration.object_type)
-            groups = int(
-                configuration.groups_density
-                * len(configuration.point_collection.get_point_list())
-                // size
-            )
-            configuration.groups = groups
-        return configuration.groups
 
     def _place_group(
         self,
@@ -95,6 +75,27 @@ class GroupPlacerManager(PlacerBase):
         points_list = self._prepare_points_list(configuration, points_list, start_point)
 
         self._place_objects(configuration, points_list, group_size, player_id)
+
+
+    def _determine_group_count(self, configuration: PlaceGroupsConfig) -> int:
+        """
+        Determines the number of groups to place based on the configuration.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
+
+        Returns:
+            int: Number of groups to place.
+        """
+        if configuration.groups_density is not None:
+            size = ObjectInfo.get_object_size(configuration.object_type)
+            groups = int(
+                configuration.groups_density
+                * len(configuration.point_collection.get_point_list())
+                // size
+            )
+            configuration.groups = groups
+        return configuration.groups
 
     def _adjust_group_size(
         self, configuration: PlaceGroupsConfig, points_list: List[tuple[int, int]]
@@ -192,7 +193,7 @@ class GroupPlacerManager(PlacerBase):
         placed = 0
 
         for x, y in points_list:
-            GroupPlacerManager.points_iterated += 1
+            GroupPlacer.points_iterated += 1
             if placed >= group_size:
                 break
 

@@ -20,8 +20,9 @@ from src.common.enums.enum import (
 from src.units.placers.placer_configs import (
     PointSelectorConfig,
     PointSelectorInRangeConfig,
+    PlaceClosestToPointConfig,
 )
-from src.templates.gate_utility import generate_polygon_walls_with_gates
+# from src.units.placers.gate_utility import generate_polygon_walls_with_gates
 from src.common.enums.enum import GateType
 from src.templates.decor import AutumnDecor
 from typing import Tuple
@@ -33,7 +34,7 @@ class FortTemplate(AbstractTemplate):
     """
 
     @staticmethod
-    def generate2(
+    def generate(
         map_manager: MapManager,
         point_collection: PointCollection,
         center_point: Tuple[int, int],
@@ -48,16 +49,12 @@ class FortTemplate(AbstractTemplate):
             map_manager (MapManager): Manages the map.
         """
 
-        distance_from_center = 10
-        map_layer_type = MapLayerType.UNIT
-
-        generate_polygon_walls_with_gates(
-            map_manager=map_manager,
+        config = PlaceClosestToPointConfig(
             point_collection=point_collection,
-            point=center_point,
-            sides=sides,
-            radius=radius,
-            gate_type=GateType.FORTIFIED_GATE,
+            map_layer_type=MapLayerType.UNIT,
+            obj_type=BuildingInfo.CITY_WALL,
+            starting_point=center_point,
+            player_id=PlayerId.ONE,
+            margin=0,
         )
-
-        # AutumnDecor.generate(map_manager, point_collection)
+        map_manager.placer.place_closest_to_point(config)

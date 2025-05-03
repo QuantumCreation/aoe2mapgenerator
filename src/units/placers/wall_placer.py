@@ -12,6 +12,7 @@ from src.common.constants.constants import DEFAULT_PLAYER
 from src.units.placers.placer_base import PlacerBase
 from src.common.types import AOE2ObjectType
 from src.units.placers.placer_configs import AddBordersConfig
+from src.units.placers.placer_configs import PlaceIfPossibleConfig
 import random
 
 
@@ -53,12 +54,14 @@ class WallPlacer(PlacerBase):
 
                 # margin 0 since each wall is placed next to other wall pieces
                 self.place_if_possible(
-                    point_collection=point_collection,
-                    map_layer_type=map_layer_type,
-                    obj_type=obj_type,
-                    starting_point=point,
-                    player_id=player_id,
-                    margin=0,
+                    PlaceIfPossibleConfig(
+                        point_collection=point_collection,
+                        map_layer_type=map_layer_type,
+                        obj_type=obj_type,
+                        starting_point=point,
+                        player_id=player_id,
+                        margin=0,
+                    )
                 )
 
         return

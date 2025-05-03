@@ -77,6 +77,26 @@ def connect_points_with_randomization(
     return randomized_points
 
 
+def create_path(key_points: List[Tuple[int, int]], num_divisions: List[int], random_shift_range: List[int]) -> List[Tuple[int, int]]:
+    """
+    Creates a path with randomization.
+
+
+    Args:
+        key_points: List of key points.
+        num_divisions: List of number of divisions.
+        random_shift_range: List of random shift ranges.
+    """
+    if len(num_divisions) != len(random_shift_range):
+        raise ValueError("num_divisions and random_shift_range must be of the same length.")
+    
+    path = connect_points(key_points)
+
+    for num_div, shift_range in zip(num_divisions, random_shift_range):
+        path = connect_points_with_randomization(key_points, num_div, shift_range, path)
+
+    return path
+
 def connect_points(point_list: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
     """
     Creates list of all connecting points for a list of outer perimeter points.

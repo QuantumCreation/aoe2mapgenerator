@@ -10,6 +10,7 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 from src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
+    GateType,
 )
 from src.units.placers.point_management.point_collection import (
     PointCollection,
@@ -18,7 +19,7 @@ from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
-from src.common.types import AOE2ObjectType
+from src.common.types import AOE2ObjectType, Point
 
 
 from AoE2ScenarioParser.datasets.players import PlayerId
@@ -159,3 +160,70 @@ class PointSelectorInRangeConfig:
     min_range: int
     max_range: int
     points_to_be_in_range_of: list[tuple[int, int]]
+
+
+@dataclass
+class PlaceClosestToPointConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    starting_point: tuple[int, int]
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class PlaceIfPossibleConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    starting_point: Point
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class PlaceMultipleConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    points: list[tuple[int, int]]
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class FillConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class CreateBlockLikeBordersConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+
+@dataclass
+class PlaceGateOnFourSidesConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    gate_type: GateType
+    player_id: PlayerId = DEFAULT_PLAYER
+
+@dataclass
+class PlaceGateOnEightSidesConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    gate_type: GateType
+    player_id: PlayerId = DEFAULT_PLAYER
+
+@dataclass
+class PlacePathConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+    key_points: list[tuple[int, int]]
+    num_divisions: list[int]
+    random_shift_range: list[int]

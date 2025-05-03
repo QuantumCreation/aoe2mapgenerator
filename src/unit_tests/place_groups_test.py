@@ -14,7 +14,7 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from src.common.enums.enum import MapLayerType
 from src.map.map import Map
 from src.map.map_object import MapObject
-from src.units.placers.group_placer import GroupPlacerManager
+from src.units.placers.group_placer import GroupPlacer
 from src.units.placers.point_management.point_manager import (
     PointCollection,
 )

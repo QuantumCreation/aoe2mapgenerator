@@ -43,7 +43,7 @@ from enum import Enum
 from src.units.wallgenerators.voronoi import VoronoiGenerator
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from src.units.placers.statictemplate import TemplateCreator
-from src.units.placers.group_placer import GroupPlacerManager
+from src.units.placers.group_placer import GroupPlacer
 from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
@@ -80,7 +80,6 @@ from src.units.placers.point_management.point_manager import (
 )
 from src.scenario.scenario import Scenario
 
-
 class MapManager:
     """
     Class to manage the map and its layers.
@@ -91,11 +90,13 @@ class MapManager:
         self.templates: list = []
         self.scenario: Scenario | None = None
 
-        # Initialize the placers
+        # Initialize the placers - Legacy
         self.base_placer: PlacerBase = PlacerBase(self.map)
         self.wall_placer: WallPlacer = WallPlacer(self.map)
         self.gate_placer: GatePlacer = GatePlacer(self.map)
-        self.group_placer: GroupPlacerManager = GroupPlacerManager(self.map)
+        self.group_placer: GroupPlacer = GroupPlacer(self.map)
+
+        # Initialize the voronoi generator
         self.voronoi_generator: VoronoiGenerator = VoronoiGenerator(self.map)
 
         # Initialize the point selector and manager

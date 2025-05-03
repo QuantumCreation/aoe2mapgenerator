@@ -38,7 +38,7 @@ from enum import Enum
 from src.units.wallgenerators.voronoi import VoronoiGenerator
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from src.units.placers.statictemplate import TemplateCreator
-from src.units.placers.group_placer import GroupPlacerManager
+from src.units.placers.group_placer import GroupPlacer
 from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
