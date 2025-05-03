@@ -8,25 +8,25 @@ from AoE2ScenarioParser.datasets.terrains import TerrainId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     BASE_SCENARIO_NAME,
     BASE_SCENE_DIR_LINUX,
     X_SHIFT,
     Y_SHIFT,
 )
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     GateType,
     MapLayerType,
     ObjectRotation,
     ObjectSize,
 )
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.units.placers.point_management.point_selector import (
+from src.map.map import Map
+from src.common.types import AOE2ObjectType
+from src.units.placers.point_management.point_selector import (
     PointSelector,
 )
-from aoe2mapgenerator.src.units.placers.placer_configs import PointSelectorConfig
-from aoe2mapgenerator.src.common.enums.enum import GateObject
+from src.units.placers.placer_configs import PointSelectorConfig
+from src.common.enums.enum import GateObject
 
 
 def get_gate_x_shift(gate_object_string: str):

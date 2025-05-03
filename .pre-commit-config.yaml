@@ -4,12 +4,22 @@ repos:
     - id: run-pytest
       name: Run pytest
       entry: ./run_tests.sh -v
+      language: system
+      require_serial: true
+      types: [python]
+      pass_filenames: false
+      stages: [commit] 
+      exclude: ^src/unit_tests/unit_test_result_images/
+      args: ["--should-visualize=false"]  # Pass the flag to pytest
+ 
+
+  - repo: local
+    hooks:
+    - id: run-mypy
+      name: Run mypy
+      entry: ./run_mypy.sh -v
       require_serial: true
       language: system
       types: [python]
 
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.812
-    hooks:
-      - id: mypy
+      

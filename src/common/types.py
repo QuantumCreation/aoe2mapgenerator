@@ -5,4 +5,6 @@ from AoE2ScenarioParser.datasets.terrains import TerrainId
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.support.info_dataset_base import InfoDatasetBase
 
-AOE2ObjectType = InfoDatasetBase | int
+
+AOE2ObjectType = PlayerId | BuildingInfo | UnitInfo | TerrainId | OtherInfo | int
+Point = tuple[int, int]

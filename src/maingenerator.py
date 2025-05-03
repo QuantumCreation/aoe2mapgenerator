@@ -1,9 +1,10 @@
+# Generator base
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
     ObjectSize,
     GateType,
@@ -12,212 +13,45 @@ from aoe2mapgenerator.src.common.enums.enum import (
     YamlReplacementKeywords,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.scenario.scenario import Scenario
+
+from src.scenario.scenario import Scenario
 import numpy as np
 import random
-from aoe2mapgenerator.src.common.constants.constants import DEFAULT_EMPTY_VALUE
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.units.placers.placer_configs import VoronoiGeneratorConfig
-from aoe2mapgenerator.src.units.wallgenerators.voronoi import VoronoiGenerator
-
-
-def main_map_generator(
-    base_scenario_full_path: str,
-    output_file_full_path: str,
-    template_dir: str,
-    map_size: int = 200,
-    **kwargs
-):
-    """
-    The main function that generates a map.
-
-    Args:
-        base_scenario_full_path (str): Full path to the base scenario file.
-        output_file_full_path (str): Full path to the output scenario file.
-        template_dir (str): Full path to the template directory.
-        **kwargs: Keyword arguments.
-    """
-    # map_size = 300
-    map_manager = MapManager(map_size)
-
-    map_manager.voronoi_generator.generate_voronoi_cells(VoronoiGeneratorConfig())
-
-    new_zones = map.voronoi(75)
-
-    keys = list(map.get_map_layer(MapLayerType.UNIT).dict.keys())
-
-    for city_zone in keys:
-        map.add_borders(
-            [
-                MapLayerType.TERRAIN,
-                MapLayerType.UNIT,
-                MapLayerType.ZONE,
-                MapLayerType.DECOR,
-            ],
-            [city_zone, city_zone, city_zone, city_zone],
-            TerrainId.ROAD_FUNGUS,
-            margin=2,
-        )
-
-    counter = 0
-    for i, zone in enumerate(new_zones):
-        # print(zone)
-        counter += 1
-        if counter >= 9:
-            counter = 1
-
-        if random.random() > 0.5:
-            build_city(zone, PlayerId(counter), map, template_dir)
-        else:
-            build_snow_forest(zone, PlayerId(counter), map, template_dir)
-
-    return map
-
-
-def save_and_write_map(
-    map: Map, base_scenario_full_path: str, output_file_full_path: str
-) -> Scenario:
-    """
-    Saves and writes the map to a scenario file.
-
-    Args:
-        map (Map): Map object to save and write.
-        base_scenario_full_path (str): Full path to the base scenario file.
-        output_file_full_path (str): Full path to the output scenario file.
-
-    Returns:
-        Scenario: Scenario object.
-    """
-    scenario = Scenario(map, base_scenario_full_path)
-    scenario._change_map_size(map.size)
-    scenario.write_map()
-    scenario.save_file(output_file_full_path)
-
-    return scenario
-
-
-def build_snow_forest(zone, player_id, map, base_template_dir):
-    """
-    Build snow forest in zone
-    """
-    print("BUILD FOREST")
-
-    map.place_template(
-        "snow_forest.yaml",
-        map_layer_type_list=[
-            MapLayerType.UNIT,
-            MapLayerType.TERRAIN,
-            MapLayerType.ZONE,
-            MapLayerType.DECOR,
-        ],
-        array_space_type_list=[zone, zone, zone, zone],
-        player_id=player_id,
-        base_template_dir=base_template_dir,
-    )
-
-
-def build_city(zone, player_id, map, base_template_dir):
-    """
-    Build city in zone
-    """
-    print("BUILD CITY")
-
-    map.add_borders(
-        [
-            MapLayerType.TERRAIN,
-            MapLayerType.ZONE,
-            MapLayerType.UNIT,
-            MapLayerType.DECOR,
-        ],
-        [zone, zone, zone, zone],
-        TerrainId.GRASS_2,
-        margin=10,
-    )
-
-    map.place_template(
-        "oak_forest.yaml",
-        map_layer_type_list=[
-            MapLayerType.UNIT,
-            MapLayerType.TERRAIN,
-            MapLayerType.ZONE,
-            MapLayerType.DECOR,
-        ],
-        array_space_type_list=[zone, (TerrainId.GRASS_2, PlayerId.GAIA), zone, zone],
-        player_id=player_id,
-        base_template_dir=base_template_dir,
-    )
-
-    map.place_template(
-        "walls.yaml",
-        map_layer_type_list=[
-            MapLayerType.UNIT,
-            MapLayerType.TERRAIN,
-            MapLayerType.ZONE,
-            MapLayerType.DECOR,
-        ],
-        array_space_type_list=[zone, zone, zone, zone],
-        player_id=player_id,
-        base_template_dir=base_template_dir,
-    )
-
-    map.add_borders(
-        [
-            MapLayerType.TERRAIN,
-            MapLayerType.ZONE,
-            MapLayerType.UNIT,
-            MapLayerType.DECOR,
-        ],
-        [zone, zone, zone, zone],
-        TerrainId.ROAD_FUNGUS,
-        margin=1,
-    )
-
-    city_zones = map.voronoi(
-        35,
-        [
-            MapLayerType.UNIT,
-            MapLayerType.TERRAIN,
-            MapLayerType.ZONE,
-            MapLayerType.DECOR,
-        ],
-        [zone, zone, zone, zone],
-    )
-
-    for city_zone in city_zones:
-        map.add_borders(
-            [
-                MapLayerType.TERRAIN,
-                MapLayerType.UNIT,
-                MapLayerType.ZONE,
-                MapLayerType.DECOR,
-            ],
-            [city_zone, city_zone, city_zone, city_zone],
-            TerrainId.ROAD_FUNGUS,
-            margin=1,
-        )
-
-        map.place_template(
-            "oak_forest.yaml",
-            map_layer_type_list=[
-                MapLayerType.UNIT,
-                MapLayerType.TERRAIN,
-                MapLayerType.ZONE,
-                MapLayerType.DECOR,
-            ],
-            array_space_type_list=[city_zone, city_zone, city_zone, city_zone],
-            base_template_dir=base_template_dir,
-        )
-
-        map.place_template(
-            "city.yaml",
-            map_layer_type_list=[
-                MapLayerType.UNIT,
-                MapLayerType.TERRAIN,
-                MapLayerType.ZONE,
-                MapLayerType.DECOR,
-            ],
-            array_space_type_list=[city_zone, city_zone, city_zone, city_zone],
-            player_id=player_id,
-            base_template_dir=base_template_dir,
-        )
+from src.common.constants.constants import (
+    DEFAULT_EMPTY_VALUE,
+    BASE_SCENE_DIR_LINUX,
+    BASE_SCENARIO_NAME,
+    TEMPLATE_DIR_LINUX,
+)
+from src.common.constants.default_objects import (
+    GHOST_OBJECT_DISPLACEMENT,
+)
+from src.common.enums.enum import GateType
+import multiprocessing as mp
+from src.map.map import Map
+import os
+from src.triggers.triggers import TriggerManager
+import inspect
+import ast
+import json
+from enum import Enum
+from src.units.wallgenerators.voronoi import VoronoiGenerator
+from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
+from src.units.placers.statictemplate import TemplateCreator
+from src.units.placers.group_placer import GroupPlacer
+from src.units.placers.point_management.point_manager import (
+    PointCollection,
+)
+from src.testing import awesome_function
+from src.map.map_object import MapObject
+from src.units.placers.point_management.point_selector import (
+    PointSelector,
+)
+from src.visualizer.visualizer import Visualizer
+from src.units.placers.gate_placer import GatePlacer
+from src.units.placers.wall_placer import WallPlacer
+from src.map.map_manager import MapManager
+from src.units.placers.placer_configs import *
+from src.units.placers.placer_configs import PlaceGroupsConfig
+import dataclasses
+import json

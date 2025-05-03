@@ -7,164 +7,220 @@ from typing import Callable
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 from typing import List
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_PLAYER,
 )
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.src.units.placers.object_info import ObjectInfo
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.units.placers.placer_configs import PlaceGroupsConfig
+from src.map.map import Map
+from src.units.placers.placer_base import PlacerBase
+from src.units.placers.object_info import ObjectInfo
+from src.common.types import AOE2ObjectType
+from src.units.placers.placer_configs import PlaceGroupsConfig
+from src.common.types import Point
+from src.units.placers.point_management.points_returned import PointPlacementResults
 
 
-class GroupPlacerManager(PlacerBase):
+class GroupPlacer(PlacerBase):
     """
     Class for placing groups of objects on a map.
     """
 
     points_iterated = 0
 
-    # By default the object is placed in the first value from the map_layer_type list.
-    def _place_group(
-        self,
-        configuration: PlaceGroupsConfig,
-    ):
-        """
-        Places a single group of units on a specific array space.
-
-        Args:
-            configuration (PlaceGroupsConfig): CoListnfiguration for placing a group of objects.
-        """
-        map_layer_type = configuration.map_layer_type
-        point_manager = configuration.point_collection
-        obj_type = configuration.object_type
-        player_id = configuration.player_id
-        group_size = configuration.group_size
-        group_density = configuration.group_density
-        clumping = configuration.clumping
-        clumping_func = configuration.clumping_func
-        margin = configuration.margin
-        start_point = configuration.start_point
-
-        if player_id is None:
-            player_id = DEFAULT_PLAYER
-
-        points_list = point_manager.get_point_list()
-
-        if len(points_list) == 0:
-            return
-
-        # Adjust group size based on density if specified
-        if group_density is not None:
-            group_size = group_density * len(points_list) // 100
-
-        # Choose a random start point if none is specified or invalid
-        if start_point is None:
-            start_point = points_list[int(random.random() * len(points_list))]
-
-        if clumping == -1:
-            random.shuffle(points_list)
-        else:
-            total_size = sum(
-                ObjectInfo.get_object_effective_size(obj_type, margin)
-                for i in range(group_size)
-            )
-            # Gets points within two times the radius required for the group
-            points_list = point_manager.get_nearby_points(
-                start_point, (total_size ** (1 / 2)) * 2
-            )
-
-            # Sort the points based on clumping score if group size is in a certain range
-            if 1 < group_size < len(points_list):
-                points_list = sorted(
-                    points_list,
-                    key=lambda point: clumping_func(point, start_point, clumping),
-                )
-
-        # Try to place objects on the selected points
-        placed = 0
-        all_placements: dict[str, List[tuple[int, int]]] = {
-            "group_center": [start_point],
-            "objects": [],
-            "displacements": [],
-        }
-
-        for x, y in points_list:
-            GroupPlacerManager.points_iterated += 1
-            if placed >= group_size:
-                break
-
-            status = self._check_placement(point_manager, (x, y), obj_type, margin)
-
-            if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
-                break
-
-            if status == CheckPlacementReturnTypes.SUCCESS:
-                # Place the object on the first n maps
-                placements = self.place_single(
-                    point_manager,
-                    map_layer_type,
-                    (x, y),
-                    obj_type,
-                    player_id,
-                    margin,
-                )
-                all_placements["objects"].extend(placements["objects"])
-                all_placements["displacements"].extend(placements["displacements"])
-
-                placed += 1
-
-        return all_placements
-
     def place_groups(
         self,
         configuration: PlaceGroupsConfig,
-    ) -> dict[str, List[tuple[int, int]]]:
+    ) -> None:
         """
         Places multiple groups of objects.
 
         Args:
             configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
+
+        Returns:
+            dict[str, List[tuple[int, int]]]: Dictionary containing group centers, objects, and displacements.
         """
-        point_collection = configuration.point_collection
-        groups_density = configuration.groups_density
-        groups = configuration.groups
+        groups = self._determine_group_count(configuration)
 
-        all_placements: dict[str, List[tuple[int, int]]] = {
-            "group_centers": [],
-            "objects": [],
-            "displacements": [],
-        }
+        for _ in range(groups):
+            self._place_group(configuration)
 
-        if groups_density is not None:
-            # Scale off of object size
+    def _place_group(
+        self,
+        configuration: PlaceGroupsConfig,
+    ) -> None:
+        """
+        Places a single group of units on a specific array space.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+
+        Returns:
+            dict[str, List[tuple[int, int]]] | None: Dictionary containing group center, objects, and displacements or None if no points are available.
+        """
+        player_id = configuration.player_id or DEFAULT_PLAYER
+        points_list = configuration.point_collection.get_point_list()
+
+        if not points_list:
+            return None
+
+        group_size: int = self._adjust_group_size(configuration, points_list)
+        start_point: Point = self._choose_start_point(configuration, points_list)
+        points_list = self._prepare_points_list(configuration, points_list, start_point)
+
+        self._place_objects(configuration, points_list, group_size, player_id)
+
+
+    def _determine_group_count(self, configuration: PlaceGroupsConfig) -> int:
+        """
+        Determines the number of groups to place based on the configuration.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing groups of objects.
+
+        Returns:
+            int: Number of groups to place.
+        """
+        if configuration.groups_density is not None:
             size = ObjectInfo.get_object_size(configuration.object_type)
             groups = int(
-                groups_density * len(point_collection.get_point_list()) // size
+                configuration.groups_density
+                * len(configuration.point_collection.get_point_list())
+                // size
             )
-            configuration.groups = int(groups)
+            configuration.groups = groups
+        return configuration.groups
 
-        for i in range(groups):
-            placements = self._place_group(
-                configuration=configuration,
+    def _adjust_group_size(
+        self, configuration: PlaceGroupsConfig, points_list: List[tuple[int, int]]
+    ) -> int:
+        """
+        Adjusts the group size based on the configuration and points list.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+
+        Returns:
+            int: Adjusted group size.
+        """
+        if configuration.group_density is not None:
+            return int(configuration.group_density * len(points_list) // 100)
+        return configuration.group_size
+
+    def _choose_start_point(
+        self, configuration: PlaceGroupsConfig, points_list: List[tuple[int, int]]
+    ) -> tuple[int, int]:
+        """
+        Chooses a start point for placing the group.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+
+        Returns:
+            tuple[int, int]: Chosen start point.
+        """
+        if configuration.start_point is None:
+            return points_list[int(random.random() * len(points_list))]
+        return configuration.start_point
+
+    def _prepare_points_list(
+        self,
+        configuration: PlaceGroupsConfig,
+        points_list: List[Point],
+        start_point: Point,
+    ) -> List[Point]:
+        """
+        Prepares the points list based on the configuration and start point. This finds the points closest to the start point
+        and sorts them based on the clumping function.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+            start_point (tuple[int, int]): Chosen start point.
+
+        Returns:
+            List[tuple[int, int]]: Prepared points list.
+        """
+        if configuration.clumping == -1:
+            random.shuffle(points_list)
+        else:
+            total_size = sum(
+                ObjectInfo.get_object_effective_size(
+                    configuration.object_type, configuration.margin
+                )
+                for _ in range(configuration.group_size)
             )
-            if placements is not None:
-                all_placements["group_centers"].extend(placements["group_center"])
-                all_placements["objects"].extend(placements["objects"])
-                all_placements["displacements"].extend(placements["displacements"])
+            points_list = configuration.point_collection.get_nearby_points(
+                start_point, (total_size**0.5) * 2
+            )
+            if 1 < configuration.group_size < len(points_list):
+                points_list = sorted(
+                    points_list,
+                    key=lambda point: configuration.clumping_func(
+                        point, start_point, configuration.clumping
+                    ),
+                )
+        return points_list
 
-        return all_placements
+    def _place_objects(
+        self,
+        configuration: PlaceGroupsConfig,
+        points_list: List[tuple[int, int]],
+        group_size: int,
+        player_id: PlayerId,
+    ) -> None:
+        """
+        Places objects on the map based on the configuration and points list.
+
+        Args:
+            configuration (PlaceGroupsConfig): Configuration for placing a group of objects.
+            points_list (List[tuple[int, int]]): List of points available for placement.
+            start_point (tuple[int, int]): Chosen start point.
+            group_size (int): Size of the group to be placed.
+            player_id (PlayerId): ID of the player placing the objects.
+
+        Returns:
+            dict[str, List[tuple[int, int]]]: Dictionary containing group center, objects, and displacements.
+        """
+        placed = 0
+
+        for x, y in points_list:
+            GroupPlacer.points_iterated += 1
+            if placed >= group_size:
+                break
+
+            status = self._check_placement(
+                configuration.point_collection,
+                (x, y),
+                configuration.object_type,
+                configuration.margin,
+            )
+
+            if status == CheckPlacementReturnTypes.SUCCESS_IMPOSSIBLE:
+                break
+
+            if status == CheckPlacementReturnTypes.SUCCESS:
+                self._place_single(
+                    configuration.point_collection,
+                    configuration.map_layer_type,
+                    (x, y),
+                    configuration.object_type,
+                    player_id,
+                    configuration.margin,
+                )
+                placed += 1
 
     # ---------------------------- HELPER METHODS ----------------------------------
 
-    def _distance_to_edge(self, points, point):
+    def __distance_to_edge(self, points, point):
         """
         Finds distance to edge blocks.
 

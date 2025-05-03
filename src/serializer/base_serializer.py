@@ -1,12 +1,12 @@
 from typing import Any
 from enum import Enum
 from abc import ABC, abstractmethod
-from aoe2mapgenerator.src.serializer.serialization_utils import (
+from src.serializer.serialization_utils import (
     serialize_enum,
     deserialize_enum,
 )
-from aoe2mapgenerator.src.common.enums.enum import *
-from aoe2mapgenerator.src.common.enums.enum import GateType
+from src.common.enums.enum import *
+from src.common.enums.enum import GateType
 import ujson as json
 from typing import Any, Dict, List, Callable, Type, get_type_hints
 import inspect
@@ -52,7 +52,7 @@ class Serializable(ABC):
 class SerializationRegistry:
     """Registry for serializable types"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._types: Dict[str, Type[Serializable]] = {}
 
     def register_type(self, cls: Type[Serializable]) -> None:
@@ -61,7 +61,7 @@ class SerializationRegistry:
             raise ValueError(f"Class {cls.__name__} must inherit from Serializable")
         self._types[cls.__name__] = cls
 
-    def deserialize_value(self, data: Dict[str, Any]) -> Serializable:
+    def deserialize(self, data: Dict[str, Any]) -> Serializable:
         """Deserialize a dictionary into an object"""
         if "_type" not in data:
             raise ValueError("Serialized data missing '_type' field")
@@ -79,7 +79,7 @@ class FunctionRunner:
     with support for custom serializable objects.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._function_registry: Dict[str, Callable] = {}
         self._serialization_registry = SerializationRegistry()
 
@@ -97,7 +97,7 @@ class FunctionRunner:
         Handles nested lists and dictionaries containing serializable objects.
         """
         if isinstance(value, dict) and "_type" in value:
-            return self._serialization_registry.deserialize_value(value)
+            return self._serialization_registry.deserialize(value)
 
         if isinstance(value, list):
             # Handle List[SomeType] annotations

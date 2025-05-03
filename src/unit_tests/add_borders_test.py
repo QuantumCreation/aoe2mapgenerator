@@ -6,20 +6,30 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.map.map import Map
-from aoe2mapgenerator.src.map.map_manager import MapManager
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.placers.placer_configs import (
+from src.common.enums.enum import MapLayerType
+from src.map.map import Map
+from src.map.map_manager import MapManager
+from src.map.map_object import MapObject
+from src.units.placers.placer_configs import (
     VoronoiGeneratorConfig,
     AddBordersConfig,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_manager import (
+from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
+from src.units.placers.placer_configs import VisualizeMapConfig
+from src.common.constants.constants import (
+    LINUX_PROJECT_PATH,
+    LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+)
+import os
+import pytest
+from src.utils.utils import current_function_name, combine_test_name_and_function_name
+
+FILE_NAME = os.path.basename(__file__).replace(".py", "")
 
 
-def test_border():
+def test_border(should_visualize):
     """
     Tests the creation of a map with size 500.
     """
@@ -45,11 +55,24 @@ def test_border():
         map_layer_type=MapLayerType.UNIT,
         obj=MapObject(BuildingInfo.CITY_WALL, PlayerId.THREE),
     )
+
+    if should_visualize:
+        # Visualize the map
+        visualize_config = VisualizeMapConfig(
+            map_layer_type=MapLayerType.UNIT,
+            include_zones=True,
+            transpose=False,
+            save_figure=True,
+            file_name=combine_test_name_and_function_name(FILE_NAME),
+            file_path=LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+        )
+
+        map_manager.visualize_map(visualize_config)
 
     assert len(values) == 36
 
 
-def test_border_2():
+def test_border_2(should_visualize):
     """
     Tests the creation of a map with size 500.
     """
@@ -67,7 +90,7 @@ def test_border_2():
         map_layer_type=MapLayerType.UNIT,
         obj_type=BuildingInfo.CITY_WALL,
         player_id=PlayerId.THREE,
-        margin=2,
+        border_width=2,
     )
 
     map_manager.place_borders(configuration)
@@ -76,5 +99,18 @@ def test_border_2():
         map_layer_type=MapLayerType.UNIT,
         obj=MapObject(BuildingInfo.CITY_WALL, PlayerId.THREE),
     )
+
+    if should_visualize:
+        # Visualize the map
+        visualize_config = VisualizeMapConfig(
+            map_layer_type=MapLayerType.UNIT,
+            include_zones=True,
+            transpose=False,
+            save_figure=True,
+            file_name=combine_test_name_and_function_name(FILE_NAME),
+            file_path=LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
+        )
+
+        map_manager.visualize_map(visualize_config)
 
     assert len(values) == 64

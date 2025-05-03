@@ -7,28 +7,30 @@ from dataclasses import dataclass
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import (
+from src.common.enums.enum import (
     MapLayerType,
     CheckPlacementReturnTypes,
+    GateType,
 )
-from aoe2mapgenerator.src.units.placers.point_management.point_collection import (
+from src.units.placers.point_management.point_collection import (
     PointCollection,
 )
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
+from src.common.types import AOE2ObjectType, Point
 
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.common.constants.constants import DEFAULT_PLAYER
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
+from src.common.enums.enum import MapLayerType
+from src.common.constants.constants import DEFAULT_PLAYER
+from src.common.types import AOE2ObjectType
 from typing import Callable
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.units.utils import default_clumping_func
+from src.map.map_object import MapObject
+from src.units.utils import default_clumping_func
+from src.common.constants.constants import LINUX_PROJECT_PATH
 
 
 @dataclass
@@ -48,7 +50,7 @@ class AddBordersConfig:
     map_layer_type: MapLayerType
     obj_type: AOE2ObjectType
     player_id: PlayerId = DEFAULT_PLAYER
-    margin: int = 1
+    border_width: int = 1
 
 
 @dataclass
@@ -121,6 +123,9 @@ class VisualizeMapConfig:
     fig_size: tuple[int, int] = (15, 15)
     include_legend: bool = True
     anchor: tuple[float, float] = (1.25, 1)
+    save_figure: bool = False
+    file_name: str = "map_visualization.png"
+    file_path: str = LINUX_PROJECT_PATH
 
 
 @dataclass
@@ -155,3 +160,70 @@ class PointSelectorInRangeConfig:
     min_range: int
     max_range: int
     points_to_be_in_range_of: list[tuple[int, int]]
+
+
+@dataclass
+class PlaceClosestToPointConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    starting_point: tuple[int, int]
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class PlaceIfPossibleConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    starting_point: Point
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class PlaceMultipleConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    points: list[tuple[int, int]]
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class FillConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+    margin: int = 0
+
+@dataclass
+class CreateBlockLikeBordersConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+
+@dataclass
+class PlaceGateOnFourSidesConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    gate_type: GateType
+    player_id: PlayerId = DEFAULT_PLAYER
+
+@dataclass
+class PlaceGateOnEightSidesConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    gate_type: GateType
+    player_id: PlayerId = DEFAULT_PLAYER
+
+@dataclass
+class PlacePathConfig:
+    point_collection: PointCollection
+    map_layer_type: MapLayerType
+    obj_type: AOE2ObjectType
+    player_id: PlayerId
+    key_points: list[tuple[int, int]]
+    num_divisions: list[int]
+    random_shift_range: list[int]

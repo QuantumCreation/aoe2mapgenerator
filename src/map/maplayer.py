@@ -6,15 +6,15 @@ from AoE2ScenarioParser.datasets.players import PlayerId
 
 from typing import Any, List
 
-from aoe2mapgenerator.src.common.constants.constants import (
+from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     DEFAULT_PLAYER,
 )
-from aoe2mapgenerator.src.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
-from aoe2mapgenerator.src.common.enums.enum import MapLayerType
-from aoe2mapgenerator.src.common.types import AOE2ObjectType
-from aoe2mapgenerator.src.map.map_object import MapObject
-from aoe2mapgenerator.src.serializer.base_serializer import Serializable
+from src.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
+from src.common.enums.enum import MapLayerType
+from src.common.types import AOE2ObjectType
+from src.map.map_object import MapObject
+from src.serializer.base_serializer import Serializable
 import ujson as json
 
 MapLayerArray = List[List[MapObject]]
@@ -99,13 +99,19 @@ class MapLayer(Serializable):
         """
         return self.dict
 
-    def get_set_with_map_object(self, obj: MapObject):
+    def get_set_with_map_object(self, obj: MapObject) -> set[tuple[int, int]]:
         """
         Returns the array representation of the map layer with the object.
         """
         if obj not in self.dict:
             return set()
         return self.dict[obj]
+
+    def get_object_at_point(self, point: tuple[int, int]) -> MapObject:
+        """
+        Returns the object at the given point.
+        """
+        return self.array[point[0]][point[1]]
 
     def to_dict(self):
         return {
