@@ -2,9 +2,11 @@
 Handles all map generation and manipulation.
 """
 
-from typing import Union
+from typing import Union, Callable, List, Tuple, Optional, Dict, Set, Any
+from src.common.types import AOE2ObjectType, Point
 
 from src.map.map import Map
+from src.map.imap_manager import IMapManager
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
@@ -20,6 +22,11 @@ from src.common.enums.enum import (
     CheckPlacementReturnTypes,
 )
 
+# Template imports
+# from src.templates.template_decorator import get_template_manager
+# from src.templates.template_types import TemplateType
+# from src.templates.templates_manager import TemplateConfig
+
 from src.scenario.scenario import Scenario
 import numpy as np
 import random
@@ -28,12 +35,12 @@ from src.common.constants.constants import (
     BASE_SCENE_DIR_LINUX,
     BASE_SCENARIO_NAME,
     TEMPLATE_DIR_LINUX,
+    TEMPLATE_DIR_WINDOWS_WSL
 )
 from src.common.constants.default_objects import (
     GHOST_OBJECT_DISPLACEMENT,
 )
 import multiprocessing as mp
-from src.map.map import Map
 import os
 from src.triggers.triggers import TriggerManager
 import inspect
@@ -47,7 +54,6 @@ from src.units.placers.group_placer import GroupPlacer
 from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
-from src.testing import awesome_function
 from src.map.map_object import MapObject
 from src.units.placers.point_management.point_selector import (
     PointSelector,
@@ -63,11 +69,9 @@ from src.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
     GHOST_OBJECT_DISPLACEMENT_ID,
     DEFAULT_PLAYER,
+    BASE_SCENE_DIR_WINDOWS_WSL
 )
-from typing import Callable
-from src.map.map import Map
 from src.units.placers.object_info import ObjectInfo
-from src.common.types import AOE2ObjectType
 from src.units.placers.placer_configs import (
     PlaceGroupsConfig,
     AddBordersConfig,
@@ -80,15 +84,16 @@ from src.units.placers.point_management.point_manager import (
 )
 from src.scenario.scenario import Scenario
 
-class MapManager:
+class MapManager(IMapManager):
     """
     Class to manage the map and its layers.
     """
 
-    def __init__(self, map_size: int):
+    def __init__(self, map_size: int, output_dir: str = BASE_SCENE_DIR_WINDOWS_WSL) -> None:
         self.map: Map = Map(map_size)
         self.templates: list = []
-        self.scenario: Scenario | None = None
+        self.output_dir: str = output_dir
+        self.scenario: Scenario = Scenario(self.map, os.path.join(self.output_dir, BASE_SCENARIO_NAME))
 
         # Initialize the placers - Legacy
         self.base_placer: PlacerBase = PlacerBase(self.map)
@@ -104,56 +109,86 @@ class MapManager:
 
         # Initialize the visualizer
         self.visualizer: Visualizer = Visualizer(self.map)
+        
+        # Get the template manager with pre-registered templates
+        # self.template_manager = get_template_manager()
 
-    def write_map_and_save(self, file_name: str):
+    def write_map_and_save(self, file_name: str) -> 'MapManager':
         """
         Writes the map and saves it to a file.
+        
+        Args:
+            file_name: The name of the file to save (without path)
+            
+        Returns:
+            MapManager: Self for method chaining.
         """
         if self.scenario is None:
             self.scenario = Scenario(self.map)
 
         self.scenario._change_map_size(self.map.size)
         self.scenario.write_map()
-        self.scenario.save_file(file_name)
+        
+        # Combine output directory with file name
+        full_path = os.path.join(self.output_dir, file_name)
+        self.scenario.save_file(full_path)
+        return self
 
     def place_groups(
         self,
         configuration: PlaceGroupsConfig,
-    ) -> None:
+    ) -> 'MapManager':
         """
         Places groups of objects on the map.
+        
+        Returns:
+            MapManager: Self for method chaining.
         """
         self.group_placer.place_groups(configuration)
+        return self
 
     def place_borders(
         self,
         configuration: AddBordersConfig,
-    ):
+    ) -> 'MapManager':
         """
         Adds borders to the map.
+        
+        Returns:
+            MapManager: Self for method chaining.
         """
         self.wall_placer.add_borders(configuration)
+        return self
 
     def place_voronoi_zones(
         self,
         configuration: VoronoiGeneratorConfig,
-    ) -> list[MapObject]:
+    ) -> List[MapObject]:
         """
         Generates the voronoi zones.
+        
+        Returns:
+            MapManager: Self for method chaining.
         """
-        return self.voronoi_generator.generate_voronoi_cells(configuration)
+        map_objects: List[MapObject] = self.voronoi_generator.generate_voronoi_cells(configuration)
+        return map_objects
 
-    def visualize_map(self, configuration: VisualizeMapConfig):
+    def visualize_map(self, configuration: VisualizeMapConfig) -> 'MapManager':
         """
         Visualizes the map.
+        
+        Returns:
+            MapManager: Self for method chaining.
         """
         self.visualizer.visualize_mat(configuration)
+        return self
 
     def select_points(
         self, configuration: PointSelectorConfig
     ) -> list[tuple[int, int]]:
         """
         Selects points on the map.
+        Note: This method doesn't support chaining as it returns the selected points.
         """
         return self.point_manager.point_selector.get_points_from_map_layer(
             configuration
@@ -199,3 +234,68 @@ class MapManager:
         return self.point_manager.point_selector.get_points_from_map_layer(
             configuration
         )
+
+    def points(self) -> PointManager:
+        """
+        Access the point manager to work with point collections.
+        This provides a cleaner interface for chaining point operations.
+        
+        Returns:
+            PointManager: The point manager instance
+        """
+        return self.point_manager
+
+    # def apply_template(
+    #     self,
+    #     template_type: TemplateType,
+    #     point_collection: Optional[PointCollection] = None,
+    #     config: Optional[TemplateConfig] = None,
+    #     **kwargs
+    # ) -> 'MapManager':
+    #     """
+    #     Apply a template to the map.
+        
+    #     Args:
+    #         template_type: Enum value of the template to apply
+    #         point_collection: Collection of points (creates new if None)
+    #         config: Optional configuration 
+    #         **kwargs: Additional parameters
+            
+    #     Returns:
+    #         MapManager: Self for method chaining
+    #     """
+    #     if point_collection is None:
+    #         point_collection = self.point_manager.create_point_collection(f"template_{template_type.name}")
+        
+    #     self.template_manager.apply_template(template_type, self, point_collection, config, **kwargs)
+    #     return self
+    
+    # Convenience methods for common templates
+    # def create_fort(
+    #     self,
+    #     center_point: Tuple[int, int] = (50, 50),
+    #     size: int = 20,
+    #     player_id: PlayerId = PlayerId.ONE,
+    #     gate_type: GateType = GateType.FORTIFIED_GATE,
+    #     **kwargs
+    # ) -> 'MapManager':
+    #     """
+    #     Create a fort on the map.
+        
+    #     Args:
+    #         center_point: Center coordinates of the fort
+    #         size: Size of the fort
+    #         player_id: Player who owns the fort
+    #         gate_type: Type of gates to use
+    #         **kwargs: Additional parameters for the template
+            
+    #     Returns:
+    #         MapManager: Self for method chaining
+    #     """
+    #     config = TemplateConfig(
+    #         center_point=center_point,
+    #         size=size,
+    #         player_id=player_id,
+    #         gate_type=gate_type
+    #     )
+    #     return self.apply_template(TemplateType.FORT, config=config, **kwargs)

@@ -4,12 +4,18 @@ This file contains the constants that are used throughout the project.
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
+import os
 
 BASE_SCENARIO_NAME = "BASE_SCENARIO.aoe2scenario"
 
 # Windows Paths
 BASE_SCENE_DIR_WINDOWS = "C:\\Users\\josep\\Games\\Age of Empires 2 DE\\76561198242754748\\resources\\_common\\scenario\\"
 TEMPLATE_DIR_WINDOWS = "C:\\Users\\josep\\OneDrive\\Documents\\GitHub\\aoe2mapgenerator\\aoe2mapgenerator\\templates\\example_templates"
+
+# WSL Paths
+BASE_SCENE_DIR_WINDOWS_WSL = "/mnt/c/Users/josep/Games/Age of Empires 2 DE/76561198242754748/resources/_common/scenario/"
+TEMPLATE_DIR_WINDOWS_WSL = "/mnt/c/Users/josep/OneDrive/Documents/GitHub/aoe2mapgenerator/aoe2mapgenerator/templates/example_templates"
+BASE_SCENARIO_FULL_PATH_WINDOWS_WSL = os.path.join(BASE_SCENE_DIR_WINDOWS_WSL, BASE_SCENARIO_NAME)
 
 # Linux Paths
 BASE_SCENE_DIR_LINUX = "/home/joseph/.steam/steam/steamapps/compatdata/813780/pfx/dosdevices/c:/users/steamuser/Games/Age of Empires 2 DE/76561198242754748/resources/_common/scenario/"
@@ -18,7 +24,7 @@ TEMPLATE_DIR_LINUX = (
 )
 LINUX_PROJECT_PATH = "/home/joseph/Documents/Projects/aoe2mapgenerator/"
 
-# Unit Test PAths
+# Unit Test Paths
 LINUX_PROJECT_UNIT_TEST_PATH = (
     "/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/"
 )

@@ -116,14 +116,14 @@ class Directions(Enum):
     """
 
     # I DONT THINK THESE ACTUALLY MATCH WHATS GOING ON IN AOE2. I PICKED THEM RANDOMLY.
-    NORTH: tuple[int, int] = (-1, 0)
-    SOUTH: tuple[int, int] = (1, 0)
-    EAST: tuple[int, int] = (0, 1)
-    WEST: tuple[int, int] = (0, -1)
-    NORTHEAST: tuple[int, int] = (-1, 1)
-    NORTHWEST: tuple[int, int] = (-1, -1)
-    SOUTHEAST: tuple[int, int] = (1, 1)
-    SOUTHWEST: tuple[int, int] = (1, -1)
+    NORTH = (-1, 0)
+    SOUTH = (1, 0)
+    EAST = (0, 1)
+    WEST = (0, -1)
+    NORTHEAST = (-1, 1)
+    NORTHWEST = (-1, -1)
+    SOUTHEAST = (1, 1)
+    SOUTHWEST = (1, -1)
 
     @classmethod
     def _missing_(cls, value):

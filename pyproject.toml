@@ -15,11 +15,14 @@ matplotlib = "^3.9.0"
 ujson = "^5.10.0"
 types-ujson = "^5.10.0.20240515"
 types-pyyaml = "^6.0.12.20240917"
+mypy = "^1.15.0"
+scipy = "^1.15.2"
+pydeps = "^3.0.1"
+pytest = "^8.3.5"
 
 
 [tool.mypy]
 files = ["src"]
-norecursedirs = ["src/unit_tests"]
 ignore_missing_imports = true
 
 [build-system]

@@ -11,14 +11,14 @@ from src.map.map_object import MapObject
 from src.units.wallgenerators.polygon import generate_polygonal_wall_points
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from src.units.placers.placer_base import PlacerBase
-
+from src.map.map_manager import IMapManager
 
 
 class AdvancedWallPlacer(PlacerBase):
     
     def generate_polygon_walls_with_gates(
         self,
-        map_manager: MapManager,
+        map_manager: IMapManager,
         point_collection: PointCollection,
         point: Tuple[int, int],
         sides: int,
@@ -57,7 +57,7 @@ class AdvancedWallPlacer(PlacerBase):
 
     def place_wall_points(
         self,
-        map_manager: MapManager,
+        map_manager: IMapManager,
         wp_collection: PointCollection,
         points: List[Tuple[int, int]],
         wall_type: str,
@@ -76,7 +76,7 @@ class AdvancedWallPlacer(PlacerBase):
 
     def place_gates(
         self,
-        map_manager: MapManager,
+        map_manager: IMapManager,
         point_collection: PointCollection,
         gate_type: GateType,
         player_id: PlayerId = PlayerId.ONE,

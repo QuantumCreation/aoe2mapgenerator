@@ -54,10 +54,19 @@ class Scenario:
             map (Map): Map object to write to the scenario.
             base_scenario_full_path (str, optional): Path to the base scenario file. Defaults to BASE_SCENARIO_FULL_PATH.
         """
-        self.scenario = self._get_scenario(base_scenario_full_path)
-        self.map = aoe2_map
+        self.scenario: AoE2DEScenario = self._load_base_scenario(base_scenario_full_path)
+        self.map: Map = aoe2_map
+    
+    def get_base_scenario(self) -> AoE2DEScenario:
+        """
+        Returns the base scenario.
 
-    def _get_scenario(self, file_full_path: str) -> AoE2DEScenario:
+        Returns:
+            AoE2DEScenario: Base scenario object.
+        """
+        return self.scenario
+    
+    def _load_base_scenario(self, file_full_path: str) -> AoE2DEScenario:
         """
         Loads a scenario from the given file name.
 
@@ -65,6 +74,26 @@ class Scenario:
             file_full_path (str): Full path to the scenario file.
         """
         return AoE2DEScenario.from_file(file_full_path)
+
+    def save_file(
+        self,
+        file_name: str = "test.aoe2scenario",
+        output_file_dir: str = BASE_SCENE_DIR_LINUX,
+    ) -> None:
+        """
+        Saves the scenario to the given output file name.
+
+        Args:
+            output_file_full_path (str): Full path to the output file.
+        """
+        file_name = (
+            file_name
+            if file_name.endswith(".aoe2scenario")
+            else file_name + ".aoe2scenario"
+        )
+        file_name = self._generate_unique_filename(file_name, output_file_dir)
+        self.scenario.write_to_file(os.path.join(output_file_dir, file_name))
+        print(f"File saved to {os.path.join(output_file_dir, file_name)}")
 
     def write_map(self) -> None:
         """
@@ -178,26 +207,6 @@ class Scenario:
         map_manager = self.scenario.map_manager
 
         map_manager.map_size = map_size
-
-    def save_file(
-        self,
-        file_name: str = "test.aoe2scenario",
-        output_file_dir: str = BASE_SCENE_DIR_LINUX,
-    ) -> None:
-        """
-        Saves the scenario to the given output file name.
-
-        Args:
-            output_file_full_path (str): Full path to the output file.
-        """
-        file_name = (
-            file_name
-            if file_name.endswith(".aoe2scenario")
-            else file_name + ".aoe2scenario"
-        )
-        file_name = self._generate_unique_filename(file_name, output_file_dir)
-        self.scenario.write_to_file(os.path.join(output_file_dir, file_name))
-        print(f"File saved to {os.path.join(output_file_dir, file_name)}")
 
     def _generate_unique_filename(self, file_name: str, output_file_dir: str) -> str:
         """

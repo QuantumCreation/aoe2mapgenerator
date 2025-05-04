@@ -31,7 +31,7 @@ class PathPlacer(PlacerBase):
         
         return [tuple(point) for point in np.array(returned_points)]
 
-    def _connect_points_with_randomization(self, key_point_list: List[Tuple[int, int]], num_divisions: int, random_shift_range: int, base_points: List[Tuple[int, int]] = None) -> List[Tuple[int, int]]:
+    def _connect_points_with_randomization(self, key_point_list: List[Tuple[int, int]], num_divisions: int, random_shift_range: int, base_points: List[Tuple[int, int]] | None = None) -> List[Tuple[int, int]]:
         if not base_points:
             base_points = self._connect_points(key_point_list)
         else:

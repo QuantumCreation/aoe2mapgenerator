@@ -13,6 +13,7 @@ from src.units.placers.placer_configs import (
     PlaceGateOnFourSidesConfig,
     PlaceGateOnEightSidesConfig,
     PlaceGroupsConfig,
+    PlacePathConfig,
     AddBordersConfig,
 )
 from src.map.map import Map
@@ -42,13 +43,28 @@ class MasterPlacer:
         self.wall_placer.add_borders(config)
 
     def create_block_like_borders(self, config: CreateBlockLikeBordersConfig) -> None:
-        self.wall_placer.create_block_like_borders(config)
+        self.wall_placer.create_block_like_borders(
+            point_collection=config.point_collection,
+            map_layer_type=config.map_layer_type,
+            obj_type=config.obj_type,
+            player_id=config.player_id
+        )
 
     def place_gate_on_four_sides(self, config: PlaceGateOnFourSidesConfig) -> None:
-        self.gate_placer.place_gate_on_four_sides(config)
+        self.gate_placer.place_gate_on_four_sides(
+            point_collection=config.point_collection,
+            map_layer_type=config.map_layer_type,
+            gate_type=config.gate_type,
+            player_id=config.player_id
+        )
 
     def place_gate_on_eight_sides(self, config: PlaceGateOnEightSidesConfig) -> None:
-        self.gate_placer.place_gate_on_eight_sides(config)
+        self.gate_placer.place_gate_on_eight_sides(
+            point_collection=config.point_collection,
+            map_layer_type=config.map_layer_type,
+            gate_type=config.gate_type,
+            player_id=config.player_id
+        )
 
     def place_groups(self, config: PlaceGroupsConfig) -> None:
         self.group_placer.place_groups(config)

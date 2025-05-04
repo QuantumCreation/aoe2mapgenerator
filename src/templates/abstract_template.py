@@ -3,10 +3,12 @@ This file contains the base class for all the generation scripts.
 """
 
 from abc import ABC, abstractmethod
-from src.map.map_manager import MapManager
+from typing import Tuple, Optional, Any
 from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
+from AoE2ScenarioParser.datasets.players import PlayerId
+from src.map.imap_manager import IMapManager
 
 
 class AbstractTemplate(ABC):
@@ -16,12 +18,34 @@ class AbstractTemplate(ABC):
 
     @abstractmethod
     def __init__(self, name: str, description: str):
+        """
+        Initialize the template.
+        
+        Args:
+            name: Name of the template
+            description: Description of what the template does
+        """
         pass
 
     @staticmethod
     @abstractmethod
-    def generate(map_manager: MapManager, point_collection: PointCollection):
+    def generate(
+        map_manager: IMapManager, 
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] = (50, 50),
+        size: int = 20,
+        player_id: PlayerId = PlayerId.ONE,
+        **kwargs
+    ) -> PointCollection:
         """
-        Generate the map.
+        Generate the template on the map.
+        
+        Args:
+            map_manager: The map manager instance
+            point_collection: Collection of points to work with
+            center_point: Center coordinates for the template
+            size: Size/scale of the template
+            player_id: Player who owns the generated objects
+            **kwargs: Additional template-specific parameters
         """
         pass

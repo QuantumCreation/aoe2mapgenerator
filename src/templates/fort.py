@@ -3,7 +3,8 @@ Defines classes which place decor on the map
 """
 
 from src.templates.abstract_template import AbstractTemplate
-from src.map.map_manager import MapManager
+# Remove direct import to break circular dependency
+# from src.map.map_manager import MapManager
 from src.units.placers.point_management.point_manager import (
     PointCollection,
 )
@@ -22,10 +23,12 @@ from src.units.placers.placer_configs import (
     PointSelectorInRangeConfig,
     PlaceClosestToPointConfig,
 )
-# from src.units.placers.gate_utility import generate_polygon_walls_with_gates
+from src.units.placers.gate_utility import AdvancedWallPlacer
 from src.common.enums.enum import GateType
-from src.templates.decor import AutumnDecor
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
+
+# Use TYPE_CHECKING to avoid circular imports
+from src.map.map_manager import IMapManager
 
 
 class FortTemplate(AbstractTemplate):
@@ -35,26 +38,107 @@ class FortTemplate(AbstractTemplate):
 
     @staticmethod
     def generate(
-        map_manager: MapManager,
+        map_manager: IMapManager,
         point_collection: PointCollection,
-        center_point: Tuple[int, int],
-        sides: int = 8,
-        radius: int = 12,
-    ) -> None:
+        *args, **kwargs
+    ) -> PointCollection:
         """
-        Places Autumn decor on the map.
+        Places a fort on the map with walls on all sides, gates, and a castle in the middle.
 
         Args:
-            point_manager (PointManager): Manager holding all potential points available for placement
-            map_manager (MapManager): Manages the map.
+            map_manager (IMapManager): Manages the map.
+            point_collection (PointCollection): Manager holding all potential points available for placement
+            args: Variable length argument list.
+            kwargs: Arbitrary keyword arguments.
         """
+        # Extract the parameters from kwargs if provided, otherwise use defaults
+        center_point = kwargs.get('center_point', (100, 100))
+        sides = kwargs.get('sides', 8)
+        radius = kwargs.get('radius', 12)
+        gate_type = kwargs.get('gate_type', GateType.CITY_GATE)
+        player_id = kwargs.get('player_id', PlayerId.ONE)
 
-        config = PlaceClosestToPointConfig(
+        # Create wall placer
+        wall_placer = AdvancedWallPlacer(map_manager.get_map())
+        
+        # Generate polygonal walls with gates on all sides
+        wall_placer.generate_polygon_walls_with_gates(
+            map_manager=map_manager,
+            point_collection=point_collection,
+            point=center_point,
+            sides=sides,
+            radius=radius,
+            gate_type=gate_type,
+            player_id=player_id
+        )
+        
+        # Place a castle in the middle
+        castle_config = PlaceClosestToPointConfig(
             point_collection=point_collection,
             map_layer_type=MapLayerType.UNIT,
-            obj_type=BuildingInfo.CITY_WALL,
+            obj_type=BuildingInfo.CASTLE,
             starting_point=center_point,
-            player_id=PlayerId.ONE,
+            player_id=player_id,
             margin=0,
         )
-        map_manager.placer.place_closest_to_point(config)
+        
+        map_manager.base_placer.place_closest_to_point(castle_config)
+
+
+        knight_collection = point_collection.copy()
+        knight_collection.filter_by_distance(center_point,
+                                           distance=radius,
+                                           edit_in_place=True)
+        
+        # Place groups of knights around the castle
+        knight_groups_config = PlaceGroupsConfig(
+            point_collection=knight_collection,
+            map_layer_type=MapLayerType.UNIT,
+            object_type=UnitInfo.KNIGHT,
+            player_id=player_id,
+            groups=10,  # 4 groups of knights
+            group_size=12,  # 5 knights per group
+            clumping=5
+        )
+
+        map_manager.group_placer.place_groups(knight_groups_config)
+
+        # Place groups of archers around the castle
+        archer_collection = knight_collection.copy()
+        archer_collection.filter_by_distance(center_point,
+                                             distance=radius * 0.8,  # Slightly closer
+                                             edit_in_place=True)
+
+        archer_groups_config = PlaceGroupsConfig(
+            point_collection=archer_collection,
+            map_layer_type=MapLayerType.UNIT,
+            object_type=UnitInfo.ARCHER,
+            player_id=player_id,
+            groups=8,  # 8 groups of archers
+            group_size=10,  # 10 archers per group
+            clumping=4
+        )
+
+        map_manager.group_placer.place_groups(archer_groups_config)
+
+        # Place groups of militia around the castle
+        militia_collection = archer_collection.copy()
+        militia_collection.filter_by_distance(center_point,
+                                              distance=radius * 0.6,  # Even closer to castle
+                                              edit_in_place=True)
+
+        militia_groups_config = PlaceGroupsConfig(
+            point_collection=militia_collection,
+            map_layer_type=MapLayerType.UNIT,
+            object_type=UnitInfo.MILITIA,
+            player_id=player_id,
+            groups=5,  # 5 groups of militia
+            group_size=15,  # 15 militia per group
+            clumping=3
+        )
+
+        map_manager.group_placer.place_groups(militia_groups_config)
+
+        return militia_collection
+
+

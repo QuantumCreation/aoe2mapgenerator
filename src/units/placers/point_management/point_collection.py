@@ -291,3 +291,30 @@ class PointCollection:
         new_point_collector = PointCollection()
         new_point_collector.add_points(self.get_point_list())
         return new_point_collector
+    
+    def filter_by_distance(
+        self, reference_point: Point, distance: float, edit_in_place: bool = False
+    ) -> "PointCollection":
+        """
+        Filters the points to only include those within the specified distance of the reference point.
+
+        Args:
+            reference_point (Point): The reference point to measure distance from
+            distance (float): The maximum distance from the reference point to include
+            edit_in_place (bool, optional): Whether to modify this collection in place. Defaults to False.
+
+        Returns:
+            PointCollection: A new collection with the filtered points, or this collection if edit_in_place is True
+        """
+        points_within_distance = self._get_points_within_distance(reference_point, distance)
+        
+        if edit_in_place:
+            points_copy = self.get_point_list_copy()
+            for point in points_copy:
+                if point not in points_within_distance:
+                    self.remove_point(point)
+            return self
+        else:
+            new_collection = PointCollection()
+            new_collection.add_points(points_within_distance)
+            return new_collection
