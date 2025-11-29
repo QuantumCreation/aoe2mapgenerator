@@ -4,16 +4,21 @@ Forest template implementation.
 from src.templates.abstract_template import AbstractTemplate
 from src.templates.template_decorator import register_template
 from src.templates.template_types import TemplateType
-from src.map.map_manager import MapManager
 from src.units.placers.point_management.point_manager import PointCollection
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
+from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from src.common.enums.enum import MapLayerType
 from typing import Tuple
 import random
 from src.map.map_manager import IMapManager
-
+from src.units.placers.placer_configs import PlaceGroupsConfig
+from src.common.enums.enum import (
+    DecorObjectsOverlap,
+    ObjectsAnimals,
+    ObjectResources
+)
 
 @register_template(TemplateType.OAK_FOREST)
 class OakForestTemplate(AbstractTemplate):
@@ -27,12 +32,9 @@ class OakForestTemplate(AbstractTemplate):
     def generate(
         map_manager: IMapManager, 
         point_collection: PointCollection, 
-        center_point: Tuple[int, int] = (50, 50), 
-        size: int = 25, 
         player_id: PlayerId = PlayerId.GAIA,
-        density: float = 0.6,
         **kwargs
-    ):
+    )-> PointCollection:
         """
         Generate an oak forest on the map.
         
@@ -45,50 +47,96 @@ class OakForestTemplate(AbstractTemplate):
             density: Tree density (0.0 to 1.0)
             **kwargs: Additional parameters
         """
-        x, y = center_point
-        
-        # Define the forest area
-        min_x = x - size // 2
-        max_x = x + size // 2
-        min_y = y - size // 2
-        max_y = y + size // 2
-        
-        # Create a more natural forest shape by varying the radius
-        num_trees = int((size * size) * density)
-        
-        # Set terrain to grass for the forest area
-        for forest_x in range(min_x, max_x + 1):
-            for forest_y in range(min_y, max_y + 1):
-                # Calculate distance from center
-                distance = ((forest_x - x) ** 2 + (forest_y - y) ** 2) ** 0.5
-                
-                # Only modify terrain within a circular area
-                if distance <= size // 2:
-                    map_manager.get_map_layer(MapLayerType.TERRAIN).add_object(
-                        forest_x, forest_y, TerrainId.GRASS_1, PlayerId.GAIA
-                    )
-        
-        # Place trees with random distribution
-        for _ in range(num_trees):
-            # Generate random positions within the forest area
-            rand_x = random.randint(min_x, max_x)
-            rand_y = random.randint(min_y, max_y)
-            
-            # Calculate distance from center
-            distance = ((rand_x - x) ** 2 + (rand_y - y) ** 2) ** 0.5
-            
-            # Only place trees within a circular area
-            if distance <= size // 2:
-                # Randomize tree type
-                tree_type = random.choice([
-                    UnitInfo.FOREST_TREE, 
-                    UnitInfo.OAK_FOREST_TREE
-                ])
-                
-                map_manager.get_map_layer(MapLayerType.UNIT).add_object(
-                    rand_x, rand_y, tree_type, player_id
-                )
+        groups_density = kwargs.get('groups_density', 0.01)
+        group_size = kwargs.get('group_size', 12)
+        clumping = kwargs.get('clumping', 5)
 
+
+        point_collection_copy_decor_only = point_collection.copy()
+
+        oak_forest_groups_config = PlaceGroupsConfig(
+            point_collection=point_collection,
+            map_layer_type=MapLayerType.UNIT,
+            object_type=OtherInfo.TREE_OAK_AUTUMN,
+            player_id=player_id,
+            groups_density=groups_density,
+            group_size=group_size,
+            clumping=clumping
+        )
+
+        map_manager.group_placer.place_groups(oak_forest_groups_config)
+
+        # Example of iterating over DecorObjectsOverlap enum
+        for decor_object in DecorObjectsOverlap:
+
+            groups_density = 0.001
+            group_size = random.randint(2, 5)
+            clumping = random.randint(5, 15)
+
+            decor_config = PlaceGroupsConfig(
+                point_collection=point_collection_copy_decor_only,
+                map_layer_type=MapLayerType.DECOR,
+                object_type=decor_object.value,
+                player_id=player_id,
+                groups_density=groups_density,
+                group_size=group_size,
+                clumping=clumping
+            )
+
+            map_manager.group_placer.place_groups(decor_config)
+
+        filtered_animals = [
+            ObjectsAnimals.WOLF,
+            ObjectsAnimals.BEAR,
+            ObjectsAnimals.DEER,
+            ObjectsAnimals.SNOW_LEOPARD
+        ]
+
+        for animal in filtered_animals:
+            
+            groups_density = 0.001
+            group_size = random.randint(4, 7)
+            clumping = random.randint(5, 10)
+
+            decor_config = PlaceGroupsConfig(
+                point_collection=point_collection,
+                map_layer_type=MapLayerType.UNIT,
+                object_type=animal.value,
+                player_id=PlayerId.GAIA,
+                groups_density=groups_density,
+                group_size=group_size,
+                clumping=clumping
+            )
+
+            map_manager.group_placer.place_groups(decor_config)
+        # Add resource objects to the forest
+
+        filtered_resources = [
+            ObjectResources.FORAGE_BUSH,
+            ObjectResources.FRUIT_BUSH,
+            ObjectResources.STONE_MINE,
+            ObjectResources.GOLD_MINE
+        ]
+
+        for resource in filtered_resources:
+            groups_density = 0.0005
+            group_size = random.randint(3, 6)
+            clumping = random.randint(3, 5)
+            
+            resource_config = PlaceGroupsConfig(
+                point_collection=point_collection,
+                map_layer_type=MapLayerType.UNIT,
+                object_type=resource.value,
+                player_id=PlayerId.GAIA,
+                groups_density=groups_density,
+                group_size=group_size,
+                clumping=clumping
+            )
+            
+            map_manager.group_placer.place_groups(resource_config)
+
+
+        return point_collection
 
 @register_template(TemplateType.SNOW_FOREST)
 class SnowForestTemplate(AbstractTemplate):
@@ -102,12 +150,9 @@ class SnowForestTemplate(AbstractTemplate):
     def generate(
         map_manager: IMapManager, 
         point_collection: PointCollection, 
-        center_point: Tuple[int, int] = (50, 50), 
-        size: int = 25, 
         player_id: PlayerId = PlayerId.GAIA,
-        density: float = 0.6,
         **kwargs
-    ):
+    )-> PointCollection:
         """
         Generate a snow forest on the map.
         
@@ -120,46 +165,5 @@ class SnowForestTemplate(AbstractTemplate):
             density: Tree density (0.0 to 1.0)
             **kwargs: Additional parameters
         """
-        x, y = center_point
-        
-        # Define the forest area
-        min_x = x - size // 2
-        max_x = x + size // 2
-        min_y = y - size // 2
-        max_y = y + size // 2
-        
-        # Create a more natural forest shape by varying the radius
-        num_trees = int((size * size) * density)
-        
-        # Set terrain to snow for the forest area
-        for forest_x in range(min_x, max_x + 1):
-            for forest_y in range(min_y, max_y + 1):
-                # Calculate distance from center
-                distance = ((forest_x - x) ** 2 + (forest_y - y) ** 2) ** 0.5
-                
-                # Only modify terrain within a circular area
-                if distance <= size // 2:
-                    map_manager.get_map_layer(MapLayerType.TERRAIN).add_object(
-                        forest_x, forest_y, TerrainId.SNOW, PlayerId.GAIA
-                    )
-        
-        # Place trees with random distribution
-        for _ in range(num_trees):
-            # Generate random positions within the forest area
-            rand_x = random.randint(min_x, max_x)
-            rand_y = random.randint(min_y, max_y)
-            
-            # Calculate distance from center
-            distance = ((rand_x - x) ** 2 + (rand_y - y) ** 2) ** 0.5
-            
-            # Only place trees within a circular area
-            if distance <= size // 2:
-                # Randomize tree type
-                tree_type = random.choice([
-                    UnitInfo.SNOW_PINE_TREE, 
-                    UnitInfo.PINE_FOREST_TREE
-                ])
-                
-                map_manager.get_map_layer(MapLayerType.UNIT).add_object(
-                    rand_x, rand_y, tree_type, player_id
-                )
+
+        return point_collection

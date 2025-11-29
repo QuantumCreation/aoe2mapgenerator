@@ -87,14 +87,25 @@ class GroupPlacer(PlacerBase):
         Returns:
             int: Number of groups to place.
         """
+        # Check if a density-based approach should be used for determining group count
         if configuration.groups_density is not None:
+            # Get the size of each object to understand space requirements
             size = ObjectInfo.get_object_size(configuration.object_type)
+            
+            # Calculate number of groups based on:
+            # - The specified density (as a percentage or multiplier)
+            # - Total available points in the collection
+            # - Divided by the object size to account for space needed per object
             groups = int(
-                configuration.groups_density
-                * len(configuration.point_collection.get_point_list())
-                // size
+            configuration.groups_density
+            * len(configuration.point_collection.get_point_list())
+            // size
             )
-            configuration.groups = groups
+            
+            # Update the configuration with the calculated group count
+            return groups
+            
+        # Return the final group count from the configuration
         return configuration.groups
 
     def _adjust_group_size(
@@ -111,7 +122,15 @@ class GroupPlacer(PlacerBase):
             int: Adjusted group size.
         """
         if configuration.group_density is not None:
-            return int(configuration.group_density * len(points_list) // 100)
+            size = ObjectInfo.get_object_size(configuration.object_type)
+
+            group_size = int(
+                configuration.group_density
+                * len(points_list)
+                // size
+            )
+
+            return group_size
         return configuration.group_size
 
     def _choose_start_point(

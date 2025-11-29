@@ -291,6 +291,21 @@ class PointCollection:
         new_point_collector = PointCollection()
         new_point_collector.add_points(self.get_point_list())
         return new_point_collector
+
+    def get_average_point_position(self) -> Point:
+        """
+        Gets the location of the average point from the point list.
+        """
+        point_list = self.get_point_list()
+        
+        if not point_list:
+            raise ValueError("Cannot calculate average of empty point collection")
+            
+        total_points = len(point_list)
+        totx = sum(point[0] for point in point_list)
+        toty = sum(point[1] for point in point_list)
+
+        return (totx // total_points, toty // total_points)
     
     def filter_by_distance(
         self, reference_point: Point, distance: float, edit_in_place: bool = False

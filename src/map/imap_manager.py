@@ -32,86 +32,72 @@ class IMapManager(Protocol):
     """
     Protocol defining the interface for the MapManager class.
     """
+    @property
+    def map(self) -> Map: ...
+        
+    @map.setter
+    def map(self, value: Map) -> None: ...
 
     @property
-    def map(self) -> Map:
-        """
-        Returns the map object.
-        """
-        ...
+    def base_placer(self) -> PlacerBase: ...
+        
+    @base_placer.setter
+    def base_placer(self, value: PlacerBase) -> None: ...
 
     @property
-    def templates(self) -> list:
-        """
-        Returns the list of templates.
-        """
-        ...
+    def gate_placer(self) -> GatePlacer: ...
+        
+    @gate_placer.setter
+    def gate_placer(self, value: GatePlacer) -> None: ...
 
     @property
-    def output_dir(self) -> str:
-        """
-        Returns the output directory.
-        """
-        ...
+    def group_placer(self) -> GroupPlacer: ...
+        
+    @group_placer.setter
+    def group_placer(self, value: GroupPlacer) -> None: ...
 
     @property
-    def scenario(self) -> Scenario:
-        """
-        Returns the scenario.
-        """
-        ...
+    def output_dir(self) -> str: ...
+        
+    @output_dir.setter
+    def output_dir(self, value: str) -> None: ...
 
     @property
-    def base_placer(self) -> PlacerBase:
-        """
-        Returns the base placer.
-        """
-        ...
+    def point_manager(self) -> PointManager: ...
+        
+    @point_manager.setter
+    def point_manager(self, value: PointManager) -> None: ...
 
     @property
-    def wall_placer(self) -> WallPlacer:
-        """
-        Returns the wall placer.
-        """
-        ...
+    def scenario(self) -> Scenario: ...
+        
+    @scenario.setter
+    def scenario(self, value: Scenario) -> None: ...
 
     @property
-    def gate_placer(self) -> GatePlacer:
-        """
-        Returns the gate placer.
-        """
-        ...
+    def templates(self) -> list: ...
+        
+    @templates.setter
+    def templates(self, value: list) -> None: ...
 
     @property
-    def group_placer(self) -> GroupPlacer:
-        """
-        Returns the group placer.
-        """
-        ...
+    def visualizer(self) -> Visualizer: ...
+        
+    @visualizer.setter
+    def visualizer(self, value: Visualizer) -> None: ...
 
     @property
-    def voronoi_generator(self) -> VoronoiGenerator:
-        """
-        Returns the voronoi generator.
-        """
-        ...
+    def voronoi_generator(self) -> VoronoiGenerator: ...
+        
+    @voronoi_generator.setter
+    def voronoi_generator(self, value: VoronoiGenerator) -> None: ...
 
     @property
-    def point_manager(self) -> PointManager:
-        """
-        Returns the point manager.
-        """
-        ...
+    def wall_placer(self) -> WallPlacer: ...
+        
+    @wall_placer.setter
+    def wall_placer(self, value: WallPlacer) -> None: ...
 
-    @property
-    def visualizer(self) -> Visualizer:
-        """
-        Returns the visualizer.
-        """
-        ...
-
-    
-    
     def write_map_and_save(self: T, file_name: str) -> T:
         """
         Writes the map and saves it to a file.

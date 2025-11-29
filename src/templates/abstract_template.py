@@ -32,8 +32,6 @@ class AbstractTemplate(ABC):
     def generate(
         map_manager: IMapManager, 
         point_collection: PointCollection,
-        center_point: Tuple[int, int] = (50, 50),
-        size: int = 20,
         player_id: PlayerId = PlayerId.ONE,
         **kwargs
     ) -> PointCollection:

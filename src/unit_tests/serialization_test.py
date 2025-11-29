@@ -1,36 +1,33 @@
 """
 TODO: Add module description.
 """
+from src.map.map_manager import MapManager
 
 import time
 
-import pytest
-import numpy as np
+# import pytest
+# import numpy as np
 
 
 from src.map.map import Map
-from src.map.map_manager import MapManager
-from src.map.map_object import MapObject
+
+# from src.map.map_object import MapObject
 from src.common.enums.enum import MapLayerType
 from src.units.placers.placer_configs import PlaceGroupsConfig
-from src.units.placers.point_management.point_manager import (
-    PointCollection,
-)
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.units import UnitInfo
-
-from src.units.placers.point_management import point_collection
-
 
 def test_serialize():
     """
     Tests the creation of a map with size 500.
     """
     n = 200
-    start_time = time.time()
+    
 
     map_manager = MapManager(n)
 
+    # Skip the initialization of the map
+    start_time = time.time()
     map_manager.point_manager.add_point_collection("base_points")
     map_manager.point_manager.get_point_collection("base_points").add_points(
         [(i, j) for i in range(n) for j in range(n)]

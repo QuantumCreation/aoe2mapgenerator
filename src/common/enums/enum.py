@@ -352,3 +352,126 @@ class CheckPlacementReturnTypes(Enum):
     FAIL = 0
     SUCCESS = 1
     SUCCESS_IMPOSSIBLE = 2
+
+
+
+
+class DecorObjectsOverlap(Enum):
+    """
+    Enum of the different decor objects.
+    """
+
+    # FLOWERS
+    FLOWER_1 = OtherInfo.FLOWERS_1
+    FLOWER_2 = OtherInfo.FLOWERS_2
+    FLOWER_3 = OtherInfo.FLOWERS_3
+    FLOWER_4 = OtherInfo.FLOWERS_4
+    FLOWER_BED = OtherInfo.FLOWER_BED
+
+    # GRASS PATCHES
+    GRASS_PATCH_GREEN = OtherInfo.GRASS_PATCH_GREEN
+    GRASS_PATCH_BROWN = OtherInfo.GRASS_PATCH_DRY
+    GRASS_DRY = OtherInfo.GRASS_DRY
+    GRASS_GREEN = OtherInfo.GRASS_GREEN
+
+    # Paths
+    PATH_1 = OtherInfo.PATH_1
+    PATH_2 = OtherInfo.PATH_2
+    PATH_3 = OtherInfo.PATH_3
+    PATH_4 = OtherInfo.PATH_4
+
+class ObjectsAnimals(Enum):
+    """
+    Enum of the different decor objects.
+    """
+
+    # ANIMALS
+    BEAR = UnitInfo.BEAR
+    BUTTERFLY1 = UnitInfo.BUTTERFLY1
+    BUTTERFLY2 = UnitInfo.BUTTERFLY2
+    BUTTERFLY3 = UnitInfo.BUTTERFLY3
+    CROCODILE = UnitInfo.CROCODILE
+    DEER = UnitInfo.DEER
+    DIRE_WOLF = UnitInfo.DIRE_WOLF
+    FALCON = UnitInfo.FALCON
+    HAWK = UnitInfo.HAWK
+    IBEX = UnitInfo.IBEX
+    IRON_BOAR = UnitInfo.IRON_BOAR
+    JAGUAR = UnitInfo.JAGUAR
+    JAVELINA = UnitInfo.JAVELINA
+    KOMODO_DRAGON = UnitInfo.KOMODO_DRAGON
+    LION = UnitInfo.LION
+    MACAW = UnitInfo.MACAW
+    OSTRICH = UnitInfo.OSTRICH
+    RABID_WOLF = UnitInfo.RABID_WOLF
+    RHINOCEROS = UnitInfo.RHINOCEROS
+    SEAGULLS = UnitInfo.SEAGULLS
+    SNOW_LEOPARD = UnitInfo.SNOW_LEOPARD
+    STORK = UnitInfo.STORK
+    TIGER = UnitInfo.TIGER
+    VULTURE = UnitInfo.VULTURE
+    WILD_BACTRIAN_CAMEL = UnitInfo.WILD_BACTRIAN_CAMEL
+    WILD_BOAR = UnitInfo.WILD_BOAR
+    WILD_CAMEL = UnitInfo.WILD_CAMEL
+    WILD_HORSE = UnitInfo.WILD_HORSE
+    WOLF = UnitInfo.WOLF
+    ZEBRA = UnitInfo.ZEBRA
+    GAZELLE = UnitInfo.GAZELLE
+
+class ObjectResources(Enum):
+    """
+    Enum of the different resource objects.
+    """
+
+    FORAGE_BUSH = OtherInfo.FORAGE_BUSH
+    FRUIT_BUSH = OtherInfo.FRUIT_BUSH
+    GOLD_MINE = OtherInfo.GOLD_MINE
+    STONE_MINE = OtherInfo.STONE_MINE
+ 
+
+class DecorObjectTakeSpace(Enum):
+    """
+    Enum of decor objects with their detailed properties.
+    """
+
+    BUSH_A = OtherInfo.BUSH_A
+    BUSH_B = OtherInfo.BUSH_B
+    BUSH_C = OtherInfo.BUSH_C
+    CRACKS = OtherInfo.CRACKS
+    CRATER = OtherInfo.CRATER
+    FORAGE_BUSH = OtherInfo.FORAGE_BUSH
+    FRUIT_BUSH = OtherInfo.FRUIT_BUSH
+    GOLD_MINE = OtherInfo.GOLD_MINE
+    GOTHIC_RELIC = OtherInfo.GOTHIC_RELIC
+    GRANARY = OtherInfo.GRANARY
+    GRASS_PATCH_DRY = OtherInfo.GRASS_PATCH_DRY
+    GRASS_PATCH_GREEN = OtherInfo.GRASS_PATCH_GREEN
+    PLANT = OtherInfo.PLANT
+    PLANT_BUSH_GREEN = OtherInfo.PLANT_BUSH_GREEN
+    PLANT_DEAD = OtherInfo.PLANT_DEAD
+    PLANT_FLOWERS = OtherInfo.PLANT_FLOWERS
+    PLANT_RAINFOREST = OtherInfo.PLANT_RAINFOREST
+    PLANT_SHRUB_GREEN = OtherInfo.PLANT_SHRUB_GREEN
+    PLANT_UNDERBRUSH = OtherInfo.PLANT_UNDERBRUSH
+    PLANT_WEEDS = OtherInfo.PLANT_WEEDS
+    ROCK_1 = OtherInfo.ROCK_1
+    ROCK_2 = OtherInfo.ROCK_2
+    ROCK_FORMATION_1 = OtherInfo.ROCK_FORMATION_1
+    ROCK_FORMATION_2 = OtherInfo.ROCK_FORMATION_2
+    ROCK_FORMATION_3 = OtherInfo.ROCK_FORMATION_3
+    ROMAN_RUINS = OtherInfo.ROMAN_RUINS
+    RUGS = OtherInfo.RUGS
+    SARACEN_RELIC = OtherInfo.SARACEN_RELIC
+    SEA_ROCKS_1 = OtherInfo.SEA_ROCKS_1
+    SEA_ROCKS_2 = OtherInfo.SEA_ROCKS_2
+    STONE_MINE = OtherInfo.STONE_MINE
+    STUMP = OtherInfo.STUMP
+    TEMPLE_RUIN = OtherInfo.TEMPLE_RUIN
+    TEUTONIC_RELIC = OtherInfo.TEUTONIC_RELIC
+    THE_ACCURSED_TOWER = OtherInfo.THE_ACCURSED_TOWER
+    THE_TOWER_OF_FLIES = OtherInfo.THE_TOWER_OF_FLIES
+    WELL = OtherInfo.WELL
+    WATERFALL_OVERLAY = OtherInfo.WATERFALL_OVERLAY
+    QUARRY = OtherInfo.QUARRY
+    LUMBER = OtherInfo.LUMBER
+    GOODS = OtherInfo.GOODS

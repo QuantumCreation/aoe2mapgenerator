@@ -22,6 +22,7 @@ from src.common.constants.constants import (
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
 from src.units.utils import manhattan_distance
+from src.units.placers.point_management.point_collection import Point
 
 
 class GatePlacer(PlacerBase):
@@ -49,7 +50,7 @@ class GatePlacer(PlacerBase):
         if len(point_collection.get_point_list()) == 0:
             return
 
-        avg_point = self._get_average_point_position(point_collection)
+        avg_point: Point = point_collection.get_average_point_position()
 
         for direction in [
             Directions.EAST,
@@ -170,7 +171,7 @@ class GatePlacer(PlacerBase):
                     )
                     return
 
-    def _get_average_point_position(self, point_collection: PointCollection):
+    def _get_average_point_position(self, point_collection: PointCollection)-> tuple[int, int]:
         """
         Gets the location of the average point from the given value type and array space lists.
         """

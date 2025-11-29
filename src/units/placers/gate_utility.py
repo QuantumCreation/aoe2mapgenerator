@@ -4,7 +4,7 @@ from src.common.enums.enum import (
     MapLayerType,
     GateType,
 )
-from src.map.map_manager import MapManager
+from src.map.imap_manager import IMapManager
 from src.units.placers.placer_configs import PointSelectorConfig, PlaceIfPossibleConfig
 from src.units.placers.point_management.point_collection import PointCollection
 from src.map.map_object import MapObject

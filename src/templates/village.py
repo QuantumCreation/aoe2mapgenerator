@@ -32,8 +32,8 @@ from src.map.map_manager import IMapManager
 from src.templates.template_decorator import register_template
 from src.templates.template_types import TemplateType
 
-@register_template(TemplateType.FORT)
-class FortTemplate(AbstractTemplate):
+@register_template(TemplateType.VILLAGE)
+class VillageTemplate(AbstractTemplate):
     """
     Class for placing decor on the map.
     """
@@ -54,25 +54,9 @@ class FortTemplate(AbstractTemplate):
             kwargs: Arbitrary keyword arguments.
         """
         # Extract the parameters from kwargs if provided, otherwise use defaults
-        center_point = kwargs.get('center_point', (100, 100))
-        sides = kwargs.get('sides', 8)
         radius = kwargs.get('radius', 12)
-        gate_type = kwargs.get('gate_type', GateType.CITY_GATE)
         player_id = kwargs.get('player_id', PlayerId.ONE)
-
-        # Create wall placer
-        wall_placer = AdvancedWallPlacer(map_manager.get_map())
-        
-        # Generate polygonal walls with gates on all sides
-        wall_placer.generate_polygon_walls_with_gates(
-            map_manager=map_manager,
-            point_collection=point_collection,
-            point=center_point,
-            sides=sides,
-            radius=radius,
-            gate_type=gate_type,
-            player_id=player_id
-        )
+        center_point = point_collection.get_average_point_position()
         
         # Place a castle in the middle
         castle_config = PlaceClosestToPointConfig(
@@ -92,7 +76,7 @@ class FortTemplate(AbstractTemplate):
                                            distance=radius,
                                            edit_in_place=True)
         
-        # Place groups of knights around the castle
+        # Place groups of knights around the castle./
         knight_groups_config = PlaceGroupsConfig(
             point_collection=knight_collection,
             map_layer_type=MapLayerType.UNIT,

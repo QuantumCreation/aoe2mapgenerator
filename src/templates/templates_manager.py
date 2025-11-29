@@ -17,6 +17,7 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 @dataclass
 class TemplateConfig:
     """Configuration parameters for a template"""
+    point_collection: PointCollection
     center_point: Tuple[int, int] = (50, 50)
     size: int = 20
     player_id: PlayerId = PlayerId.ONE
@@ -43,9 +44,9 @@ class TemplateManager:
         self.templates[template_type] = template_class
     
     def apply_template(self, 
-                      template_type: TemplateType, 
                       map_manager: IMapManager, 
                       point_collection: PointCollection,
+                      template_type: TemplateType, 
                       config: Optional[TemplateConfig] = None, 
                       **kwargs) -> None:
         """
@@ -70,7 +71,7 @@ class TemplateManager:
                 'center_point': config.center_point,
                 'player_id': config.player_id,
                 'size': config.size,
-                'gate_type': config.gate_type
+                'gate_type': config.gate_type,
                 # Add more parameters as needed
             }
         
