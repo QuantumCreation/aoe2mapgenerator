@@ -26,7 +26,7 @@ class Map(Serializable):
             size: Size of the map.
         """
         # TEMPLATE NAMES, MULTIPLE INHERITANCE, init, AAHGHG
-        self.template_names: dict = {}
+        self.template_names: dict[str, str] = {}
         self.size = size
 
         self.unit_map_layer = MapLayer(MapLayerType.UNIT, self.size)
@@ -110,7 +110,7 @@ class Map(Serializable):
         """
         return self.get_map_layer(map_layer_type).get_set_with_map_object(obj)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, object]:
         return {
             "_type": self.__class__.__name__,
             "unit_map_layer": self.unit_map_layer.to_dict(),
@@ -120,12 +120,12 @@ class Map(Serializable):
             "elevation_map_layer": self.elevation_map_layer.to_dict(),
         }
 
-    def serialize(self):
+    def serialize(self) -> str:
         return self.dump(self.to_dict())
 
     @staticmethod
-    def deserialize(json_string: str | dict) -> "Map":
-        json_dict: dict
+    def deserialize(json_string: str | dict[str, object]) -> "Map":
+        json_dict: dict[str, object]
         if isinstance(json_string, dict):
             json_dict = json_string
         else:
@@ -133,13 +133,24 @@ class Map(Serializable):
 
         new_map = Map()
 
-        new_map.unit_map_layer = MapLayer.deserialize(json_dict["unit_map_layer"])
-        new_map.zone_map_layer = MapLayer.deserialize(json_dict["zone_map_layer"])
-        new_map.terrain_map_layer = MapLayer.deserialize(json_dict["terrain_map_layer"])
-        new_map.decor_map_layer = MapLayer.deserialize(json_dict["decor_map_layer"])
-        new_map.elevation_map_layer = MapLayer.deserialize(
-            json_dict["elevation_map_layer"]
-        )
+        # Cast to the expected type for MapLayer.deserialize
+        unit_data = json_dict["unit_map_layer"]
+        zone_data = json_dict["zone_map_layer"]
+        terrain_data = json_dict["terrain_map_layer"]
+        decor_data = json_dict["decor_map_layer"]
+        elevation_data = json_dict["elevation_map_layer"]
+
+        assert isinstance(unit_data, (str, dict))
+        assert isinstance(zone_data, (str, dict))
+        assert isinstance(terrain_data, (str, dict))
+        assert isinstance(decor_data, (str, dict))
+        assert isinstance(elevation_data, (str, dict))
+
+        new_map.unit_map_layer = MapLayer.deserialize(unit_data)  # type: ignore
+        new_map.zone_map_layer = MapLayer.deserialize(zone_data)  # type: ignore
+        new_map.terrain_map_layer = MapLayer.deserialize(terrain_data)  # type: ignore
+        new_map.decor_map_layer = MapLayer.deserialize(decor_data)  # type: ignore
+        new_map.elevation_map_layer = MapLayer.deserialize(elevation_data)  # type: ignore
 
         return new_map
 
