@@ -1,9 +1,27 @@
 # AOE2_Map_Generator
 Generates Random AOE2 Maps
 
+## Installation
 
+### Using Poetry (recommended)
 
+```bash
+cd ~/Documents/Projects/aoe2mapgenerator
+poetry install
+```
 
+### Using pip (editable install)
+
+If you prefer pip or need to use this package in another project:
+
+```bash
+cd ~/Documents/Projects/aoe2mapgenerator
+pip install -e .
+```
+
+This installs the package in "editable" mode — changes you make to the source code are immediately available without reinstalling.
+
+---
 
 # Testing with MYPY
 

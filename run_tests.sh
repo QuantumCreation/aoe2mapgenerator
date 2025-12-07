@@ -1,4 +1,4 @@
 #!/bin/bash
 # run_tests.sh
-find ./src/unit_tests -iname *.py | xargs pytest "$@" --disable-warnings
+poetry install && find ./src/aoe2mapgenerator/unit_tests -iname *.py | xargs pytest "$@" --disable-warnings
 
