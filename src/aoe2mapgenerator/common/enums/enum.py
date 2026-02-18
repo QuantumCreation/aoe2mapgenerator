@@ -23,10 +23,10 @@ class MapLayerType(Enum):
     ELEVATION = 4
 
     @classmethod
-    def _missing_(cls, value):
-        if value in cls.__members__:
+    def _missing_(cls, value: object) -> "MapLayerType":
+        if isinstance(value, str) and value in cls.__members__:
             return cls.__members__[value]
-        return cls.UNIT
+        raise ValueError(f"{value!r} is not a valid {cls.__name__}")
 
 
 class ObjectSize(Enum):

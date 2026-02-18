@@ -3,34 +3,25 @@ Configuration for the methods for various placers
 """
 
 from dataclasses import dataclass
-
+from typing import Callable
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
-from aoe2mapgenerator.common.enums.enum import (
-    MapLayerType,
-    CheckPlacementReturnTypes,
-    GateType,
-)
-from aoe2mapgenerator.units.placers.point_management.point_collection import (
-    PointCollection,
-)
 from aoe2mapgenerator.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
+    DEFAULT_PLAYER,
     GHOST_OBJECT_DISPLACEMENT_ID,
+    LINUX_PROJECT_PATH,
+)
+from aoe2mapgenerator.common.enums.enum import (
+    CheckPlacementReturnTypes,
+    GateType,
+    MapLayerType,
 )
 from aoe2mapgenerator.common.types import AOE2ObjectType, Point
-
-
-from AoE2ScenarioParser.datasets.players import PlayerId
-
-from aoe2mapgenerator.common.enums.enum import MapLayerType
-from aoe2mapgenerator.common.constants.constants import DEFAULT_PLAYER
-from aoe2mapgenerator.common.types import AOE2ObjectType
-from typing import Callable
 from aoe2mapgenerator.map.map_object import MapObject
+from aoe2mapgenerator.units.placers.point_management.point_collection import PointCollection
 from aoe2mapgenerator.units.utils import default_clumping_func
-from aoe2mapgenerator.common.constants.constants import LINUX_PROJECT_PATH
 
 
 @dataclass
