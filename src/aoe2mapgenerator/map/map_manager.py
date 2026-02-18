@@ -78,6 +78,27 @@ class MapManager(IMapManager):
         self._visualizer: Visualizer = Visualizer(self.map)
         self.template_manager = get_template_manager()
 
+    def load_map(self, map_obj: Map) -> None:
+        """Replace the current map and rewire all internal collaborators.
+
+        This is the correct way to restore a previously serialised map into a
+        ``MapManager`` so that all placers and helpers operate on the loaded
+        data rather than the blank map created in ``__init__``.
+
+        Args:
+            map_obj: Deserialised :class:`~aoe2mapgenerator.map.map.Map` to
+                load.  Must have the same ``size`` as this ``MapManager``.
+        """
+        self.map = map_obj
+        # Rewire every collaborator so mutations go to the loaded map.
+        self._base_placer.map = map_obj
+        self._wall_placer.map = map_obj
+        self._gate_placer.map = map_obj
+        self._group_placer.map = map_obj
+        self._voronoi_generator.map = map_obj
+        self._point_manager.map = map_obj
+        self._visualizer.map = map_obj
+
     # ------------------------------------------------------------------
     # IMapManager protocol properties (read-only access to collaborators)
     # ------------------------------------------------------------------

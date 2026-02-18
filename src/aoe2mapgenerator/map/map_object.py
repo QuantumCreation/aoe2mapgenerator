@@ -3,8 +3,7 @@ TODO: Add module description
 """
 
 from typing import Any
-from pydantic.dataclasses import dataclass
-from pydantic import ConfigDict
+from dataclasses import dataclass
 from AoE2ScenarioParser.datasets.players import PlayerId
 
 from aoe2mapgenerator.common.types import AOE2ObjectType
@@ -17,7 +16,7 @@ from aoe2mapgenerator.serializer.base_serializer import Serializable
 import ujson as json
 
 
-@dataclass(frozen=True, config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass(frozen=True)
 class MapObject:
     """
     Class for the Age of Empires Map Object

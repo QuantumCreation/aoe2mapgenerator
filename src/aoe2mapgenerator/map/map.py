@@ -238,6 +238,10 @@ class Map(BaseModel):
 
         new_map = Map()
 
+        # Restore size if serialised (added in map_serialization v2).
+        if "size" in json_dict:
+            new_map.size = int(json_dict["size"])  # type: ignore[assignment]
+
         # Cast to the expected type for MapLayer.deserialize
         unit_data = json_dict["unit_map_layer"]
         zone_data = json_dict["zone_map_layer"]

@@ -39,6 +39,7 @@ MapManager
 | `group_placer.py` | Places groups of objects with configurable density, clumping, and size. |
 | `wall_placer.py` | Adds walls / borders along the perimeter of a region. |
 | `gate_placer.py` | Inserts gate objects at wall openings. |
+| `path_placer.py` | Path / road generation between two points. |
 | `placer_configs.py` | Dataclass configs for every placer method — keeps call-sites clean. |
 | `point_management/` | `PointCollection` (ordered point set) + `PointManager` + `PointSelector`. |
 
@@ -89,6 +90,10 @@ Matplotlib-based map renderer used during development / debugging.
 
 1. **Create a `MapManager`** with a map size.  This creates an empty `Map` (all tiles
    are `DEFAULT_EMPTY_OBJECT`).
+
+   To restore a previously-serialised map (e.g. from the API round-trip), call
+   `map_manager.load_map(map_obj)` **instead of** `map_manager.map = map_obj`.  The
+   `load_map()` method rewires all internal placers so they operate on the loaded data.
 
 2. **Populate zones** (optional) — call `place_voronoi_zones()` to assign tiles to
    named Voronoi-cell regions held in the ZONE layer.
