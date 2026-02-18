@@ -1,12 +1,22 @@
-"""
-TODO: Add module docstring.
+"""Map — top-level container for all AoE2 map layer data.
+
+A ``Map`` is a Pydantic ``BaseModel`` composed of five ``MapLayer`` instances,
+one per ``MapLayerType`` (UNIT, ZONE, TERRAIN, DECOR, ELEVATION).  It is the
+primary data container passed between ``MapManager``, placers, and the
+scenario serialiser.
+
+Serialization
+-------------
+* ``model_dump()`` / ``model_validate()`` — Pydantic-style round-trip using the
+  internal format expected by ``map_serialization.py``.
+* ``serialize()`` / ``deserialize()`` — legacy JSON round-trip kept for backward
+  compatibility with older scenario files.
 """
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
 from typing import Optional, Any
-from pydantic.dataclasses import dataclass
-from pydantic import Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.map.maplayer import MapLayer, MapLayerDictionary
@@ -16,45 +26,62 @@ from aoe2mapgenerator.common.constants.constants import DisplacementType
 from aoe2mapgenerator.serializer.base_serializer import Serializable
 import ujson as json
 
+# Dispatch table: MapLayerType → attribute name on the Map instance.
+# Update this dict whenever a new MapLayerType is introduced.
+_LAYER_ATTR: dict[MapLayerType, str] = {
+    MapLayerType.UNIT: "unit_map_layer",
+    MapLayerType.ZONE: "zone_map_layer",
+    MapLayerType.TERRAIN: "terrain_map_layer",
+    MapLayerType.DECOR: "decor_map_layer",
+    MapLayerType.ELEVATION: "elevation_map_layer",
+}
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
-class Map:
+
+class Map(BaseModel):
     """
     Class for the Age of Empires Map layers
+
+    BaseModel provides validation, serialization, and other features.
     """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     size: int = 100
     template_names: dict[str, str] = Field(default_factory=dict)
-    unit_map_layer: Optional[MapLayer] = Field(default=None, init=False, repr=False)
-    zone_map_layer: Optional[MapLayer] = Field(default=None, init=False, repr=False)
-    terrain_map_layer: Optional[MapLayer] = Field(default=None, init=False, repr=False)
-    decor_map_layer: Optional[MapLayer] = Field(default=None, init=False, repr=False)
-    elevation_map_layer: Optional[MapLayer] = Field(default=None, init=False, repr=False)
+    unit_map_layer: Optional[MapLayer] = Field(default=None, exclude=True)
+    zone_map_layer: Optional[MapLayer] = Field(default=None, exclude=True)
+    terrain_map_layer: Optional[MapLayer] = Field(default=None, exclude=True)
+    decor_map_layer: Optional[MapLayer] = Field(default=None, exclude=True)
+    elevation_map_layer: Optional[MapLayer] = Field(default=None, exclude=True)
 
-    def __post_init__(self):
-        """Initialize map layers."""
-        object.__setattr__(self, 'unit_map_layer', MapLayer(map_layer_type=MapLayerType.UNIT, size=self.size))
-        object.__setattr__(self, 'zone_map_layer', MapLayer(map_layer_type=MapLayerType.ZONE, size=self.size))
-        object.__setattr__(self, 'terrain_map_layer', MapLayer(map_layer_type=MapLayerType.TERRAIN, size=self.size))
-        object.__setattr__(self, 'decor_map_layer', MapLayer(map_layer_type=MapLayerType.DECOR, size=self.size))
-        object.__setattr__(self, 'elevation_map_layer', MapLayer(map_layer_type=MapLayerType.ELEVATION, size=self.size))
+    def __init__(self, size: int = 100, **data: Any):
+        super().__init__(size=size, **data)
 
-    def get_map_layer(self, map_layer_type: MapLayerType):
+    def model_post_init(self, __context: Any) -> None:
+        """Initialize map layers after model creation."""
+        if self.unit_map_layer is None:
+            self.unit_map_layer = MapLayer(map_layer_type=MapLayerType.UNIT, size=self.size)
+        if self.zone_map_layer is None:
+            self.zone_map_layer = MapLayer(map_layer_type=MapLayerType.ZONE, size=self.size)
+        if self.terrain_map_layer is None:
+            self.terrain_map_layer = MapLayer(map_layer_type=MapLayerType.TERRAIN, size=self.size)
+        if self.decor_map_layer is None:
+            self.decor_map_layer = MapLayer(map_layer_type=MapLayerType.DECOR, size=self.size)
+        if self.elevation_map_layer is None:
+            self.elevation_map_layer = MapLayer(map_layer_type=MapLayerType.ELEVATION, size=self.size)
+
+    def get_map_layer(self, map_layer_type: MapLayerType) -> "MapLayer":
+        """Return the MapLayer for the given layer type.
+
+        Raises:
+            ValueError: If ``map_layer_type`` is not a known layer.
         """
-        Gets the corresponding map layer from a map layer type.
-        """
-
-        if map_layer_type == MapLayerType.ZONE:
-            return self.zone_map_layer
-        elif map_layer_type == MapLayerType.TERRAIN:
-            return self.terrain_map_layer
-        elif map_layer_type == MapLayerType.UNIT:
-            return self.unit_map_layer
-        elif map_layer_type == MapLayerType.DECOR:
-            return self.decor_map_layer
-        elif map_layer_type == MapLayerType.ELEVATION:
-            return self.elevation_map_layer
-
-        raise ValueError("Retrieving map layer from map layer type failed.")
+        attr = _LAYER_ATTR.get(map_layer_type)
+        if attr is None:
+            raise ValueError(
+                f"Unknown MapLayerType {map_layer_type!r}. "
+                f"Valid values: {list(_LAYER_ATTR)}"
+            )
+        return getattr(self, attr)
 
     def get_all_map_layers(self) -> list[MapLayer]:
         """
@@ -175,12 +202,12 @@ class Map:
         json_dict = json.loads(json_string)
         return Map.model_validate(json_dict)
     
-    @staticmethod
-    def model_validate(json_dict: dict[str, Any]) -> "Map":
+    @classmethod
+    def model_validate(cls, json_dict: dict[str, Any]) -> "Map":
         """
         Pydantic-style dict deserialization.
         """
-        new_map = Map(size=json_dict["size"])
+        new_map = cls(size=json_dict["size"])
         new_map.template_names = json_dict.get("template_names", {})
         
         # Deserialize map layers
@@ -197,7 +224,7 @@ class Map:
                     player_id = Serializable.deserialize_prim(cell_data["player_id"])
                     layer.set_point((i, j), obj_type, player_id)
             
-            object.__setattr__(new_map, layer_name, layer)
+            setattr(new_map, layer_name, layer)
         
         return new_map
 

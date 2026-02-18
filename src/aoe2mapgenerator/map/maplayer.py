@@ -1,12 +1,19 @@
-"""
-TODO: Add module documentation.
+"""MapLayer — a single typed 2-D grid of MapObjects.
+
+Each ``MapLayer`` maintains two complementary representations of the same data:
+
+* ``array``      — ``list[list[MapObject]]`` for O(1) spatial look-ups by (x, y).
+* ``dictionary`` — ``dict[MapObject, set[tuple[int,int]]]`` for O(1) reverse
+  look-ups of *all* coordinates occupied by a given object.
+
+Both representations are kept in sync by ``set_point()``.  Do not mutate
+``array`` or ``dictionary`` directly.
 """
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
 from typing import Any, List, Optional
-from pydantic.dataclasses import dataclass
-from pydantic import Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 from aoe2mapgenerator.common.constants.constants import (
     DEFAULT_EMPTY_VALUE,
@@ -29,21 +36,23 @@ MapLayerDictionary: Dictionary representation of the map layer. Each key is a Ma
 """
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
-class MapLayer:
+class MapLayer(BaseModel):
     """
     Single Map type constructor.
     """
-    map_layer_type: MapLayerType
-    size: int = 100
-    array: Optional[MapLayerArray] = Field(default=None, init=False, repr=False)
-    dictionary: Optional[MapLayerDictionary] = Field(default=None, init=False, repr=False)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def __post_init__(self):
-        """Initialize the array and dictionary."""
-        array_data = [[DEFAULT_EMPTY_OBJECT for i in range(self.size)] for j in range(self.size)]
-        object.__setattr__(self, 'array', array_data)
-        object.__setattr__(self, 'dictionary', _create_dict(array_data))
+    map_layer_type: Optional[MapLayerType]
+    size: Optional[int] = 100
+    array: Optional[MapLayerArray] = Field(default=None, exclude=True)
+    dictionary: Optional[MapLayerDictionary] = Field(default=None, exclude=True)
+
+    def model_post_init(self, __context: Any) -> None:
+        """Initialize the array and dictionary after model creation."""
+        if self.array is None:
+            array_data = [[DEFAULT_EMPTY_OBJECT for i in range(self.size)] for j in range(self.size)]
+            self.array = array_data
+            self.dictionary = _create_dict(array_data)
 
     def set_point(
         self,
