@@ -1,244 +1,120 @@
-"""
-Interface for the MapManager.
+"""IMapManager \u2014 structural Protocol for MapManager.
+
+Defines the stable public contract that any MapManager implementation must
+satisfy.  Code that only needs to *use* a MapManager (e.g. templates,
+services) should type-hint against ``IMapManager`` rather than the concrete
+class, making both testing and alternative implementations straightforward.
+
+Design notes
+------------
+* Mutable attributes (``map``, ``output_dir``, ``templates``, ``scenario``)
+  are part of the public API and appear as simple attribute annotations.
+* Internal collaborators (placers, generators, visualiser) are exposed as
+  read-only properties so call-sites can reach them when needed, but callers
+  are not expected to replace them.
+* All map-mutating methods return ``self`` (typed via TypeVar ``T``) to
+  support method chaining.
 """
 
-from typing import Protocol, List, Tuple, Dict, Set, Any, TypeVar
+from typing import Any, Dict, List, Protocol, Set, Tuple, TypeVar
+
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
-from aoe2mapgenerator.units.placers.placer_configs import (
-    PlaceGroupsConfig,
-    AddBordersConfig,
-    VoronoiGeneratorConfig,
-    VisualizeMapConfig,
-    PointSelectorConfig,
-)
-from aoe2mapgenerator.units.placers.point_management.point_manager import (
-    PointManager,
-)
 from aoe2mapgenerator.scenario.scenario import Scenario
-from aoe2mapgenerator.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.units.placers.wall_placer import WallPlacer
 from aoe2mapgenerator.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.units.placers.group_placer import GroupPlacer
+from aoe2mapgenerator.units.placers.placer_base import PlacerBase
+from aoe2mapgenerator.units.placers.placer_configs import (
+    AddBordersConfig,
+    PlaceGroupsConfig,
+    PointSelectorConfig,
+    VisualizeMapConfig,
+    VoronoiGeneratorConfig,
+)
+from aoe2mapgenerator.units.placers.point_management.point_manager import PointManager
+from aoe2mapgenerator.units.placers.wall_placer import WallPlacer
 from aoe2mapgenerator.units.wallgenerators.voronoi import VoronoiGenerator
 from aoe2mapgenerator.visualizer.visualizer import Visualizer
 
+T = TypeVar("T", bound="IMapManager")
 
-# Type for self-referencing the implementing class
-T = TypeVar('T', bound='IMapManager')
 
 class IMapManager(Protocol):
+    """Structural Protocol describing the MapManager public API.
+
+    Implementors must expose the attributes and methods declared here.
+    Use ``isinstance(obj, IMapManager)`` with ``runtime_checkable`` if
+    needed \u2014 otherwise rely on static type checking only.
     """
-    Protocol defining the interface for the MapManager class.
-    """
-    @property
-    def map(self) -> Map: ...
-        
-    @map.setter
-    def map(self, value: Map) -> None: ...
+
+    # ------------------------------------------------------------------
+    # Mutable public attributes
+    # ------------------------------------------------------------------
+    map: Map
+    output_dir: str
+    templates: list
+    scenario: Scenario
+
+    # ------------------------------------------------------------------
+    # Read-only collaborator properties
+    # ------------------------------------------------------------------
 
     @property
     def base_placer(self) -> PlacerBase: ...
-        
-    @base_placer.setter
-    def base_placer(self, value: PlacerBase) -> None: ...
 
     @property
     def gate_placer(self) -> GatePlacer: ...
-        
-    @gate_placer.setter
-    def gate_placer(self, value: GatePlacer) -> None: ...
 
     @property
     def group_placer(self) -> GroupPlacer: ...
-        
-    @group_placer.setter
-    def group_placer(self, value: GroupPlacer) -> None: ...
-
-    @property
-    def output_dir(self) -> str: ...
-        
-    @output_dir.setter
-    def output_dir(self, value: str) -> None: ...
 
     @property
     def point_manager(self) -> PointManager: ...
-        
-    @point_manager.setter
-    def point_manager(self, value: PointManager) -> None: ...
-
-    @property
-    def scenario(self) -> Scenario: ...
-        
-    @scenario.setter
-    def scenario(self, value: Scenario) -> None: ...
-
-    @property
-    def templates(self) -> list: ...
-        
-    @templates.setter
-    def templates(self, value: list) -> None: ...
 
     @property
     def visualizer(self) -> Visualizer: ...
-        
-    @visualizer.setter
-    def visualizer(self, value: Visualizer) -> None: ...
 
     @property
     def voronoi_generator(self) -> VoronoiGenerator: ...
-        
-    @voronoi_generator.setter
-    def voronoi_generator(self, value: VoronoiGenerator) -> None: ...
 
     @property
     def wall_placer(self) -> WallPlacer: ...
-        
-    @wall_placer.setter
-    def wall_placer(self, value: WallPlacer) -> None: ...
 
-    def write_map_and_save(self: T, file_name: str) -> T:
-        """
-        Writes the map and saves it to a file.
-        
-        Returns:
-            Self for method chaining.
-        """
-        ...
-    
-    def place_groups(self: T, configuration: PlaceGroupsConfig) -> T:
-        """
-        Places groups of objects on the map.
-        
-        Returns:
-            Self for method chaining.
-        """
-        ...
-    
-    def place_borders(self: T, configuration: AddBordersConfig) -> T:
-        """
-        Adds borders to the map.
-        
-        Returns:
-            Self for method chaining.
-        """
-        ...
-    
-    def place_voronoi_zones(self: T, configuration: VoronoiGeneratorConfig) -> List[MapObject]:
-        """
-        Generates the voronoi zones.
-        
-        Returns:
-            Self for method chaining.
-        """
-        ...
-    
-    def visualize_map(self: T, configuration: VisualizeMapConfig) -> T:
-        """
-        Visualizes the map.
-        
-        Returns:
-            Self for method chaining.
-        """
-        ...
-    
-    def select_points(self: T, configuration: PointSelectorConfig) -> List[Tuple[int, int]]:
-        """
-        Selects points on the map.
-        Note: This method doesn't support chaining as it returns the selected points.
-        """
-        ...
-    
-    def get_map(self: T) -> Map:
-        """
-        Returns the map object.
-        """
-        ...
-    
-    def get_map_layer(self: T, map_layer_type: MapLayerType) -> Any:
-        """
-        Returns the map layer object.
-        """
-        ...
-    
-    def get_dictionary(self: T, map_layer_type: MapLayerType) -> Dict:
-        """
-        Returns the dictionary of the map layer.
-        """
-        ...
-    
-    def get_array(self: T, map_layer_type: MapLayerType) -> List:
-        """
-        Returns the array of the map layer.
-        """
-        ...
-    
-    def get_set_with_map_object(self: T, map_layer_type: MapLayerType, obj: MapObject) -> Set:
-        """
-        Returns the set of points with the object.
-        """
-        ...
-    
-    def get_points_from_map_layer(self: T, configuration: PointSelectorConfig) -> List[Tuple[int, int]]:
-        """
-        Gets the points from a map layer.
-        """
-        ...
-    
-    def points(self: T) -> PointManager:
-        """
-        Access the point manager to work with point collections.
-        This provides a cleaner interface for chaining point operations.
-        
-        Returns:
-            The point manager instance
-        """
-        ...
-        
-    # Commented out methods to match the commented methods in MapManager
-    # Keep these in the interface but commented out to maintain alignment
+    # ------------------------------------------------------------------
+    # Map-building methods
+    # ------------------------------------------------------------------
 
-    # def apply_template(
-    #     self,
-    #     template_type: TemplateType,
-    #     point_collection: Optional[PointCollection] = None,
-    #     config: Optional[TemplateConfig] = None,
-    #     **kwargs
-    # ) -> T:
-    #     """
-    #     Apply a template to the map.
-    #     
-    #     Args:
-    #         template_type: Enum value of the template to apply
-    #         point_collection: Collection of points (creates new if None)
-    #         config: Optional configuration 
-    #         **kwargs: Additional parameters
-    #         
-    #     Returns:
-    #         Self for method chaining
-    #     """
-    #     ...
-    
-    # def create_fort(
-    #     self,
-    #     center_point: Tuple[int, int] = (50, 50),
-    #     size: int = 20,
-    #     player_id: PlayerId = PlayerId.ONE,
-    #     gate_type: GateType = GateType.FORTIFIED_GATE,
-    #     **kwargs
-    # ) -> T:
-    #     """
-    #     Create a fort on the map.
-    #     
-    #     Args:
-    #         center_point: Center coordinates of the fort
-    #         size: Size of the fort
-    #         player_id: Player who owns the fort
-    #         gate_type: Type of gates to use
-    #         **kwargs: Additional parameters for the template
-    #         
-    #     Returns:
-    #         Self for method chaining
-    #     """
-    #     ...
+    def write_map_and_save(self: T, file_name: str) -> T: ...
+
+    def place_groups(self: T, configuration: PlaceGroupsConfig) -> T: ...
+
+    def place_borders(self: T, configuration: AddBordersConfig) -> T: ...
+
+    def place_voronoi_zones(
+        self: T, configuration: VoronoiGeneratorConfig
+    ) -> List[MapObject]: ...
+
+    def visualize_map(self: T, configuration: VisualizeMapConfig) -> T: ...
+
+    def select_points(
+        self: T, configuration: PointSelectorConfig
+    ) -> List[Tuple[int, int]]: ...
+
+    def get_map(self: T) -> Map: ...
+
+    def get_map_layer(self: T, map_layer_type: MapLayerType) -> Any: ...
+
+    def get_dictionary(self: T, map_layer_type: MapLayerType) -> Dict: ...
+
+    def get_array(self: T, map_layer_type: MapLayerType) -> List: ...
+
+    def get_set_with_map_object(
+        self: T, map_layer_type: MapLayerType, obj: MapObject
+    ) -> Set: ...
+
+    def get_points_from_map_layer(
+        self: T, configuration: PointSelectorConfig
+    ) -> List[Tuple[int, int]]: ...
+
+    def points(self: T) -> PointManager: ...
