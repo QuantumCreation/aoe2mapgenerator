@@ -29,15 +29,21 @@ from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
 from aoe2mapgenerator.templates.decor import OakForestTemplate
+from aoe2mapgenerator.templates.fort import FortTemplate  # noqa: F401 – registers via @register_template
+from aoe2mapgenerator.templates.village import VillageTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.template_decorator import get_template_manager
 from aoe2mapgenerator.templates.template_types import TemplateType
 from aoe2mapgenerator.templates.templates_manager import TemplateConfig
 from aoe2mapgenerator.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.units.placers.group_placer import GroupPlacer
+from aoe2mapgenerator.units.placers.path_placer import PathPlacer
 from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.units.placers.placer_configs import (
     AddBordersConfig,
+    PlaceGateOnFourSidesConfig,
+    PlaceGateOnEightSidesConfig,
     PlaceGroupsConfig,
+    PlacePathConfig,
     PointSelectorConfig,
     VisualizeMapConfig,
     VoronoiGeneratorConfig,
@@ -73,6 +79,7 @@ class MapManager(IMapManager):
         self._wall_placer: WallPlacer = WallPlacer(self.map)
         self._gate_placer: GatePlacer = GatePlacer(self.map)
         self._group_placer: GroupPlacer = GroupPlacer(self.map)
+        self._path_placer: PathPlacer = PathPlacer(self.map)
         self._voronoi_generator: VoronoiGenerator = VoronoiGenerator(self.map)
         self._point_manager: PointManager = PointManager(self.map)
         self._visualizer: Visualizer = Visualizer(self.map)
@@ -95,6 +102,7 @@ class MapManager(IMapManager):
         self._wall_placer.map = map_obj
         self._gate_placer.map = map_obj
         self._group_placer.map = map_obj
+        self._path_placer.map = map_obj
         self._voronoi_generator.map = map_obj
         self._point_manager.map = map_obj
         self._visualizer.map = map_obj
@@ -122,6 +130,10 @@ class MapManager(IMapManager):
     @property
     def voronoi_generator(self) -> VoronoiGenerator:
         return self._voronoi_generator
+
+    @property
+    def path_placer(self) -> PathPlacer:
+        return self._path_placer
 
     @property
     def point_manager(self) -> PointManager:
@@ -197,6 +209,47 @@ class MapManager(IMapManager):
     def get_map(self) -> Map:
         """Return the underlying Map object."""
         return self.map
+
+    def create_path(self, configuration: "PlacePathConfig") -> "MapManager":
+        """Trace and place a randomised path connecting key points.
+
+        Returns:
+            self, for method chaining.
+        """
+        self._path_placer.create_path(configuration)
+        return self
+
+    def place_gates_on_four_sides(
+        self, configuration: "PlaceGateOnFourSidesConfig"
+    ) -> "MapManager":
+        """Place gates at the four cardinal-direction extremes of a region.
+
+        Returns:
+            self, for method chaining.
+        """
+        self._gate_placer.place_gate_on_four_sides(
+            configuration.point_collection,
+            configuration.map_layer_type,
+            configuration.gate_type,
+            configuration.player_id,
+        )
+        return self
+
+    def place_gates_on_eight_sides(
+        self, configuration: "PlaceGateOnEightSidesConfig"
+    ) -> "MapManager":
+        """Place gates at all eight compass-direction extremes of a region.
+
+        Returns:
+            self, for method chaining.
+        """
+        self._gate_placer.place_gate_on_eight_sides(
+            configuration.point_collection,
+            configuration.map_layer_type,
+            configuration.gate_type,
+            configuration.player_id,
+        )
+        return self
 
     def get_map_layer(self, map_layer_type: MapLayerType):
         """Return the MapLayer for the given layer type."""

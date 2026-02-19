@@ -1,25 +1,45 @@
-from aoe2mapgenerator.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.units.placers.point_management.point_collection import PointCollection
-from aoe2mapgenerator.common.enums.enum import MapLayerType
-from aoe2mapgenerator.common.types import AOE2ObjectType, Point
-from aoe2mapgenerator.units.placers.placer_configs import PlacePathConfig
+import logging
 from typing import List, Tuple
 import numpy as np
 import random
+
 from AoE2ScenarioParser.datasets.players import PlayerId
-from aoe2mapgenerator.units.placers.placer_configs import PlaceIfPossibleConfig
+
+from aoe2mapgenerator.common.enums.enum import MapLayerType
+from aoe2mapgenerator.common.types import AOE2ObjectType, Point
+from aoe2mapgenerator.units.placers.placer_base import PlacerBase
+from aoe2mapgenerator.units.placers.placer_configs import PlaceIfPossibleConfig, PlacePathConfig
+from aoe2mapgenerator.units.placers.point_management.point_collection import PointCollection
+
+logger = logging.getLogger(__name__)
+
 
 class PathPlacer(PlacerBase):
+    """Places a winding path between key points on a map layer."""
+
     def create_path(self, config: PlacePathConfig) -> None:
-        print(f"Key points: {config.key_points}")
+        """Trace and place a randomised path connecting ``config.key_points``.
+
+        The path is first traced as straight line segments between each
+        consecutive pair of key-points, then iteratively randomised by
+        injecting extra waypoints and shifting them by ``random_shift_range``
+        pixels.  Each randomisation pass corresponds to an entry in
+        ``config.num_divisions`` / ``config.random_shift_range``.
+
+        Args:
+            config: Path configuration (key points, layer, object type, player,
+                num_divisions, random_shift_range).
+        """
+        logger.debug("create_path: key_points=%s", config.key_points)
         path = self._connect_points(config.key_points)
-        print(f"Initial path: {path}")
         for num_div, shift_range in zip(config.num_divisions, config.random_shift_range):
             path = self._connect_points_with_randomization(config.key_points, num_div, shift_range, path)
-            print(f"Path after randomization (num_div={num_div}, shift_range={shift_range}): {path}")
-        
+            logger.debug(
+                "create_path: after randomisation (num_div=%s, shift_range=%s) → %d points",
+                num_div, shift_range, len(path),
+            )
         self._place_path(config.point_collection, path, config.map_layer_type, config.obj_type, config.player_id)
-        print(f"Final path: {path}")
+        logger.debug("create_path: placed %d path tiles", len(path))
 
     def _connect_points(self, point_list: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         returned_points: List[Tuple[int, int]] = []
@@ -50,10 +70,7 @@ class PathPlacer(PlacerBase):
         return list(set(randomized_points)) # Remove duplicates
 
     def _place_path(self, point_collection: PointCollection, path: List[Tuple[int, int]], map_layer_type: MapLayerType, obj_type: AOE2ObjectType, player_id: PlayerId) -> None:
-        print(f"Placing path: {path}")
-
         for point in path:
-            print(f"Placing object at {point}")
             config = PlaceIfPossibleConfig(
                 point_collection=point_collection,
                 map_layer_type=map_layer_type,

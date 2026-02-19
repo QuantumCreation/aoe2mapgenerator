@@ -31,8 +31,6 @@ class GroupPlacer(PlacerBase):
     Class for placing groups of objects on a map.
     """
 
-    points_iterated = 0
-
     def place_groups(
         self,
         configuration: PlaceGroupsConfig,
@@ -212,7 +210,6 @@ class GroupPlacer(PlacerBase):
         placed = 0
 
         for x, y in points_list:
-            GroupPlacer.points_iterated += 1
             if placed >= group_size:
                 break
 

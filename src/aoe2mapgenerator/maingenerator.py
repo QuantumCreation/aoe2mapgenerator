@@ -1,57 +1,65 @@
-# Generator base
-from AoE2ScenarioParser.datasets.players import PlayerId
-from AoE2ScenarioParser.datasets.units import UnitInfo
-from AoE2ScenarioParser.datasets.buildings import BuildingInfo
-from AoE2ScenarioParser.datasets.other import OtherInfo
-from AoE2ScenarioParser.datasets.terrains import TerrainId
-from aoe2mapgenerator.common.enums.enum import (
-    MapLayerType,
-    ObjectSize,
-    GateType,
-    TemplateTypes,
-    ObjectRotation,
-    YamlReplacementKeywords,
-    CheckPlacementReturnTypes,
-)
+"""Quick-start entry point for the aoe2mapgenerator library.
 
-from aoe2mapgenerator.scenario.scenario import Scenario
-import numpy as np
-import random
-from aoe2mapgenerator.common.constants.constants import (
-    DEFAULT_EMPTY_VALUE,
-    BASE_SCENE_DIR_LINUX,
-    BASE_SCENARIO_NAME,
-    TEMPLATE_DIR_LINUX,
-)
-from aoe2mapgenerator.common.constants.default_objects import (
-    GHOST_OBJECT_DISPLACEMENT,
-)
-from aoe2mapgenerator.common.enums.enum import GateType
-import multiprocessing as mp
-from aoe2mapgenerator.map.map import Map
-import os
-from aoe2mapgenerator.triggers.triggers import TriggerManager
-import inspect
-import ast
-import json
-from enum import Enum
-from aoe2mapgenerator.units.wallgenerators.voronoi import VoronoiGenerator
-from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
-from aoe2mapgenerator.units.placers.statictemplate import TemplateCreator
-from aoe2mapgenerator.units.placers.group_placer import GroupPlacer
-from aoe2mapgenerator.units.placers.point_management.point_manager import (
-    PointCollection,
-)
-from aoe2mapgenerator.testing import awesome_function
-from aoe2mapgenerator.map.map_object import MapObject
-from aoe2mapgenerator.units.placers.point_management.point_selector import (
-    PointSelector,
-)
-from aoe2mapgenerator.visualizer.visualizer import Visualizer
-from aoe2mapgenerator.units.placers.gate_placer import GatePlacer
-from aoe2mapgenerator.units.placers.wall_placer import WallPlacer
+This module demonstrates the canonical way to use MapManager to build and
+save an AoE2 scenario file.  Run it directly or use it as a copy-paste
+reference for custom scripts:
+
+    poetry run python -m aoe2mapgenerator.maingenerator
+
+The map is written to the directory configured by ``BASE_SCENE_DIR_** ``
+constants in ``common/constants/constants.py``.
+"""
+
+from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+
+from aoe2mapgenerator.common.enums.enum import GateType, MapLayerType
 from aoe2mapgenerator.map.map_manager import MapManager
-from aoe2mapgenerator.units.placers.placer_configs import *
-from aoe2mapgenerator.units.placers.placer_configs import PlaceGroupsConfig
-import dataclasses
-import json
+from aoe2mapgenerator.templates.template_types import TemplateType
+from aoe2mapgenerator.units.placers.placer_configs import (
+    PlaceGroupsConfig,
+    VoronoiGeneratorConfig,
+)
+from aoe2mapgenerator.units.placers.point_management.point_manager import PointCollection
+
+
+def build_example_map(map_size: int = 80) -> MapManager:
+    """Build a small example map and return the MapManager.
+
+    Args:
+        map_size: Edge length of the square map in tiles (default 80).
+
+    Returns:
+        Populated ``MapManager`` ready to call ``write_map_and_save()`` on.
+    """
+    mm = MapManager(map_size=map_size)
+
+    # 1. Voronoi regions on the ZONE layer
+    all_points = PointCollection()
+    for x in range(map_size):
+        for y in range(map_size):
+            all_points.add_point((x, y))
+
+    mm.place_voronoi_zones(
+        VoronoiGeneratorConfig(
+            point_collection=all_points.copy(),
+            interpoint_distance=20,
+            map_layer_type=MapLayerType.ZONE,
+        )
+    )
+
+    # 2. Oak forest in the top-left quadrant
+    forest_points = PointCollection()
+    for x in range(map_size // 2):
+        for y in range(map_size // 2):
+            forest_points.add_point((x, y))
+
+    mm.create_oak_forest(forest_points, groups_density=0.02, group_size=8, clumping=4)
+
+    return mm
+
+
+if __name__ == "__main__":
+    mm = build_example_map()
+    mm.write_map_and_save("example_map.aoe2scenario")
+    print("Example map written.")

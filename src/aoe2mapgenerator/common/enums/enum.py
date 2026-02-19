@@ -88,7 +88,7 @@ class ObjectRotation(Enum):
     BUSH_DEFAULT = 4
     FORAGE_BUSH = 4
 
-    # HOUSE ROTATION STILL NOT WORKING! AHSDFHASGHHASDHFAHSDHFAHSDF!?!?!?!
+    # FIXME: house rotation for HOUSE not yet working
     HOUSE = 3
     BURNED_BUILDING = 12
 
@@ -112,10 +112,14 @@ class TemplateSize(Enum):
 
 class Directions(Enum):
     """
-    Enum of different directions.
+    Enum of cardinal and intercardinal directions used for gate/border placement.
+
+    Note: These values represent (row_delta, col_delta) offsets in the
+    internal grid coordinate system, which may differ from AoE2 in-game
+    compass directions.  Verified correct for gate placement logic — update
+    with care.
     """
 
-    # I DONT THINK THESE ACTUALLY MATCH WHATS GOING ON IN AOE2. I PICKED THEM RANDOMLY.
     NORTH = (-1, 0)
     SOUTH = (1, 0)
     EAST = (0, 1)
@@ -307,42 +311,6 @@ class GateObject(Enum):
             return ((-1, 0), (0, 0), (1, 0), (2, 0))
 
         raise ValueError(f"Unknown gate type: {self}")
-
-
-class TemplateTypes(Enum):
-    """
-    Enum representing the different types of templates.
-    """
-
-    DYNAMIC = 0
-    STATIC = 1
-    MIXED = 2
-
-    @classmethod
-    def _missing_(cls, value):
-        if value in cls.__members__:
-            return cls.__members__[value]
-        return cls.DYNAMIC
-
-
-class YamlReplacementKeywords(Enum):
-    """
-    Enum of the yaml keywords that get replaced with python varibles.
-    """
-
-    # ARRAY SPACE REPLACEMENT VARIABLES
-    UNIT = "$UNIT"
-    TERRAIN = "$TERRAIN"
-    ZONE = "$ZONE"
-    DECOR = "$DECOR"
-    ELEVATION = "$ELEVATION"
-
-    # PLAYER ID
-    PLAYER_ID = "$PLAYER_ID"
-
-    # GATE TYPES
-    GATE_TYPE = "$GATE_TYPE"
-
 
 class CheckPlacementReturnTypes(Enum):
     """

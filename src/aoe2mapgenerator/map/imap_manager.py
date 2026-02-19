@@ -24,10 +24,14 @@ from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
 from aoe2mapgenerator.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.units.placers.group_placer import GroupPlacer
+from aoe2mapgenerator.units.placers.path_placer import PathPlacer
 from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.units.placers.placer_configs import (
     AddBordersConfig,
+    PlaceGateOnFourSidesConfig,
+    PlaceGateOnEightSidesConfig,
     PlaceGroupsConfig,
+    PlacePathConfig,
     PointSelectorConfig,
     VisualizeMapConfig,
     VoronoiGeneratorConfig,
@@ -79,6 +83,9 @@ class IMapManager(Protocol):
     def voronoi_generator(self) -> VoronoiGenerator: ...
 
     @property
+    def path_placer(self) -> PathPlacer: ...
+
+    @property
     def wall_placer(self) -> WallPlacer: ...
 
     # ------------------------------------------------------------------
@@ -94,6 +101,12 @@ class IMapManager(Protocol):
     def place_voronoi_zones(
         self: T, configuration: VoronoiGeneratorConfig
     ) -> List[MapObject]: ...
+
+    def create_path(self: T, configuration: PlacePathConfig) -> T: ...
+
+    def place_gates_on_four_sides(self: T, configuration: PlaceGateOnFourSidesConfig) -> T: ...
+
+    def place_gates_on_eight_sides(self: T, configuration: PlaceGateOnEightSidesConfig) -> T: ...
 
     def visualize_map(self: T, configuration: VisualizeMapConfig) -> T: ...
 

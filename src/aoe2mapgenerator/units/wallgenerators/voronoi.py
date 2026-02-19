@@ -6,6 +6,7 @@ import random
 
 import numpy as np
 from AoE2ScenarioParser.datasets.players import PlayerId
+from scipy.ndimage import distance_transform_edt
 
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.map.map import Map
@@ -14,8 +15,6 @@ from aoe2mapgenerator.units.placers.placer_base import PlacerBase
 from aoe2mapgenerator.units.placers.point_management.point_manager import (
     PointCollection,
 )
-import numpy as np
-from scipy.ndimage import distance_transform_edt
 from aoe2mapgenerator.units.placers.placer_configs import (
     PlaceGroupsConfig,
     AddBordersConfig,
@@ -192,10 +191,23 @@ class VoronoiGenerator(PlacerBase):
         self, width=1.0, height=1.0, radius=0.025, k=30
     ) -> np.ndarray:
         """
-        Generates random points with the poisson disk method
+        Generates random points using the Poisson disk sampling method.
+
+        Implements the algorithm described in:
+            "Fast Poisson Disk Sampling in Arbitrary Dimensions"
+            Robert Bridson, SIGGRAPH 2007.
 
         Args:
-            IDK what the variables are LMAO
+            width: Width of the sampling domain (number of columns).
+            height: Height of the sampling domain (number of rows).
+            radius: Minimum distance between any two sample points.
+            k: Number of candidate points tested per accepted point before
+               the point is considered inactive. Higher k gives better
+               packing at the cost of more iterations (recommended: 30).
+
+        Returns:
+            np.ndarray of shape (N, 2) containing accepted sample coordinates,
+            where each row is (row_coord, col_coord) within [0, height) × [0, width).
         """
 
         # References: Fast Poisson Disk Sampling in Arbitrary Dimensions
