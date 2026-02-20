@@ -106,6 +106,9 @@ class MapManager(IMapManager):
         self._voronoi_generator.map = map_obj
         self._point_manager.map = map_obj
         self._visualizer.map = map_obj
+        # Keep scenario writer bound to the active map as well.
+        if self.scenario is not None:
+            self.scenario.map = map_obj
 
     # ------------------------------------------------------------------
     # IMapManager protocol properties (read-only access to collaborators)
@@ -159,6 +162,8 @@ class MapManager(IMapManager):
         """
         if self.scenario is None:
             self.scenario = Scenario(self.map)
+        # Ensure scenario serialization writes the current map instance.
+        self.scenario.map = self.map
         self.scenario._change_map_size(self.map.size)
         self.scenario.write_map()
         self.scenario.save_file(os.path.join(self.output_dir, file_name))
