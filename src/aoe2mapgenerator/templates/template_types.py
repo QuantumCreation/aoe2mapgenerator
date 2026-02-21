@@ -18,4 +18,5 @@ class TemplateType(Enum):
     SNOW_FOREST = auto()
     WALLS = auto()
     CITY = auto()
+    PALACE = auto()
     # Add more as needed

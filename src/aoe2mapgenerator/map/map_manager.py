@@ -28,8 +28,10 @@ from aoe2mapgenerator.map.imap_manager import IMapManager
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
+from aoe2mapgenerator.templates.city import CityTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.decor import OakForestTemplate
 from aoe2mapgenerator.templates.fort import FortTemplate  # noqa: F401 – registers via @register_template
+from aoe2mapgenerator.templates.palace import PalaceTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.village import VillageTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.template_decorator import get_template_manager
 from aoe2mapgenerator.templates.template_types import TemplateType
@@ -339,6 +341,63 @@ class MapManager(IMapManager):
             gate_type=gate_type,
         )
         return self.apply_template(point_collection, TemplateType.FORT, config=config, **kwargs)
+
+    def create_city(
+        self,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] = (120, 120),
+        size: int | None = None,
+        player_id: PlayerId = PlayerId.ONE,
+        gate_type: GateType = GateType.CITY_GATE,
+        preset: str = "balanced",
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Place a full city template (districts + walls + gates + roads).
+
+        Args:
+            point_collection: Candidate tile positions.
+            center_point: Centre coordinates of the city.
+            size: City radius. If omitted, the selected ``preset`` determines radius.
+            player_id: Player who owns the city.
+            gate_type: Gate style to use for city walls.
+            preset: One of ``compact``, ``balanced``, ``mega_city`` (or ``mega`` alias).
+            **kwargs: Extra keyword arguments forwarded to CityTemplate.
+
+        Returns:
+            self, for method chaining.
+        """
+        resolved_size = size if size is not None else 0
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=center_point,
+            size=resolved_size,
+            player_id=player_id,
+            gate_type=gate_type,
+        )
+        kwargs.setdefault("preset", preset)
+        if size is not None:
+            kwargs.setdefault("city_radius", size)
+        return self.apply_template(point_collection, TemplateType.CITY, config=config, **kwargs)
+
+    def create_palace(
+        self,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] = (120, 120),
+        size: int = 22,
+        player_id: PlayerId = PlayerId.ONE,
+        gate_type: GateType = GateType.FORTIFIED_GATE,
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Place a fortified palace complex with moat, gardens, and elite guard."""
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=center_point,
+            size=size,
+            player_id=player_id,
+            gate_type=gate_type,
+        )
+        kwargs.setdefault("radius", size)
+        return self.apply_template(point_collection, TemplateType.PALACE, config=config, **kwargs)
 
     def create_oak_forest(
         self,

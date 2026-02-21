@@ -242,20 +242,27 @@ class TriggerManager:
         player_id: PlayerId,
         x_target: int,
         y_target: int,
-        looping: bool = True,
-    ):
-        """
-        Patrols objects from the x1, y1, x2, y2 area
+        looping: bool = False,
+        trigger_name: str = "Patrol",
+    ) -> None:
+        """Order all units in the source area to patrol to the target point.
+
+        AoE2's patrol order is inherently back-and-forth: units ordered to
+        patrol will walk to *target* and then return to their starting position,
+        repeating indefinitely when ``looping=True``.
 
         Args:
-            x1 (int): x1 coordinate of the source area
-            y1 (int): y1 coordinate of the source area
-            x2 (int): x2 coordinate of the source area
-            y2 (int): y2 coordinate of the source area
-            player_id (PlayerId): player id of the object
-            looping (bool, optional): if the trigger should loop. Defaults to True.
+            x1: Left tile of the source area (units to receive the order).
+            y1: Top tile of the source area.
+            x2: Right tile of the source area.
+            y2: Bottom tile of the source area.
+            player_id: PlayerId of the units that will receive the patrol order.
+            x_target: X tile coordinate of the patrol destination.
+            y_target: Y tile coordinate of the patrol destination.
+            looping: Whether the trigger fires on repeat. Defaults to False.
+            trigger_name: Display name for the new trigger. Defaults to "Patrol".
         """
-        trigger = self.trigger_manager.add_trigger("Patrol")
+        trigger = self.trigger_manager.add_trigger(trigger_name)
 
         trigger.new_effect.patrol(
             area_x1=x1,
@@ -268,3 +275,105 @@ class TriggerManager:
         )
 
         trigger.looping = looping
+
+    def patrol_between_points(
+        self,
+        source_point: tuple[int, int],
+        target_point: tuple[int, int],
+        player_id: PlayerId,
+        area_padding: int = 4,
+        looping: bool = True,
+        trigger_name: str = "Patrol Between Points",
+    ) -> None:
+        """Patrol units near ``source_point`` to ``target_point`` and back.
+
+        This is a convenience wrapper that converts point-based inputs to the
+        rectangular area expected by :meth:`patrol`.
+        """
+        sx, sy = source_point
+        tx, ty = target_point
+        self.patrol(
+            x1=sx - area_padding,
+            y1=sy - area_padding,
+            x2=sx + area_padding,
+            y2=sy + area_padding,
+            player_id=player_id,
+            x_target=tx,
+            y_target=ty,
+            looping=looping,
+            trigger_name=trigger_name,
+        )
+
+    def task_units_to_point(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        target_x: int,
+        target_y: int,
+        player_id: PlayerId,
+        action_type: int | None = None,
+        looping: bool = True,
+        trigger_name: str = "Task Units",
+    ) -> None:
+        """Issue a task order to all units in an area.
+
+        This is primarily used for city-life villager behavior to continuously
+        re-assign work destinations (farms, mines, resource spots).
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.task_object(
+            source_player=player_id,
+            location_x=target_x,
+            location_y=target_y,
+            area_x1=x1,
+            area_y1=y1,
+            area_x2=x2,
+            area_y2=y2,
+            action_type=action_type,
+        )
+        trigger.looping = looping
+
+    def patrol_back_and_forth(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        player_id: PlayerId,
+        waypoint_x: int,
+        waypoint_y: int,
+        label: str = "",
+    ) -> None:
+        """High-level helper: units in *source area* patrol to *waypoint* and back.
+
+        Creates a single looping patrol trigger.  AoE2's built-in patrol
+        mechanic handles the return trip automatically — units walk to the
+        waypoint, then walk back to their spawn area and repeat.
+
+        This is a thin convenience wrapper over :meth:`patrol` with sensible
+        defaults and a label-based trigger name.
+
+        Args:
+            x1: Left tile of the source area.
+            y1: Top tile of the source area.
+            x2: Right tile of the source area.
+            y2: Bottom tile of the source area.
+            player_id: Owner of the units receiving the patrol order.
+            waypoint_x: X tile coordinate of the patrol endpoint.
+            waypoint_y: Y tile coordinate of the patrol endpoint.
+            label: Optional descriptive label embedded in the trigger name.
+        """
+        name = f"Patrol – {label}" if label else "Patrol"
+        self.patrol(
+            x1=x1,
+            y1=y1,
+            x2=x2,
+            y2=y2,
+            player_id=player_id,
+            x_target=waypoint_x,
+            y_target=waypoint_y,
+            looping=True,
+            trigger_name=name,
+        )

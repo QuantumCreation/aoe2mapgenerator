@@ -12,7 +12,7 @@ from AoE2ScenarioParser.datasets.terrains import TerrainId
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from typing import Tuple
 import random
-from aoe2mapgenerator.map.map_manager import IMapManager
+from aoe2mapgenerator.map.imap_manager import IMapManager
 from aoe2mapgenerator.units.placers.placer_configs import PlaceGroupsConfig
 from aoe2mapgenerator.common.enums.enum import (
     DecorObjectsOverlap,

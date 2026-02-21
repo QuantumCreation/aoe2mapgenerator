@@ -9,7 +9,9 @@ from aoe2mapgenerator.templates.template_types import TemplateType
 from aoe2mapgenerator.templates.abstract_template import AbstractTemplate
 
 # Import all template implementations to register them
+from aoe2mapgenerator.templates.city import CityTemplate
 from aoe2mapgenerator.templates.fort import FortTemplate
+from aoe2mapgenerator.templates.palace import PalaceTemplate
 from aoe2mapgenerator.templates.decor import OakForestTemplate, SnowForestTemplate
 # Import other template modules as needed
 

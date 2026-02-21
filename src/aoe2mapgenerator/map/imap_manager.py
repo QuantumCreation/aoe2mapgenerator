@@ -18,6 +18,9 @@ Design notes
 
 from typing import Any, Dict, List, Protocol, Set, Tuple, TypeVar
 
+from AoE2ScenarioParser.datasets.players import PlayerId
+
+from aoe2mapgenerator.common.enums.enum import GateType
 from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
@@ -37,6 +40,7 @@ from aoe2mapgenerator.units.placers.placer_configs import (
     VoronoiGeneratorConfig,
 )
 from aoe2mapgenerator.units.placers.point_management.point_manager import PointManager
+from aoe2mapgenerator.units.placers.point_management.point_collection import PointCollection
 from aoe2mapgenerator.units.placers.wall_placer import WallPlacer
 from aoe2mapgenerator.units.wallgenerators.voronoi import VoronoiGenerator
 from aoe2mapgenerator.visualizer.visualizer import Visualizer
@@ -107,6 +111,27 @@ class IMapManager(Protocol):
     def place_gates_on_four_sides(self: T, configuration: PlaceGateOnFourSidesConfig) -> T: ...
 
     def place_gates_on_eight_sides(self: T, configuration: PlaceGateOnEightSidesConfig) -> T: ...
+
+    def create_city(
+        self: T,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] = ...,
+        size: int | None = ...,
+        player_id: PlayerId = ...,
+        gate_type: GateType = ...,
+        preset: str = ...,
+        **kwargs: Any,
+    ) -> T: ...
+
+    def create_palace(
+        self: T,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] = ...,
+        size: int = ...,
+        player_id: PlayerId = ...,
+        gate_type: GateType = ...,
+        **kwargs: Any,
+    ) -> T: ...
 
     def visualize_map(self: T, configuration: VisualizeMapConfig) -> T: ...
 

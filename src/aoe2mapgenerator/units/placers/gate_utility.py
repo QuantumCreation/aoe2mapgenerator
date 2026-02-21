@@ -11,7 +11,6 @@ from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.units.wallgenerators.polygon import generate_polygonal_wall_points
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 from aoe2mapgenerator.units.placers.placer_base import PlacerBase
-from aoe2mapgenerator.map.map_manager import IMapManager
 
 
 class AdvancedWallPlacer(PlacerBase):
