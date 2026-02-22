@@ -13,7 +13,19 @@ from aoe2mapgenerator.templates.city import CityTemplate
 from aoe2mapgenerator.templates.fort import FortTemplate
 from aoe2mapgenerator.templates.palace import PalaceTemplate
 from aoe2mapgenerator.templates.decor import OakForestTemplate, SnowForestTemplate
-# Import other template modules as needed
+
+# Nature / biome templates (pond, river, forests, biomes)
+from aoe2mapgenerator.templates.nature import (
+    PondTemplate,
+    RiverSegmentTemplate,
+    PineForestTemplate,
+    WinterLandscapeTemplate,
+    DesertTemplate,
+    DesertOasisTemplate,
+    SavannahTemplate,
+    RainforestTemplate,
+    MediterraneanTemplate,
+)
 
 # Make the template manager accessible
 template_manager = get_template_manager()

@@ -29,10 +29,11 @@ from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
 from aoe2mapgenerator.templates.city import CityTemplate  # noqa: F401 – registers via @register_template
-from aoe2mapgenerator.templates.decor import OakForestTemplate
+from aoe2mapgenerator.templates.decor import OakForestTemplate, SnowForestTemplate
 from aoe2mapgenerator.templates.fort import FortTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.palace import PalaceTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.village import VillageTemplate  # noqa: F401 – registers via @register_template
+import aoe2mapgenerator.templates.nature  # noqa: F401 – side-effect: registers all nature templates
 from aoe2mapgenerator.templates.template_decorator import get_template_manager
 from aoe2mapgenerator.templates.template_types import TemplateType
 from aoe2mapgenerator.templates.templates_manager import TemplateConfig
@@ -426,5 +427,275 @@ class MapManager(IMapManager):
             groups_density=groups_density,
             group_size=group_size,
             clumping=clumping,
+            **kwargs,
+        )
+
+    def create_snow_forest(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.012,
+        group_size: int = 10,
+        clumping: int = 5,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Scatter a snow forest (snow terrain + snow pine trees + arctic fauna).
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Fraction of points used as tree-group seeds.
+            group_size: Number of trees per group.
+            clumping: Tree cluster tightness.
+            **kwargs: Extra keyword arguments forwarded to SnowForestTemplate.
+        """
+        return SnowForestTemplate.generate(
+            self,
+            point_collection,
+            player_id=PlayerId.GAIA,
+            groups_density=groups_density,
+            group_size=group_size,
+            clumping=clumping,
+            **kwargs,
+        )
+
+    def _create_nature_template(
+        self,
+        point_collection: PointCollection,
+        template_type: TemplateType,
+        groups_density: float,
+        group_size: int,
+        clumping: int,
+        center_point: Tuple[int, int] | None = None,
+        size: int = 10,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Internal helper: apply a nature template via the registered template manager."""
+        if len(point_collection.get_point_list()) == 0:
+            return point_collection
+        effective_center = center_point or point_collection.get_average_point_position()
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=effective_center,
+            size=size,
+            player_id=PlayerId.GAIA,
+        )
+        self.apply_template(
+            point_collection,
+            template_type,
+            config=config,
+            groups_density=groups_density,
+            group_size=group_size,
+            clumping=clumping,
+            center_point=effective_center,
+            size=size,
+            **kwargs,
+        )
+        return point_collection
+
+    def create_pond(
+        self,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] | None = None,
+        size: int = 8,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a freshwater pond (shallows terrain + fish + reeds).
+
+        Args:
+            point_collection: Candidate tile positions.
+            center_point: Centre of the pond; defaults to centroid of selection.
+            size: Pond radius in tiles.  Default 8.
+            **kwargs: Forwarded to PondTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.POND,
+            groups_density=0.0, group_size=0, clumping=0,
+            center_point=center_point, size=size, **kwargs,
+        )
+
+    def create_river_segment(
+        self,
+        point_collection: PointCollection,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Fill the selected region with a river (shallow water terrain + fish).
+
+        The caller selects the river channel.  This method fills it with
+        WATER_SHALLOW terrain and populates it with fish and shore reeds.
+
+        Args:
+            point_collection: Tiles forming the river channel.
+            **kwargs: Forwarded to RiverSegmentTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.RIVER_SEGMENT,
+            groups_density=0.0, group_size=0, clumping=0, **kwargs,
+        )
+
+    def create_pine_forest(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.01,
+        group_size: int = 12,
+        clumping: int = 5,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Scatter a pine forest (trees + deer + wolves + rocks).
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Fraction of points used as tree-group seeds.
+            group_size: Number of trees per group.
+            clumping: Tree cluster tightness.
+            **kwargs: Extra keyword arguments forwarded to PineForestTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.PINE_FOREST,
+            groups_density=groups_density, group_size=group_size, clumping=clumping,
+            **kwargs,
+        )
+
+    def create_winter_landscape(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.01,
+        group_size: int = 10,
+        clumping: int = 5,
+        center_point: Tuple[int, int] | None = None,
+        size: int = 6,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a winter biome (snow terrain + frozen pond + arctic fauna).
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Tree density.
+            group_size: Trees per group.
+            clumping: Tree cluster tightness.
+            center_point: Centre for the frozen pond; defaults to centroid.
+            size: Radius of the frozen pond in tiles.  Default 6.
+            **kwargs: Forwarded to WinterLandscapeTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.WINTER_LANDSCAPE,
+            groups_density=groups_density, group_size=group_size, clumping=clumping,
+            center_point=center_point, size=size, **kwargs,
+        )
+
+    def create_desert(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.005,
+        group_size: int = 6,
+        clumping: int = 4,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a desert biome (sand terrain + palms + cacti + desert fauna).
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Vegetation density.
+            group_size: Objects per group.
+            clumping: Cluster tightness.
+            **kwargs: Forwarded to DesertTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.DESERT,
+            groups_density=groups_density, group_size=group_size, clumping=clumping,
+            **kwargs,
+        )
+
+    def create_desert_oasis(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.004,
+        group_size: int = 5,
+        clumping: int = 4,
+        center_point: Tuple[int, int] | None = None,
+        size: int = 10,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a desert biome with a central freshwater oasis.
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Background vegetation density.
+            group_size: Objects per group.
+            clumping: Cluster tightness.
+            center_point: Centre of the oasis pool; defaults to centroid.
+            size: Oasis pool radius in tiles.  Default 10.
+            **kwargs: Forwarded to DesertOasisTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.DESERT_OASIS,
+            groups_density=groups_density, group_size=group_size, clumping=clumping,
+            center_point=center_point, size=size, **kwargs,
+        )
+
+    def create_savannah(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.003,
+        group_size: int = 4,
+        clumping: int = 3,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create an African savannah biome.
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Tree density (savannahs are open — keep low).
+            group_size: Trees per group.
+            clumping: Cluster tightness.
+            **kwargs: Forwarded to SavannahTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.SAVANNAH,
+            groups_density=groups_density, group_size=group_size, clumping=clumping,
+            **kwargs,
+        )
+
+    def create_rainforest(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.015,
+        group_size: int = 14,
+        clumping: int = 6,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a dense tropical rainforest biome.
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Tree density (dense — keep high).
+            group_size: Trees per group.
+            clumping: Cluster tightness.
+            **kwargs: Forwarded to RainforestTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.RAINFOREST,
+            groups_density=groups_density, group_size=group_size, clumping=clumping,
+            **kwargs,
+        )
+
+    def create_mediterranean(
+        self,
+        point_collection: PointCollection,
+        groups_density: float = 0.008,
+        group_size: int = 8,
+        clumping: int = 4,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a Mediterranean woodland biome.
+
+        Args:
+            point_collection: Candidate tile positions.
+            groups_density: Tree density.
+            group_size: Trees per group.
+            clumping: Cluster tightness.
+            **kwargs: Forwarded to MediterraneanTemplate.
+        """
+        return self._create_nature_template(
+            point_collection, TemplateType.MEDITERRANEAN,
+            groups_density=groups_density, group_size=group_size, clumping=clumping,
             **kwargs,
         )

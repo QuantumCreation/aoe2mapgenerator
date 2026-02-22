@@ -153,17 +153,85 @@ class SnowForestTemplate(AbstractTemplate):
         player_id: PlayerId = PlayerId.GAIA,
         **kwargs
     )-> PointCollection:
+        """Generate a snow forest on the map.
+
+        Covers the region with snow terrain, populates it with snow pine and
+        snow-capped oak trees, adds arctic undergrowth, and scatters wolves,
+        snow leopards, and bears.
+
+        Keyword args:
+            groups_density (float): Tree density.  Default 0.012.
+            group_size (int): Trees per group.  Default 10.
+            clumping (int): Cluster tightness.  Default 5.
         """
-        Generate a snow forest on the map.
-        
-        Args:
-            map_manager: The map manager
-            point_collection: Collection of points
-            center_point: Center of the forest
-            size: Size of the forest
-            player_id: Player who owns the forest (typically GAIA)
-            density: Tree density (0.0 to 1.0)
-            **kwargs: Additional parameters
-        """
+        groups_density: float = kwargs.get("groups_density", 0.012)
+        group_size: int = kwargs.get("group_size", 10)
+        clumping: int = kwargs.get("clumping", 5)
+
+        # 1. Snow terrain base
+        snow_fill_config = PlaceGroupsConfig(
+            point_collection=point_collection.copy(),
+            map_layer_type=MapLayerType.TERRAIN,
+            object_type=TerrainId.SNOW,
+            player_id=player_id,
+            groups=1,
+            group_size=max(len(point_collection.get_point_list()), 50),
+            clumping=3,
+        )
+        map_manager.group_placer.place_groups(snow_fill_config)
+
+        # 2. Snow pine trees (primary)
+        pine_config = PlaceGroupsConfig(
+            point_collection=point_collection.copy(),
+            map_layer_type=MapLayerType.UNIT,
+            object_type=OtherInfo.TREE_SNOW_PINE,
+            player_id=player_id,
+            groups_density=groups_density,
+            group_size=group_size,
+            clumping=clumping,
+        )
+        map_manager.group_placer.place_groups(pine_config)
+
+        # 3. Snow-capped oak trees for variety
+        oak_snow_config = PlaceGroupsConfig(
+            point_collection=point_collection.copy(),
+            map_layer_type=MapLayerType.UNIT,
+            object_type=OtherInfo.TREE_OAK_AUTUMN_SNOW,
+            player_id=player_id,
+            groups_density=groups_density * 0.3,
+            group_size=max(3, group_size // 3),
+            clumping=clumping,
+        )
+        map_manager.group_placer.place_groups(oak_snow_config)
+
+        # 4. Winter undergrowth (decor layer)
+        for decor_obj in [OtherInfo.PLANT_DEAD, OtherInfo.STUMP, OtherInfo.ROCK_1, OtherInfo.ROCK_2]:
+            decor_config = PlaceGroupsConfig(
+                point_collection=point_collection.copy(),
+                map_layer_type=MapLayerType.DECOR,
+                object_type=decor_obj,
+                player_id=player_id,
+                groups_density=0.001,
+                group_size=random.randint(1, 3),
+                clumping=3,
+            )
+            map_manager.group_placer.place_groups(decor_config)
+
+        # 5. Arctic animals
+        for animal, density, size_range in [
+            (UnitInfo.WOLF,         0.001,  (2, 4)),
+            (UnitInfo.SNOW_LEOPARD, 0.0005, (1, 2)),
+            (UnitInfo.BEAR,         0.0004, (1, 2)),
+        ]:
+            animal_config = PlaceGroupsConfig(
+                point_collection=point_collection.copy(),
+                map_layer_type=MapLayerType.UNIT,
+                object_type=animal,
+                player_id=PlayerId.GAIA,
+                groups_density=density,
+                group_size=random.randint(*size_range),
+                clumping=5,
+            )
+            map_manager.group_placer.place_groups(animal_config)
 
         return point_collection

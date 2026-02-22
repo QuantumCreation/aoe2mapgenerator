@@ -19,4 +19,14 @@ class TemplateType(Enum):
     WALLS = auto()
     CITY = auto()
     PALACE = auto()
-    # Add more as needed
+
+    # ── Nature / biome templates ─────────────────────────────────────────
+    POND = auto()                   # Freshwater pond with fish and reeds
+    RIVER_SEGMENT = auto()          # Flowing river strip with fish
+    PINE_FOREST = auto()            # Coniferous pine forest
+    WINTER_LANDSCAPE = auto()       # Snow terrain + frozen pond + arctic fauna
+    DESERT = auto()                 # Desert sand with palms, cacti, and desert animals
+    DESERT_OASIS = auto()           # Desert biome with a central freshwater oasis
+    SAVANNAH = auto()               # Dry grassland with acacia/baobab and savannah fauna
+    RAINFOREST = auto()             # Dense jungle with exotic flora and fauna
+    MEDITERRANEAN = auto()          # Mediterranean grassland with mixed woodland

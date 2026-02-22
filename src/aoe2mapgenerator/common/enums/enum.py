@@ -384,7 +384,6 @@ class ObjectsAnimals(Enum):
     WILD_HORSE = UnitInfo.WILD_HORSE
     WOLF = UnitInfo.WOLF
     ZEBRA = UnitInfo.ZEBRA
-    GAZELLE = UnitInfo.GAZELLE
 
 class ObjectResources(Enum):
     """
@@ -395,6 +394,73 @@ class ObjectResources(Enum):
     FRUIT_BUSH = OtherInfo.FRUIT_BUSH
     GOLD_MINE = OtherInfo.GOLD_MINE
     STONE_MINE = OtherInfo.STONE_MINE
+
+
+class ObjectsFish(Enum):
+    """Fish and aquatic objects placeable on water terrain tiles (UNIT layer)."""
+
+    FISH_DORADO = OtherInfo.FISH_DORADO
+    FISH_PERCH = OtherInfo.FISH_PERCH
+    FISH_SALMON = OtherInfo.FISH_SALMON
+    FISH_SNAPPER = OtherInfo.FISH_SNAPPER
+    FISH_TUNA = OtherInfo.FISH_TUNA
+    SHORE_FISH = OtherInfo.SHORE_FISH
+    BOX_TURTLES = OtherInfo.BOX_TURTLES
+
+
+class ObjectsAnimalsArctic(Enum):
+    """Animals suited to arctic/winter environments."""
+
+    WOLF = UnitInfo.WOLF
+    SNOW_LEOPARD = UnitInfo.SNOW_LEOPARD
+    BEAR = UnitInfo.BEAR
+
+
+class ObjectsAnimalsDesert(Enum):
+    """Animals suited to desert environments."""
+
+    LION = UnitInfo.LION
+    VULTURE = UnitInfo.VULTURE
+    WILD_BACTRIAN_CAMEL = UnitInfo.WILD_BACTRIAN_CAMEL
+    WILD_CAMEL = UnitInfo.WILD_CAMEL
+
+
+class ObjectsAnimalsSavannah(Enum):
+    """Animals suited to savannah environments."""
+
+    ZEBRA = UnitInfo.ZEBRA
+    LION = UnitInfo.LION
+    OSTRICH = UnitInfo.OSTRICH
+    IBEX = UnitInfo.IBEX
+    RHINOCEROS = UnitInfo.RHINOCEROS
+
+
+class ObjectsAnimalsRainforest(Enum):
+    """Animals suited to rainforest environments."""
+
+    JAGUAR = UnitInfo.JAGUAR
+    MACAW = UnitInfo.MACAW
+    STORK = UnitInfo.STORK
+
+
+class DecorObjectsSnow(Enum):
+    """Decorative objects fitting a snow/winter environment (DECOR layer)."""
+
+    ROCK_1 = OtherInfo.ROCK_1
+    ROCK_2 = OtherInfo.ROCK_2
+    PLANT_DEAD = OtherInfo.PLANT_DEAD
+    STUMP = OtherInfo.STUMP
+
+
+class DecorObjectsDesert(Enum):
+    """Decorative objects fitting a desert environment (DECOR layer)."""
+
+    ROCK_1 = OtherInfo.ROCK_1
+    ROCK_2 = OtherInfo.ROCK_2
+    ROCK_FORMATION_1 = OtherInfo.ROCK_FORMATION_1
+    ROCK_FORMATION_2 = OtherInfo.ROCK_FORMATION_2
+    PLANT_DEAD = OtherInfo.PLANT_DEAD
+    CACTUS = OtherInfo.CACTUS
  
 
 class DecorObjectTakeSpace(Enum):

@@ -133,6 +133,105 @@ class IMapManager(Protocol):
         **kwargs: Any,
     ) -> T: ...
 
+    def create_oak_forest(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_snow_forest(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_pond(
+        self: T,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] | None = ...,
+        size: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_river_segment(
+        self: T,
+        point_collection: PointCollection,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_pine_forest(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_winter_landscape(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        center_point: Tuple[int, int] | None = ...,
+        size: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_desert(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_desert_oasis(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        center_point: Tuple[int, int] | None = ...,
+        size: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_savannah(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_rainforest(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_mediterranean(
+        self: T,
+        point_collection: PointCollection,
+        groups_density: float = ...,
+        group_size: int = ...,
+        clumping: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
     def visualize_map(self: T, configuration: VisualizeMapConfig) -> T: ...
 
     def select_points(
