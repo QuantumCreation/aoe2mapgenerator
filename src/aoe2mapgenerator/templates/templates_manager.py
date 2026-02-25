@@ -33,7 +33,13 @@ class TemplateManager:
     def __init__(self) -> None:
         self.templates: Dict[TemplateType, Type[AbstractTemplate]] = {}
     
-    def register_template(self, template_type: TemplateType, template_class: Type[AbstractTemplate]) -> None:
+    def register_template(
+        self,
+        template_type: TemplateType,
+        template_class: Type[AbstractTemplate],
+        *,
+        replace: bool = False,
+    ) -> None:
         """
         Register a template with the manager.
         
@@ -41,6 +47,15 @@ class TemplateManager:
             template_type: Enum value to identify the template
             template_class: The template class that implements AbstractTemplate
         """
+        existing = self.templates.get(template_type)
+        if existing is not None and existing is not template_class and not replace:
+            raise ValueError(
+                "Template registration collision for "
+                f"{template_type.name}: {existing.__module__}.{existing.__name__} "
+                f"already registered; refusing to replace with "
+                f"{template_class.__module__}.{template_class.__name__}"
+            )
+
         self.templates[template_type] = template_class
     
     def apply_template(self, 

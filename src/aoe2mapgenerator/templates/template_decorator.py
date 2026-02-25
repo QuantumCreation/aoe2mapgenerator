@@ -7,7 +7,7 @@ from aoe2mapgenerator.templates.templates_manager import TemplateManager
 # Global template manager instance
 _TEMPLATE_MANAGER = TemplateManager()
 
-def register_template(template_type: TemplateType):
+def register_template(template_type: TemplateType, *, replace: bool = False):
     """
     Decorator to register a template class with the template manager.
     
@@ -18,7 +18,11 @@ def register_template(template_type: TemplateType):
         The decorated class
     """
     def decorator(template_class):
-        _TEMPLATE_MANAGER.register_template(template_type, template_class)
+        _TEMPLATE_MANAGER.register_template(
+            template_type,
+            template_class,
+            replace=replace,
+        )
         return template_class
     return decorator
 
