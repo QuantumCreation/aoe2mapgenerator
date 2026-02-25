@@ -11,6 +11,9 @@ from aoe2mapgenerator.units.placers.point_management.point_collection import (
     PointCollection,
 )
 from aoe2mapgenerator.common.enums.enum import MapLayerType
+from aoe2mapgenerator.common.constants.default_objects import DEFAULT_EMPTY_OBJECT
+from aoe2mapgenerator.map.map_object import MapObject
+from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.terrains import TerrainId
 from typing import Tuple, Union, Callable, Optional, List, Dict, TypeVar, Any, cast
 import random
@@ -35,7 +38,7 @@ class PointManager:
         self.points_removed: int = 0
 
     def add_point_collection(
-        self, name: str, points: list[Point] = [], make_unique=False
+        self, name: str, points: list[Point] | None = None, make_unique=False
     ) -> PointCollection:
         """
         Adds a point collection to the list
@@ -55,7 +58,8 @@ class PointManager:
             )
 
         point_collection = PointCollection()
-        point_collection.add_points(points)
+        if points:
+            point_collection.add_points(points)
 
         point_collection.name = name
         self.__point_collections[name] = point_collection
@@ -366,16 +370,17 @@ class PointManager:
         """
         config = PointSelectorConfig(
             map_layer_type=MapLayerType.TERRAIN,
-            object_type=terrain_type
+            object_type=MapObject(terrain_type, PlayerId.GAIA),
         )
         
         points = self.point_selector.get_points_from_map_layer(config)
         
         # If exclude_occupied is True, filter out points that have units
         if exclude_occupied:
+            unit_layer = self.map.get_map_layer(MapLayerType.UNIT)
             points = [
                 point for point in points 
-                if not self.map.get_map_layer(MapLayerType.UNIT).get_object_at_point(point)
+                if unit_layer.get_object_at_point(point) == DEFAULT_EMPTY_OBJECT
             ]
         
         if limit and len(points) > limit:

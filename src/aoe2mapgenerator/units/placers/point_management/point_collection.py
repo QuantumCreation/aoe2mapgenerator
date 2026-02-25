@@ -100,7 +100,7 @@ class PointCollection:
             points_copy = self.get_point_list_copy()
 
             for point in points_copy:
-                if point not in other.get_point_list():
+                if not other.check_point_exists(point):
                     self.remove_point(point)
             return self
 
@@ -168,9 +168,11 @@ class PointCollection:
         """
         points: List[Point] = []
 
+        distance_sq = float(distance) * float(distance)
+
         for i in range(-int(distance), int(distance) + 1):
             for j in range(-int(distance), int(distance) + 1):
-                if i + j <= distance and self.check_point_exists(
+                if (i * i + j * j) <= distance_sq and self.check_point_exists(
                     (point[0] + i, point[1] + j)
                 ):
                     points.append((point[0] + i, point[1] + j))
@@ -243,7 +245,7 @@ class PointCollection:
             self.get_leftmost_point(),
             self.get_rightmost_point(),
             self.get_topmost_point(),
-            self.get_topmost_point(),
+            self.get_bottommost_point(),
         )
 
     def get_y_point_range(self) -> int:
@@ -324,9 +326,10 @@ class PointCollection:
         points_within_distance = self._get_points_within_distance(reference_point, distance)
         
         if edit_in_place:
+            points_within_distance_set = set(points_within_distance)
             points_copy = self.get_point_list_copy()
             for point in points_copy:
-                if point not in points_within_distance:
+                if point not in points_within_distance_set:
                     self.remove_point(point)
             return self
         else:
