@@ -102,6 +102,7 @@ class Scenario:
         self._write_any_type(MapLayerType.UNIT)
         self._write_any_type(MapLayerType.TERRAIN)
         self._write_any_type(MapLayerType.DECOR)
+        self._write_elevation()
 
     def _write_any_type(self, map_layer_type: MapLayerType) -> None:
         """
@@ -127,6 +128,23 @@ class Scenario:
                 self._write_terrain(points, aoe2_object)
             if isinstance(aoe2_object, (BuildingInfo, OtherInfo, UnitInfo)):
                 self._write_units(points, aoe2_object, player_id)
+
+    def _write_elevation(self) -> None:
+        """Writes the elevation map layer to scenario terrain tiles."""
+        d: MapLayerDictionary = self.map.get_dictionary_from_map_layer_type(
+            MapLayerType.ELEVATION
+        )
+        point_selector: PointSelector = PointSelector(self.map)
+
+        for map_object in d:
+            elevation_value = map_object.get_obj_type()
+            if not isinstance(elevation_value, int):
+                continue
+
+            points: List[tuple[int, int]] = point_selector.get_points_from_map_layer(
+                PointSelectorConfig(MapLayerType.ELEVATION, map_object)
+            )
+            self._write_elevation_points(points, int(elevation_value))
 
     def _write_units(
         self,
@@ -196,6 +214,18 @@ class Scenario:
         for i, (x, y) in enumerate(points):
             tile = map_manager.get_tile(x, y)
             tile.terrain_id = terrain_const.value
+
+    def _write_elevation_points(
+        self,
+        points: set | List[tuple[int, int]],
+        elevation: int,
+    ) -> None:
+        """Writes elevation values directly to scenario tiles."""
+        map_manager = self.scenario.map_manager
+
+        for x, y in points:
+            tile = map_manager.get_tile(x, y)
+            tile.elevation = elevation
 
     def _change_map_size(self, map_size: int) -> None:
         """

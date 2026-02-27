@@ -25,6 +25,7 @@ from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
+from aoe2mapgenerator.terrain.terrain import PerlinTerrainConfig
 from aoe2mapgenerator.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.units.placers.group_placer import GroupPlacer
 from aoe2mapgenerator.units.placers.path_placer import PathPlacer
@@ -105,6 +106,8 @@ class IMapManager(Protocol):
     def place_voronoi_zones(
         self: T, configuration: VoronoiGeneratorConfig
     ) -> List[MapObject]: ...
+
+    def generate_perlin_terrain(self: T, config: PerlinTerrainConfig) -> T: ...
 
     def create_path(self: T, configuration: PlacePathConfig) -> T: ...
 

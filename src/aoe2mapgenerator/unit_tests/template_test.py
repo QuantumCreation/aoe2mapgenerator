@@ -18,9 +18,12 @@ from AoE2ScenarioParser.datasets.units import UnitInfo
 from aoe2mapgenerator.common.enums.enum import GateType, MapLayerType
 from aoe2mapgenerator.map.map_manager import MapManager
 from aoe2mapgenerator.map.map_object import MapObject
+from aoe2mapgenerator.templates.city_layout_plan import PrefabPlacement, PrefabSpec
+from aoe2mapgenerator.templates.city_prefab_stamper import CityPrefabStamper
 from aoe2mapgenerator.templates.template_types import TemplateType
 from aoe2mapgenerator.templates.templates_manager import TemplateConfig
 from aoe2mapgenerator.units.placers.placer_configs import VisualizeMapConfig
+from aoe2mapgenerator.units.placers.point_management.point_collection import PointCollection
 from aoe2mapgenerator.common.constants.constants import (
     LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
 )
@@ -394,6 +397,109 @@ def test_city_life_triggers_created() -> None:
     assert any("City Life - Villager Task" in name for name in trigger_names)
     assert any("City Life - Expedition" in name for name in trigger_names)
     assert any("City Life - Command Route" in name for name in trigger_names)
+
+
+def test_city_has_expected_gate_count_octagon() -> None:
+    """CITY/octagon should place 8 gates (one per compass sector) on a full map."""
+    n = 260
+    center = (n // 2, n // 2)
+    mm = MapManager(n)
+    mm.point_manager.add_point_collection("base_points")
+    mm.point_manager.get_point_collection("base_points").add_points([(i, j) for i in range(n) for j in range(n)])
+
+    mm.create_city(
+        point_collection=mm.point_manager.get_point_collection("base_points"),
+        center_point=center,
+        preset="balanced",
+        seed=7,
+        enable_city_life=False,
+        gate_type=GateType.CITY_GATE,
+    )
+
+    debug = getattr(mm, "_last_city_debug")
+    assert debug["gate_count"] == 8
+    assert debug["gate_sectors"] == ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+
+
+def test_city_roads_reach_all_gates() -> None:
+    """Every captured gate must have road/plaza tiles adjacent to its inner approach."""
+    n = 260
+    center = (n // 2, n // 2)
+    mm = MapManager(n)
+    mm.point_manager.add_point_collection("base_points")
+    mm.point_manager.get_point_collection("base_points").add_points([(i, j) for i in range(n) for j in range(n)])
+
+    mm.create_city(
+        point_collection=mm.point_manager.get_point_collection("base_points"),
+        center_point=center,
+        size=85,
+        seed=7,
+        enable_city_life=False,
+        gate_type=GateType.CITY_GATE,
+    )
+
+    debug = getattr(mm, "_last_city_debug")
+    roads = set(tuple(p) for p in debug["road_points"])
+    for approach in debug["inner_gate_approaches"]:
+        ar, ac = approach
+        has_adjacent = any((ar + dr, ac + dc) in roads for dr in (-1, 0, 1) for dc in (-1, 0, 1))
+        assert has_adjacent or (ar, ac) in roads, f"Missing road near gate inner approach {approach}"
+
+
+def test_city_deterministic_core_same_seed_same_skeleton() -> None:
+    """Same seed and preset should produce identical gate + road skeleton diagnostics."""
+    n = 260
+    center = (n // 2, n // 2)
+
+    def build_debug() -> dict:
+        mm = MapManager(n)
+        mm.point_manager.add_point_collection("base_points")
+        mm.point_manager.get_point_collection("base_points").add_points([(i, j) for i in range(n) for j in range(n)])
+        mm.create_city(
+            point_collection=mm.point_manager.get_point_collection("base_points"),
+            center_point=center,
+            preset="balanced",
+            seed=11,
+            enable_city_life=False,
+            gate_type=GateType.CITY_GATE,
+        )
+        return getattr(mm, "_last_city_debug")
+
+    a = build_debug()
+    b = build_debug()
+    assert a["gate_points"] == b["gate_points"]
+    assert a["inner_gate_approaches"] == b["inner_gate_approaches"]
+    assert a["road_points"] == b["road_points"]
+    assert a["ward_sizes"] == b["ward_sizes"]
+
+
+def test_city_prefab_stamp_exactness() -> None:
+    """CityPrefabStamper stamps exact UNIT/TERRAIN/DECOR tiles with transforms."""
+    n = 50
+    mm = MapManager(n)
+    all_points = [(i, j) for i in range(n) for j in range(n)]
+    unit_points = PointCollection()
+    unit_points.add_points(all_points)
+    surface_allowed = set(all_points)
+    stamper = CityPrefabStamper(mm, unit_points, surface_allowed)
+
+    spec = PrefabSpec(
+        name="test_prefab",
+        footprint_mask=[(0, 0), (1, 0)],
+        reserved_mask=[(0, 1)],
+        unit_tiles=[PrefabPlacement((0, 0), MapLayerType.UNIT, UnitInfo.ARCHER, PlayerId.ONE)],
+        terrain_tiles=[PrefabPlacement((1, 0), MapLayerType.TERRAIN, TerrainId.ROAD, PlayerId.GAIA)],
+        decor_tiles=[PrefabPlacement((0, 1), MapLayerType.DECOR, OtherInfo.FLOWERS_1, PlayerId.GAIA)],
+        allowed_transforms=("identity", "rot90"),
+    )
+
+    result = stamper.stamp(spec, anchor=(25, 25), transform="rot90", reserved_points=set())
+    assert result.success
+
+    # rot90 transforms (dr,dc)->(dc,-dr): (0,0)->(25,25), (1,0)->(25,24), (0,1)->(26,25)
+    assert (25, 25) in mm.get_set_with_map_object(MapLayerType.UNIT, MapObject(UnitInfo.ARCHER, PlayerId.ONE))
+    assert (25, 24) in mm.get_set_with_map_object(MapLayerType.TERRAIN, MapObject(TerrainId.ROAD, PlayerId.GAIA))
+    assert (26, 25) in mm.get_set_with_map_object(MapLayerType.DECOR, MapObject(OtherInfo.FLOWERS_1, PlayerId.GAIA))
 
 
 def test_apply_template_palace() -> None:

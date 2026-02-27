@@ -292,5 +292,5 @@ class GatePlacer(PlacerBase):
                     player_id,
                 )
 
-            point_collection.remove_point(point_to_place)
+            point_collection.remove_point(point)
             self.points_set_on_map += 1

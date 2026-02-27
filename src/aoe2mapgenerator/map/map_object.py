@@ -13,7 +13,10 @@ from aoe2mapgenerator.common.constants.constants import (
 )
 
 from aoe2mapgenerator.serializer.base_serializer import Serializable
-import ujson as json
+try:
+    import ujson as json
+except ModuleNotFoundError:  # pragma: no cover - environment-dependent
+    import json
 
 
 @dataclass(frozen=True)

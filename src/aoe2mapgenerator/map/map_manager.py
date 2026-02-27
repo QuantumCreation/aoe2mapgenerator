@@ -28,7 +28,8 @@ from aoe2mapgenerator.map.imap_manager import IMapManager
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
-from aoe2mapgenerator.templates.city import CityTemplate  # noqa: F401 – registers via @register_template
+from aoe2mapgenerator.terrain.terrain import PerlinTerrainConfig, PerlinTerrainGenerator
+from aoe2mapgenerator.templates.city_hybrid import CityTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.decor import OakForestTemplate, SnowForestTemplate
 from aoe2mapgenerator.templates.fort import FortTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.palace import PalaceTemplate  # noqa: F401 – registers via @register_template
@@ -84,6 +85,7 @@ class MapManager(IMapManager):
         self._group_placer: GroupPlacer = GroupPlacer(self.map)
         self._path_placer: PathPlacer = PathPlacer(self.map)
         self._voronoi_generator: VoronoiGenerator = VoronoiGenerator(self.map)
+        self._terrain_generator: PerlinTerrainGenerator = PerlinTerrainGenerator(self.map)
         self._point_manager: PointManager = PointManager(self.map)
         self._visualizer: Visualizer = Visualizer(self.map)
         self.template_manager = get_template_manager()
@@ -107,6 +109,7 @@ class MapManager(IMapManager):
         self._group_placer.map = map_obj
         self._path_placer.map = map_obj
         self._voronoi_generator.map = map_obj
+        self._terrain_generator.map = map_obj
         self._point_manager.map = map_obj
         self._visualizer.map = map_obj
         # Keep scenario writer bound to the active map as well.
@@ -195,6 +198,15 @@ class MapManager(IMapManager):
     ) -> List[MapObject]:
         """Generate Voronoi cells and return the resulting MapObjects."""
         return self._voronoi_generator.generate_voronoi_cells(configuration)
+
+    def generate_perlin_terrain(self, config: PerlinTerrainConfig) -> "MapManager":
+        """Generate Perlin-based terrain and elevation into the map.
+
+        The supplied config controls both noise sampling and how the normalized
+        noise values are quantized into terrain IDs and elevation levels.
+        """
+        self._terrain_generator.generate_perlin_terrain(config)
+        return self
 
     def visualize_map(self, configuration: VisualizeMapConfig) -> "MapManager":
         """Render a visual representation of the map.

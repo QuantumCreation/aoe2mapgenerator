@@ -21,6 +21,14 @@ class PointCollection:
         self.__points_dict: PointDict = {}
         self.points_removed: int = 0
         self.name: str = ""
+        # Bounding-box cache (O(1) after first build).
+        # _bounds_dirty is set when a boundary point is removed or the
+        # collection is cleared.  Rebuilt lazily on next accessor call.
+        self._bounds_dirty: bool = True
+        self._min_x: int = 0
+        self._max_x: int = 0
+        self._min_y: int = 0
+        self._max_y: int = 0
 
     def add_point(self, point: Point) -> None:
         """
@@ -32,6 +40,19 @@ class PointCollection:
         if point not in self.__points_dict:
             self.__points_list.append(point)
             self.__points_dict[point] = len(self.__points_list) - 1
+            # Eagerly expand cached bounds when they are valid (O(1)). When
+            # the cache is already dirty we skip the update — the rebuild
+            # will include this point on the next bounding-box access.
+            if not self._bounds_dirty:
+                x, y = point
+                if x < self._min_x:
+                    self._min_x = x
+                elif x > self._max_x:
+                    self._max_x = x
+                if y < self._min_y:
+                    self._min_y = y
+                elif y > self._max_y:
+                    self._max_y = y
 
     def add_points(self, points: Union[List[Point], set[Point]]) -> None:
         """
@@ -51,6 +72,13 @@ class PointCollection:
             point (tuple): The point to remove
         """
         if point in self.__points_dict:
+            # Invalidate bounds cache only when a boundary point is removed,
+            # since the new bounds can only be found by a full O(n) scan.
+            if not self._bounds_dirty:
+                x, y = point
+                if (x == self._min_x or x == self._max_x
+                        or y == self._min_y or y == self._max_y):
+                    self._bounds_dirty = True
             # Get the index of the point to remove
             index = self.__points_dict[point]
             # Remove the point from the dictionary
@@ -86,6 +114,7 @@ class PointCollection:
         """
         self.__points_list = []
         self.__points_dict = {}
+        self._bounds_dirty = True
 
     def intersect(
         self, other: "PointCollection", edit_in_place: bool = False
@@ -180,60 +209,48 @@ class PointCollection:
         return points
 
     def get_leftmost_point(self) -> Point:
-        """
-        Gets the leftmost point in the set
-        """
-        return min(self.__points_list, key=lambda point: point[1])
+        """Gets the point with the smallest y-coordinate."""
+        self._ensure_bounds()
+        target = self._min_y
+        return next(p for p in self.__points_list if p[1] == target)
 
     def get_rightmost_point(self) -> Point:
-        """
-        Gets the rightmost point in the set
-        """
-        return max(self.__points_list, key=lambda point: point[1])
+        """Gets the point with the largest y-coordinate."""
+        self._ensure_bounds()
+        target = self._max_y
+        return next(p for p in self.__points_list if p[1] == target)
 
     def get_topmost_point(self) -> Point:
-        """
-        Gets the topmost point in the set
-        """
-        return min(self.__points_list, key=lambda point: point[0])
+        """Gets the point with the smallest x-coordinate."""
+        self._ensure_bounds()
+        target = self._min_x
+        return next(p for p in self.__points_list if p[0] == target)
 
     def get_bottommost_point(self) -> Point:
-        """
-        Gets the bottommost point in the set
-        """
-        return max(self.__points_list, key=lambda point: point[0])
+        """Gets the point with the largest x-coordinate."""
+        self._ensure_bounds()
+        target = self._max_x
+        return next(p for p in self.__points_list if p[0] == target)
 
     def get_theoretical_top_left_corner_point(self) -> Point:
-        """
-        Gets the theoretical top left corner point in the set
-        """
-        x = self.get_topmost_point()[0]
-        y = self.get_leftmost_point()[1]
-        return (x, y)
+        """O(1) after first build: returns (min_x, min_y)."""
+        self._ensure_bounds()
+        return (self._min_x, self._min_y)
 
     def get_theoretical_bottom_right_corner_point(self) -> Point:
-        """
-        Gets the theoretical bottom right corner point in the set
-        """
-        x = self.get_bottommost_point()[0]
-        y = self.get_rightmost_point()[1]
-        return (x, y)
+        """O(1) after first build: returns (max_x, max_y)."""
+        self._ensure_bounds()
+        return (self._max_x, self._max_y)
 
     def get_theoretical_top_right_corner_point(self) -> Point:
-        """
-        Gets the theoretical top right corner point in the set
-        """
-        x = self.get_topmost_point()[0]
-        y = self.get_rightmost_point()[1]
-        return (x, y)
+        """O(1) after first build: returns (min_x, max_y)."""
+        self._ensure_bounds()
+        return (self._min_x, self._max_y)
 
     def get_theoretical_bottom_left_corner_point(self) -> Point:
-        """
-        Gets the theoretical bottom left corner point in the set
-        """
-        x = self.get_bottommost_point()[0]
-        y = self.get_leftmost_point()[1]
-        return (x, y)
+        """O(1) after first build: returns (max_x, min_y)."""
+        self._ensure_bounds()
+        return (self._max_x, self._min_y)
 
     def get_maximal_points(
         self,
@@ -249,16 +266,14 @@ class PointCollection:
         )
 
     def get_y_point_range(self) -> int:
-        """
-        Gets the range of x values in the set
-        """
-        return 1 + abs(self.get_leftmost_point()[1] - self.get_rightmost_point()[1])
+        """O(1) after first build: width of the bounding box (y axis)."""
+        self._ensure_bounds()
+        return 1 + self._max_y - self._min_y
 
     def get_x_point_range(self) -> int:
-        """
-        Gets the range of y values in the set
-        """
-        return 1 + abs(self.get_topmost_point()[0] - self.get_bottommost_point()[0])
+        """O(1) after first build: height of the bounding box (x axis)."""
+        self._ensure_bounds()
+        return 1 + self._max_x - self._min_x
 
     def get_neighbors(self, point: tuple[int, int]) -> list[tuple[int, int]]:
         """
@@ -285,6 +300,19 @@ class PointCollection:
         self.__points_list = []
         self.__points_dict = {}
         self.points_removed = 0
+        self._bounds_dirty = True
+
+    def _ensure_bounds(self) -> None:
+        """Rebuild bounding-box cache if dirty.  O(n) rebuild, O(1) otherwise."""
+        if not self._bounds_dirty:
+            return
+        if not self.__points_list:
+            raise ValueError("Cannot compute bounds of an empty PointCollection")
+        self._min_x = min(p[0] for p in self.__points_list)
+        self._max_x = max(p[0] for p in self.__points_list)
+        self._min_y = min(p[1] for p in self.__points_list)
+        self._max_y = max(p[1] for p in self.__points_list)
+        self._bounds_dirty = False
 
     def copy(self) -> "PointCollection":
         """

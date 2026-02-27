@@ -24,7 +24,10 @@ from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.common.types import AOE2ObjectType
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.serializer.base_serializer import Serializable
-import ujson as json
+try:
+    import ujson as json
+except ModuleNotFoundError:  # pragma: no cover - environment-dependent
+    import json
 
 MapLayerArray = List[List[MapObject]]
 """

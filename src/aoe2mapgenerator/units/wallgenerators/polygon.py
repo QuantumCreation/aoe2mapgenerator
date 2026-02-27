@@ -3,8 +3,6 @@ Generates a polygonal wall.
 """
 
 import numpy as np
-from matplotlib.pylab import matshow
-import matplotlib.pyplot as plt
 from typing import List, Tuple
 from aoe2mapgenerator.units.utils import connect_points
 

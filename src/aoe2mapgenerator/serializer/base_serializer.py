@@ -7,7 +7,10 @@ from aoe2mapgenerator.serializer.serialization_utils import (
 )
 from aoe2mapgenerator.common.enums.enum import *
 from aoe2mapgenerator.common.enums.enum import GateType
-import ujson as json
+try:
+    import ujson as json
+except ModuleNotFoundError:  # pragma: no cover - environment-dependent
+    import json
 from typing import Any, Dict, List, Callable, Type, get_type_hints
 import inspect
 from abc import ABC, abstractmethod

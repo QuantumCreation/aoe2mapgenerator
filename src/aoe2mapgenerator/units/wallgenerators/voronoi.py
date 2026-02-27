@@ -275,8 +275,10 @@ class VoronoiGenerator(PlacerBase):
         add_point((np.random.uniform(height), np.random.uniform(width)))
         while len(points) > 0:
             index: int = np.random.randint(len(points))
-            p = points[index]
-            del points[index]
+            # O(1) removal: swap chosen element with tail, then pop.
+            # Preserves identical statistical behaviour; avoids O(n) list shift.
+            points[index] = points[-1]
+            p = points.pop()
             Q = random_point_around(p, k)
             for q in Q:
                 if in_limits(q) and not in_neighborhood(q):
@@ -331,37 +333,59 @@ def generate_voronoi_l1(
     zone_shift: int = 1,
 ) -> list[list[int]]:
     """
-    Generate a Voronoi diagram on a cell grid using L1 distance.
+    Generate a Voronoi diagram on a cell grid using L1 (Manhattan) distance.
+
+    Fully vectorised: all seed distances are computed in a single NumPy
+    broadcast operation instead of a per-seed loop.
+
+    Tie-breaking: when two seeds are equidistant from a tile the seed with the
+    lower list index wins.  This is identical to the former per-seed loop which
+    used strict ``<`` comparison, and to ``np.argmin`` semantics on the stacked
+    distance array.
 
     Args:
-        grid_width (int): The width of the grid.
-        grid_height (int): The height of the grid.
+        grid_width (int): Width of the grid (number of rows in the returned 2D list).
+        grid_height (int): Height of the grid (number of columns in each row).
         seed_points (list): List of (x, y) tuples representing seed points.
+        zone_shift (int): Added to every zone index; zones start at ``zone_shift``
+            rather than 0 so they do not alias with the empty-tile sentinel.
 
     Returns:
-        list[list[int]]: A 2D list where each cell contains the index of the nearest seed point incremented by 1.
+        list[list[int]]: 2D list where each cell contains the index of the
+        nearest seed point + zone_shift.
     """
-    # rows, cols = grid_height, grid_width
     rows, cols = grid_width, grid_height
 
-    seeds = np.array(seed_points)
+    if not seed_points:
+        return [[zone_shift] * cols for _ in range(rows)]
 
-    # Create a coordinate grid
-    x, y = np.meshgrid(np.arange(cols), np.arange(rows))
-    coordinates = np.stack([x, y], axis=-1)
+    seeds = np.array(seed_points, dtype=np.int32)  # (n_seeds, 2)
 
-    # Initialize distance and index grids
-    distance_grid = np.full((rows, cols), np.inf)
-    index_grid = np.full((rows, cols), -1)
+    # Coordinate grids: col_idx[i, j] = j, row_idx[i, j] = i
+    # Mirrors the original: x, y = np.meshgrid(np.arange(cols), np.arange(rows))
+    # where x[i,j] = j (col component) and y[i,j] = i (row component).
+    col_idx, row_idx = np.meshgrid(
+        np.arange(cols, dtype=np.int32),
+        np.arange(rows, dtype=np.int32),
+    )  # both shape (rows, cols)
 
-    # Compute L1 distance for each seed point and update grids
-    for idx, (sx, sy) in enumerate(seeds):
-        distances = np.abs(coordinates[..., 0] - sx) + np.abs(coordinates[..., 1] - sy)
-        update_mask = distances < distance_grid
-        distance_grid[update_mask] = distances[update_mask]
-        index_grid[update_mask] = idx
+    # Broadcast seeds to (n_seeds, 1, 1) for simultaneous distance computation.
+    seeds_sx = seeds[:, 0][:, np.newaxis, np.newaxis]  # col component of seeds
+    seeds_sy = seeds[:, 1][:, np.newaxis, np.newaxis]  # row component of seeds
 
-    # Increment every element so we don't get overlapping zones
-    index_grid += zone_shift
+    # all_distances[k, i, j] = L1 distance from grid tile (i, j) to seed k.
+    # Shape: (n_seeds, rows, cols), dtype=int32.
+    all_distances = (
+        np.abs(col_idx[np.newaxis] - seeds_sx)
+        + np.abs(row_idx[np.newaxis] - seeds_sy)
+    )
+
+    # argmin along the seed axis: ties broken by lowest seed index (first wins),
+    # identical to the former loop with strict < comparison.
+    index_grid = np.argmin(all_distances, axis=0)  # (rows, cols)
+
+    # Shift so zone indices start at zone_shift.
+    index_grid = index_grid + zone_shift
 
     return index_grid.transpose().tolist()
+

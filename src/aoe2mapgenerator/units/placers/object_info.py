@@ -2,6 +2,8 @@
 TODO: Add module description.
 """
 
+import functools
+
 from aoe2mapgenerator.common.enums.enum import ObjectSize
 from AoE2ScenarioParser.datasets.support.info_dataset_base import InfoDatasetBase
 from aoe2mapgenerator.common.types import AOE2ObjectType
@@ -16,6 +18,7 @@ class ObjectInfo:
         pass
 
     @staticmethod
+    @functools.cache
     def get_object_rows(aoe2_object: AOE2ObjectType):
         """
         Returns the effective width of an object.
@@ -26,6 +29,7 @@ class ObjectInfo:
         return ObjectSize(aoe2_object._name_).value
 
     @staticmethod
+    @functools.cache
     def get_object_columns(aoe2_object: AOE2ObjectType):
         """
         Returns the effective height of an object.
@@ -36,6 +40,7 @@ class ObjectInfo:
         return ObjectSize(aoe2_object._name_).value
 
     @staticmethod
+    @functools.cache
     def get_object_size(aoe2_object: AOE2ObjectType):
         """
         Returns the effective size of an object.
@@ -46,6 +51,7 @@ class ObjectInfo:
         return ObjectSize(aoe2_object._name_).value
 
     @staticmethod
+    @functools.cache
     def get_object_effective_width(aoe2_object: AOE2ObjectType, margin: int = 0):
         """
         Returns the effective width of an object.
@@ -56,6 +62,7 @@ class ObjectInfo:
         return ObjectSize(aoe2_object._name_).value + margin
 
     @staticmethod
+    @functools.cache
     def get_object_effective_height(aoe2_object: AOE2ObjectType, margin: int = 0):
         """
         Returns the effective height of an object.
@@ -66,6 +73,7 @@ class ObjectInfo:
         return ObjectSize(aoe2_object._name_).value + margin
 
     @staticmethod
+    @functools.cache
     def get_object_effective_size(aoe2_object: AOE2ObjectType, margin: int = 0):
         """
         Returns the effective size of an object.

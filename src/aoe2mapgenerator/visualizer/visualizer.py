@@ -4,7 +4,10 @@ TODO: Add description
 
 from copy import deepcopy
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ModuleNotFoundError:  # Optional dependency for visualization only
+    plt = None
 import numpy as np
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
 
@@ -16,6 +19,12 @@ from aoe2mapgenerator.units.placers.placer_configs import VisualizeMapConfig
 from aoe2mapgenerator.map.map_object import MapObject
 import os
 
+
+
+
+def _require_matplotlib():
+    if plt is None:
+        raise ImportError("matplotlib is required for visualization features")
 
 class Visualizer:
     """
@@ -35,6 +44,7 @@ class Visualizer:
             mapping: Maps points to object ids.
             colors: TBD
         """
+        _require_matplotlib()
         mapping = []
 
         c = {BuildingInfo.FORTIFIED_WALL: (255, 255, 255)}
@@ -64,6 +74,7 @@ class Visualizer:
         Args:
             map_layer_type: Type of value to visualize.
         """
+        _require_matplotlib()
         map_layer_type = configuration.map_layer_type
         include_zones = configuration.include_zones
         transpose = configuration.transpose
@@ -147,6 +158,7 @@ class Visualizer:
         Args:
             map: Map to visualize
         """
+        _require_matplotlib()
         fig, ax = plt.subplots(1, 1, facecolor="white", figsize=(25, 25))
         terrain_matrix = deepcopy(self.get_map_layer(MapLayerType.TERRAIN).array)
         object_matrix = deepcopy(self.get_map_layer(MapLayerType.UNIT).array)
