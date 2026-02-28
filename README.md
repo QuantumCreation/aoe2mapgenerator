@@ -1,64 +1,154 @@
-# AOE2_Map_Generator
-Generates Random AOE2 Maps
+# aoe2mapgenerator
 
-## Installation
-
-### Using Poetry (recommended)
-
-```bash
-cd ~/Documents/Projects/aoe2mapgenerator
-poetry install
-```
-
-### Using pip (editable install)
-
-If you prefer pip or need to use this package in another project:
-
-```bash
-cd ~/Documents/Projects/aoe2mapgenerator
-pip install -e .
-```
-
-This installs the package in "editable" mode — changes you make to the source code are immediately available without reinstalling.
+A Python library for **procedurally generating Age of Empires II Definitive Edition maps** and exporting them as `.aoe2scenario` files.
 
 ---
 
-# Testing with MYPY
+## What it does
 
-## Running unit tests
+- Build layered tile maps (terrain, units, decor, elevation, zones) programmatically.
+- Apply reusable **templates** — forests, cities, forts, mines, castles, roads, rivers, and more.
+- Generate organic terrain shapes with **Perlin-noise** and **Voronoi** partitioning.
+- Fire **triggers** (patrol routes, visibility, resources, win/loss, diplomacy).
+- Configure per-player settings (civilization, resources, starting age) via `ScenarioConfig`.
+- Write the final map straight to a `.aoe2scenario` file that AoE2 DE can load.
 
-This project uses pytest for unit tests and is managed with Poetry. Tests live under `src/unit_tests/`.
+---
 
-Recommended quick commands (from the repository root):
+## Quick Start
 
-1) Install dependencies (if you haven't already):
+### 1 — Install
 
 ```bash
+# Clone the repo (if not already present)
+git clone https://github.com/your-org/aoe2mapgenerator
 cd aoe2mapgenerator
+
+# Install with Poetry (recommended)
 poetry install
+
+# — or — editable pip install
+pip install -e .
 ```
 
-2) Run all tests using the helper script:
+### 2 — Generate a map
+
+```python
+from aoe2mapgenerator import MapManager, Map, ScenarioConfig, PlayerConfig
+from aoe2mapgenerator import PlayerId, Civilization, StartingAge
+
+# Create a 120×120 map
+map_obj = Map(120)
+mg = MapManager(map_obj, seed=42)
+
+# Apply premade templates
+mg.create_oak_forest(point=(20, 20), size=15)
+mg.create_city(point=(60, 60), size=40, player_id=PlayerId.ONE)
+mg.create_mine(point=(30, 80), size=8)
+
+# Optional: configure scenario metadata
+config = ScenarioConfig(
+    map_name="My Scenario",
+    players=[
+        PlayerConfig(player_id=PlayerId.ONE, name="Human", civilization=Civilization.BRITONS),
+        PlayerConfig(player_id=PlayerId.TWO, name="AI",    civilization=Civilization.FRANKS),
+    ],
+    enemy_pairs=[(PlayerId.ONE, PlayerId.TWO)],
+)
+mg.configure_scenario(config)
+
+# Write to disk
+mg.write_map_and_save("/tmp/my_map.aoe2scenario")
+```
+
+---
+
+## Features
+
+| Feature | Description |
+|---|---|
+| **Templates** | Forests, cities, forts, palaces, mines, mountains, castles, roads, rivers, walls |
+| **Perlin terrain** | Smooth randomised terrain layers via `PerlinTerrainGenerator` |
+| **Voronoi zones** | Divide the map into player/biome zones with `PlaceBorders` |
+| **Triggers** | Patrol, visibility, resources, win/loss, diplomacy, unit stance |
+| **Scenario config** | Per-player civilization, age, resources, population cap, allied victory |
+| **Serialization** | JSON round-trip with `SerializedMap` for saving/restoring map state |
+| **Type-safe** | Full PEP 484 type hints; `py.typed` marker included |
+
+---
+
+## API Overview
+
+```
+MapManager          — primary orchestration façade
+  .create_<name>()  — shortcut template methods (forest, city, port, mine, …)
+  .place_groups()   — low-level object placement
+  .place_borders()  — Voronoi zone generation
+  .configure_scenario(ScenarioConfig) — set player & diplomacy metadata
+  .write_map_and_save(path) — write .aoe2scenario
+
+TriggerManager      — attach AoE2 triggers to the scenario
+  .add_patrol_path()
+  .set_player_wins() / .set_player_loses()
+  .set_starting_resources()
+  .set_mutual_alliance()
+  .reveal_area_to_player()
+  … (see triggers.py for the full list)
+
+ScenarioConfig / PlayerConfig
+  — dataclasses for per-player settings (civ, age, resources, diplomacy)
+```
+
+Full API reference: [`API_REFERENCE.md`](API_REFERENCE.md).
+
+---
+
+## Running Tests
 
 ```bash
+# All tests (116 passing)
 ./run_tests.sh
+
+# Or directly with Poetry
+poetry run pytest src/aoe2mapgenerator/unit_tests -q
+
+# Single test file
+poetry run pytest src/aoe2mapgenerator/unit_tests/map_test.py -q
 ```
 
-3) Or run the full unit test suite with Poetry directly:
+> **Note:** One test (`test_city_life_triggers_created`) is skipped unless a valid AoE2 base scenario file is present at `~/Documents/DE/Games/…`
+
+## Type Checking
 
 ```bash
-poetry run pytest src/unit_tests -q
+poetry run mypy src
+# or
+./run_mypy.sh
 ```
 
-4) Run a single test file or test function:
+---
 
-```bash
-# single file
-poetry run pytest src/unit_tests/map_test.py -q
+## Project Structure
 
-# single test function inside a file
-poetry run pytest src/unit_tests/map_test.py::test_create_map_10 -q
 ```
+src/aoe2mapgenerator/
+├── __init__.py          # Public API surface (import from here)
+├── map/                 # MapManager, Map, layers
+├── templates/           # Template definitions + registry
+├── units/               # Object placers and wall generators
+├── triggers/            # TriggerManager + city_life
+├── scenario/            # Scenario writing + ScenarioConfig
+├── terrain/             # Perlin noise generator
+├── serializer/          # JSON serialization
+├── utils/               # Point collections, helpers
+└── unit_tests/          # pytest test suite
+```
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, coding conventions, testing expectations, and a step-by-step guide for adding new templates and triggers.
 
 5) Advanced / debugging options:
 

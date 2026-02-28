@@ -25,6 +25,7 @@ from aoe2mapgenerator.common.enums.enum import MapLayerType
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
+from aoe2mapgenerator.scenario.scenario_config import ScenarioConfig
 from aoe2mapgenerator.terrain.terrain import PerlinTerrainConfig
 from aoe2mapgenerator.units.placers.gate_placer import GatePlacer
 from aoe2mapgenerator.units.placers.group_placer import GroupPlacer
@@ -62,6 +63,7 @@ class IMapManager(Protocol):
     # ------------------------------------------------------------------
     map: Map
     output_dir: str
+    seed: int | None
     templates: list
     scenario: Scenario
 
@@ -96,6 +98,8 @@ class IMapManager(Protocol):
     # ------------------------------------------------------------------
     # Map-building methods
     # ------------------------------------------------------------------
+
+    def configure_scenario(self: T, config: ScenarioConfig) -> T: ...
 
     def write_map_and_save(self: T, file_name: str) -> T: ...
 
@@ -258,3 +262,11 @@ class IMapManager(Protocol):
     ) -> List[Tuple[int, int]]: ...
 
     def points(self: T) -> PointManager: ...
+
+    def all_points(self: T, name: str = ...) -> PointCollection: ...
+
+    def points_in_rect(
+        self: T, x1: int, y1: int, x2: int, y2: int, name: str = ...
+    ) -> PointCollection: ...
+
+    def points_from_zone(self: T, zone_obj: MapObject, name: str = ...) -> PointCollection: ...

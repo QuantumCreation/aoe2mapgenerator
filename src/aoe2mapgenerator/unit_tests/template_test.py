@@ -23,6 +23,14 @@ from aoe2mapgenerator.templates.city_prefab_stamper import CityPrefabStamper
 from aoe2mapgenerator.templates.template_types import TemplateType
 from aoe2mapgenerator.templates.templates_manager import TemplateConfig
 from aoe2mapgenerator.units.placers.placer_configs import VisualizeMapConfig
+from aoe2mapgenerator.common.constants.constants import BASE_SCENE_DIR_LINUX, BASE_SCENARIO_NAME
+
+_BASE_SCENARIO_PATH = os.path.join(BASE_SCENE_DIR_LINUX, BASE_SCENARIO_NAME)
+_requires_aoe2 = pytest.mark.skipif(
+    not os.path.isfile(_BASE_SCENARIO_PATH),
+    reason=f"AoE2 base scenario not found at '{_BASE_SCENARIO_PATH}'. "
+           "Install AoE2 DE or set the path in constants.py to run this test.",
+)
 from aoe2mapgenerator.units.placers.point_management.point_collection import PointCollection
 from aoe2mapgenerator.common.constants.constants import (
     LINUX_PROJECT_UNIT_TEST_IMAGES_PATH,
@@ -370,6 +378,7 @@ def test_create_city_presets_scale_progression() -> None:
     assert wall_counts["compact"] < wall_counts["balanced"] < wall_counts["mega_city"]
 
 
+@_requires_aoe2
 def test_city_life_triggers_created() -> None:
     """City life mode should add patrol and villager-work trigger sets."""
     n = 260

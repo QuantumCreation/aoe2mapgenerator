@@ -16,9 +16,11 @@ from typing import Any, List, Tuple
 
 from AoE2ScenarioParser.datasets.players import PlayerId
 
+import random as _random
 from aoe2mapgenerator.common.constants.constants import (
     BASE_SCENARIO_NAME,
     BASE_SCENE_DIR_WINDOWS_WSL,
+    DEFAULT_OUTPUT_DIR,
     DEFAULT_PLAYER,
     GHOST_OBJECT_DISPLACEMENT_ID,
 )
@@ -28,6 +30,11 @@ from aoe2mapgenerator.map.imap_manager import IMapManager
 from aoe2mapgenerator.map.map import Map
 from aoe2mapgenerator.map.map_object import MapObject
 from aoe2mapgenerator.scenario.scenario import Scenario
+from aoe2mapgenerator.scenario.scenario_config import (
+    PlayerConfig,
+    ScenarioConfig,
+    configure_scenario as _configure_scenario,
+)
 from aoe2mapgenerator.terrain.terrain import PerlinTerrainConfig, PerlinTerrainGenerator
 from aoe2mapgenerator.templates.city_hybrid import CityTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.decor import OakForestTemplate, SnowForestTemplate
@@ -35,6 +42,7 @@ from aoe2mapgenerator.templates.fort import FortTemplate  # noqa: F401 – regis
 from aoe2mapgenerator.templates.palace import PalaceTemplate  # noqa: F401 – registers via @register_template
 from aoe2mapgenerator.templates.village import VillageTemplate  # noqa: F401 – registers via @register_template
 import aoe2mapgenerator.templates.nature  # noqa: F401 – side-effect: registers all nature templates
+import aoe2mapgenerator.templates.missing_templates  # noqa: F401 – registers WALLS, ROAD, MINE, MOUNTAIN, CASTLE, RIVER
 from aoe2mapgenerator.templates.template_decorator import get_template_manager
 from aoe2mapgenerator.templates.template_types import TemplateType
 from aoe2mapgenerator.templates.templates_manager import TemplateConfig
@@ -67,18 +75,42 @@ class MapManager(IMapManager):
     Internal collaborators (placers, generators, visualiser) are created once
     in ``__init__`` and are considered implementation details.  Only ``map``,
     ``output_dir``, and the public methods below form the stable API.
+
+    Args:
+        map_size: Side length of the square map in tiles.
+        output_dir: Directory where scenario files are written.  Defaults to a
+            cross-platform temp directory so the library works out-of-the-box
+            on any OS.  Override with your AoE2 scenario folder path.
+        seed: Optional integer seed that pins *all* random decisions made
+            during map generation.  Two ``MapManager`` instances created with
+            the same *seed* produce identical output.  Pass ``None`` (default)
+            for a non-deterministic map.
     """
 
-    def __init__(self, map_size: int, output_dir: str = BASE_SCENE_DIR_WINDOWS_WSL) -> None:
+    def __init__(
+        self,
+        map_size: int,
+        output_dir: str = DEFAULT_OUTPUT_DIR,
+        seed: int | None = None,
+    ) -> None:
         self.map: Map = Map(size=map_size)
         self.output_dir: str = output_dir
+        self.seed: int | None = seed
         self.templates: list[str] = []
 
-        self.scenario: Scenario = Scenario(
-            self.map, os.path.join(self.output_dir, BASE_SCENARIO_NAME)
-        )
+        # Seeded RNG shared by all collaborators that consume randomness.
+        # Pass ``self.rng`` down to any new collaborator that needs randomness.
+        self.rng: _random.Random = _random.Random(seed)
 
-        # Internal collaborators — treat as private
+        os.makedirs(self.output_dir, exist_ok=True)
+        # Scenario is created lazily on first write so that MapManager can be
+        # instantiated in environments that don't have the base .aoe2scenario
+        # file available (e.g. CI, unit tests, notebooks).
+        self.scenario: Scenario | None = None
+
+        # Internal collaborators — treat as private.
+        # NOTE: Any object added here *must* also appear in _map_collaborators
+        # below so that load_map() rewires it automatically.
         self._base_placer: PlacerBase = PlacerBase(self.map)
         self._wall_placer: WallPlacer = WallPlacer(self.map)
         self._gate_placer: GatePlacer = GatePlacer(self.map)
@@ -90,6 +122,20 @@ class MapManager(IMapManager):
         self._visualizer: Visualizer = Visualizer(self.map)
         self.template_manager = get_template_manager()
 
+        # Registry of objects whose ``.map`` attribute must be updated by
+        # ``load_map()``.  Add new collaborators here — never in load_map().
+        self._map_collaborators: list[Any] = [
+            self._base_placer,
+            self._wall_placer,
+            self._gate_placer,
+            self._group_placer,
+            self._path_placer,
+            self._voronoi_generator,
+            self._terrain_generator,
+            self._point_manager,
+            self._visualizer,
+        ]
+
     def load_map(self, map_obj: Map) -> None:
         """Replace the current map and rewire all internal collaborators.
 
@@ -97,21 +143,17 @@ class MapManager(IMapManager):
         ``MapManager`` so that all placers and helpers operate on the loaded
         data rather than the blank map created in ``__init__``.
 
+        Adding a collaborator?  Append it to ``self._map_collaborators`` in
+        ``__init__`` — **not** here.
+
         Args:
             map_obj: Deserialised :class:`~aoe2mapgenerator.map.map.Map` to
                 load.  Must have the same ``size`` as this ``MapManager``.
         """
         self.map = map_obj
-        # Rewire every collaborator so mutations go to the loaded map.
-        self._base_placer.map = map_obj
-        self._wall_placer.map = map_obj
-        self._gate_placer.map = map_obj
-        self._group_placer.map = map_obj
-        self._path_placer.map = map_obj
-        self._voronoi_generator.map = map_obj
-        self._terrain_generator.map = map_obj
-        self._point_manager.map = map_obj
-        self._visualizer.map = map_obj
+        # Rewire every registered collaborator via the registry.
+        for collaborator in self._map_collaborators:
+            collaborator.map = map_obj
         # Keep scenario writer bound to the active map as well.
         if self.scenario is not None:
             self.scenario.map = map_obj
@@ -155,6 +197,44 @@ class MapManager(IMapManager):
     # ------------------------------------------------------------------
     # Public map-building API
     # ------------------------------------------------------------------
+
+    def configure_scenario(self, config: ScenarioConfig) -> "MapManager":
+        """Apply scenario-level and player-level configuration.
+
+        This must be called **before** :meth:`write_map_and_save` so the
+        settings are reflected in the written file.
+
+        Internally this delegates to
+        :func:`aoe2mapgenerator.scenario.scenario_config.configure_scenario`.
+
+        Args:
+            config: A :class:`ScenarioConfig` describing player names,
+                civilizations, starting resources, and diplomacy.
+
+        Returns:
+            self, for method chaining.
+
+        Example::
+
+            mm.configure_scenario(
+                ScenarioConfig(
+                    map_name="Valley of Shadows",
+                    players=[
+                        PlayerConfig(
+                            player_id=PlayerId.ONE,
+                            name="House Valen",
+                            civilization=36,  # Franks
+                            starting_gold=500,
+                        ),
+                    ],
+                    enemy_pairs=[(PlayerId.ONE, PlayerId.TWO)],
+                )
+            )
+        """
+        if self.scenario is None:
+            self.scenario = Scenario(self.map)
+        _configure_scenario(self.scenario.scenario, config)
+        return self
 
     def write_map_and_save(self, file_name: str) -> "MapManager":
         """Write the map to a scenario file and save it to disk.
@@ -298,6 +378,87 @@ class MapManager(IMapManager):
     def points(self) -> PointManager:
         """Return the PointManager for direct point-collection operations."""
         return self._point_manager
+
+    # ------------------------------------------------------------------
+    # Convenience point helpers
+    # ------------------------------------------------------------------
+
+    def all_points(self, name: str = "_all_points") -> PointCollection:
+        """Return a ``PointCollection`` containing every tile on the map.
+
+        The collection is freshly computed on each call and registered under
+        *name*.  Pass a unique name when you need multiple independent copies
+        in the same session.
+
+        Args:
+            name: Registry name for the new collection.  Must not already exist
+                unless the previous one was removed.
+
+        Returns:
+            A ``PointCollection`` pre-populated with all ``(x, y)`` tiles.
+        """
+        size = self.map.size
+        return self._point_manager.add_point_collection(
+            name,
+            [(x, y) for x in range(size) for y in range(size)],
+            make_unique=True,
+        )
+
+    def points_in_rect(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        name: str = "_rect",
+    ) -> PointCollection:
+        """Return a ``PointCollection`` for the axis-aligned rectangle ``(x1,y1)→(x2,y2)``.
+
+        Coordinates are clamped to map bounds, so over-extending the rectangle
+        is safe.
+
+        Args:
+            x1: Left column (inclusive).
+            y1: Top row (inclusive).
+            x2: Right column (inclusive).
+            y2: Bottom row (inclusive).
+            name: Registry name for the new collection.
+
+        Returns:
+            PointCollection for the specified rectangle.
+        """
+        size = self.map.size
+        xs = range(max(0, min(x1, x2)), min(size, max(x1, x2) + 1))
+        ys = range(max(0, min(y1, y2)), min(size, max(y1, y2) + 1))
+        return self._point_manager.add_point_collection(
+            name,
+            [(x, y) for x in xs for y in ys],
+            make_unique=True,
+        )
+
+    def points_from_zone(
+        self,
+        zone_obj: MapObject,
+        name: str = "_zone",
+    ) -> PointCollection:
+        """Return a ``PointCollection`` of every tile occupied by *zone_obj* in the ZONE layer.
+
+        This is the canonical way to retrieve all tiles belonging to one
+        Voronoi zone after calling ``place_voronoi_zones()``.
+
+        Args:
+            zone_obj: The ``MapObject`` representing the zone.
+            name: Registry name for the new collection.
+
+        Returns:
+            PointCollection containing the zone's tiles.
+        """
+        tiles = self.map.get_map_layer(MapLayerType.ZONE).get_array_of_points(zone_obj)
+        return self._point_manager.add_point_collection(
+            name,
+            list(tiles),
+            make_unique=True,
+        )
 
     # ------------------------------------------------------------------
     # Template helpers
@@ -711,3 +872,219 @@ class MapManager(IMapManager):
             groups_density=groups_density, group_size=group_size, clumping=clumping,
             **kwargs,
         )
+
+    # ------------------------------------------------------------------
+    # Convenience wrappers for the new structural templates
+    # ------------------------------------------------------------------
+
+    def create_walls(
+        self,
+        point_collection: PointCollection,
+        gate_type: GateType = GateType.FORTIFIED_GATE,
+        border_width: int = 1,
+        player_id: PlayerId = PlayerId.ONE,
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Place a perimeter wall around a region.
+
+        Args:
+            point_collection: Tiles forming the region to wall off.
+            gate_type: Wall material / gate style.
+            border_width: Wall thickness in tiles.
+            player_id: Player who owns the walls.
+            **kwargs: Forwarded to WallsTemplate.
+
+        Returns:
+            self, for method chaining.
+        """
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=point_collection.get_average_point_position(),
+            player_id=player_id,
+            gate_type=gate_type,
+        )
+        self.apply_template(
+            point_collection,
+            TemplateType.WALLS,
+            config=config,
+            gate_type=gate_type,
+            border_width=border_width,
+            player_id=player_id,
+            **kwargs,
+        )
+        return self
+
+    def create_road(
+        self,
+        point_collection: PointCollection,
+        key_points: List[Tuple[int, int]] | None = None,
+        width: int = 1,
+        player_id: PlayerId = PlayerId.GAIA,
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Trace a dirt road through a region.
+
+        Args:
+            point_collection: Valid tile canvas for the road.
+            key_points: Ordered ``(x, y)`` waypoints.  If ``None`` the road
+                runs left-to-right across the bounding box midline.
+            width: Road width in tiles.
+            player_id: Owner of terrain objects.
+            **kwargs: Forwarded to RoadTemplate.
+
+        Returns:
+            self, for method chaining.
+        """
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=point_collection.get_average_point_position(),
+            player_id=player_id,
+        )
+        kw: dict[str, Any] = {"key_points": key_points or [], "width": width, "player_id": player_id}
+        kw.update(kwargs)
+        self.apply_template(point_collection, TemplateType.ROAD, config=config, **kw)
+        return self
+
+    def create_mine(
+        self,
+        point_collection: PointCollection,
+        resource: str = "GOLD",
+        num_piles: int = 4,
+        player_id: PlayerId = PlayerId.GAIA,
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Place a resource mine cluster.
+
+        Args:
+            point_collection: Region for the mine.
+            resource: ``"GOLD"`` or ``"STONE"``.
+            num_piles: Number of resource pile groups.
+            player_id: Owner (GAIA for neutral mines).
+            **kwargs: Forwarded to MineTemplate.
+
+        Returns:
+            self, for method chaining.
+        """
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=point_collection.get_average_point_position(),
+            player_id=player_id,
+        )
+        self.apply_template(
+            point_collection,
+            TemplateType.MINE,
+            config=config,
+            resource=resource,
+            num_piles=num_piles,
+            player_id=player_id,
+            **kwargs,
+        )
+        return self
+
+    def create_mountain(
+        self,
+        point_collection: PointCollection,
+        max_elevation: int = 4,
+        player_id: PlayerId = PlayerId.GAIA,
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Create a rocky elevated terrain feature.
+
+        Args:
+            point_collection: Tiles forming the mountain area.
+            max_elevation: Peak elevation at centre (0–7).
+            player_id: Owner of terrain objects.
+            **kwargs: Forwarded to MountainTemplate.
+
+        Returns:
+            self, for method chaining.
+        """
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=point_collection.get_average_point_position(),
+            player_id=player_id,
+        )
+        self.apply_template(
+            point_collection,
+            TemplateType.MOUNTAIN,
+            config=config,
+            max_elevation=max_elevation,
+            player_id=player_id,
+            **kwargs,
+        )
+        return self
+
+    def create_castle(
+        self,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] | None = None,
+        player_id: PlayerId = PlayerId.ONE,
+        gate_type: GateType = GateType.STONE_GATE,
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Place a fortified castle complex.
+
+        Delegates to ``FortTemplate`` for the walls/gates then places a Castle
+        building at the centre with elite guard units.
+
+        Args:
+            point_collection: Candidate tile positions.
+            center_point: Castle centre tile.  Defaults to the centroid.
+            player_id: Owning player.
+            gate_type: Gate / wall style.
+            **kwargs: Forwarded to CastleTemplate.
+
+        Returns:
+            self, for method chaining.
+        """
+        effective_center = center_point or point_collection.get_average_point_position()
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=effective_center,
+            player_id=player_id,
+            gate_type=gate_type,
+        )
+        self.apply_template(
+            point_collection,
+            TemplateType.CASTLE,
+            config=config,
+            center_point=effective_center,
+            player_id=player_id,
+            gate_type=gate_type,
+            **kwargs,
+        )
+        return self
+
+    def create_river(
+        self,
+        point_collection: PointCollection,
+        from_point: Tuple[int, int] | None = None,
+        to_point: Tuple[int, int] | None = None,
+        width: int = 3,
+        **kwargs: Any,
+    ) -> "MapManager":
+        """Trace an edge-to-edge river across a region.
+
+        Args:
+            point_collection: Tiles available for the river channel.
+            from_point: River entry tile.  Defaults to left-centre of bbox.
+            to_point: River exit tile.  Defaults to right-centre of bbox.
+            width: River width in tiles.
+            **kwargs: Forwarded to RiverTemplate.
+
+        Returns:
+            self, for method chaining.
+        """
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=point_collection.get_average_point_position(),
+            player_id=PlayerId.GAIA,
+        )
+        kw: dict[str, Any] = {"width": width}
+        if from_point is not None:
+            kw["from_point"] = from_point
+        if to_point is not None:
+            kw["to_point"] = to_point
+        kw.update(kwargs)
+        self.apply_template(point_collection, TemplateType.RIVER, config=config, **kw)
+        return self

@@ -89,6 +89,12 @@ def apply_city_life_triggers(
     edge_margin: int = 6,
 ) -> int:
     """Create a robust city-life trigger set and return trigger count created."""
+    # Lazily initialize the scenario if it hasn't been created yet.
+    # This happens when MapManager is constructed in environments that do not
+    # have a custom output_dir pointing at the AoE2 installation (e.g. tests).
+    if map_manager.scenario is None:
+        from aoe2mapgenerator.scenario.scenario import Scenario  # local to avoid circular
+        map_manager.scenario = Scenario(map_manager.map)
     trigger_manager = TriggerManager(map_manager.scenario.get_base_scenario())
     map_size = map_manager.map.size
     created = 0

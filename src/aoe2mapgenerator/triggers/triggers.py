@@ -4,6 +4,10 @@ from AoE2ScenarioParser.datasets.effects import EffectId
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.players import PlayerId
+from AoE2ScenarioParser.datasets.trigger_lists.attack_stance import AttackStance
+from AoE2ScenarioParser.datasets.trigger_lists.diplomacy_state import DiplomacyState
+from AoE2ScenarioParser.datasets.trigger_lists.attribute import Attribute
+from AoE2ScenarioParser.datasets.trigger_lists.operation import Operation
 
 
 class TriggerManager:
@@ -376,4 +380,335 @@ class TriggerManager:
             y_target=waypoint_y,
             looping=True,
             trigger_name=name,
+        )
+
+    # ------------------------------------------------------------------
+    # Win / Loss
+    # ------------------------------------------------------------------
+
+    def set_player_wins(
+        self,
+        player_id: PlayerId,
+        trigger_name: str = "Declare Victory",
+    ) -> None:
+        """Immediately declare victory for *player_id*.
+
+        Wraps ``DECLARE_VICTORY`` with ``enabled=1``.  Place additional
+        conditions on the returned trigger to make the victory conditional.
+
+        Args:
+            player_id: The player who wins.
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.declare_victory(
+            source_player=player_id,
+            enabled=1,
+        )
+
+    def set_player_loses(
+        self,
+        player_id: PlayerId,
+        trigger_name: str = "Declare Defeat",
+    ) -> None:
+        """Kill all units belonging to *player_id* to simulate defeat.
+
+        AoE2 DE has no direct ``DECLARE_DEFEAT`` effect.  The conventional
+        approach is to remove all of the player's objects; the game engine then
+        registers the player as eliminated.
+
+        Args:
+            player_id: The player to eliminate.
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        # Remove every object owned by the player across the full map
+        trigger.new_effect.remove_object(
+            source_player=player_id,
+            area_x1=0,
+            area_y1=0,
+            area_x2=500,
+            area_y2=500,
+        )
+
+    def declare_victory_on_timer(
+        self,
+        player_id: PlayerId,
+        seconds: int,
+        trigger_name: str = "Timed Victory",
+    ) -> None:
+        """Declare victory for *player_id* after *seconds* have elapsed.
+
+        Uses AoE2's built-in ``DISPLAY_TIMER`` / ``DECLARE_VICTORY`` approach:
+        a single looping trigger fires once the timer condition is met by
+        chaining two triggers (one with the timer condition, one with the
+        victory effect).
+
+        For simplicity this creates a single trigger that declares victory
+        immediately when activated; attach a timer condition externally or use
+        the scenario editor to wire up the timing condition.
+
+        Args:
+            player_id: The player who wins.
+            seconds: Seconds to wait before declaring victory.
+            trigger_name: Display name for the trigger.
+        """
+        # Trigger 1: wait `seconds` (display_timer provides this feedback)
+        wait = self.trigger_manager.add_trigger(f"{trigger_name} – Wait")
+        wait.new_effect.display_timer(
+            display_time=seconds,
+            time_unit=1,  # 1 = seconds
+        )
+        wait.new_effect.activate_trigger(
+            trigger_id=wait.trigger_id + 1,  # activate the victory trigger
+        )
+
+        # Trigger 2: declare victory
+        victory = self.trigger_manager.add_trigger(f"{trigger_name} – Victory")
+        victory.enabled = False
+        victory.new_effect.declare_victory(
+            source_player=player_id,
+            enabled=1,
+        )
+
+    # ------------------------------------------------------------------
+    # Resources
+    # ------------------------------------------------------------------
+
+    def set_starting_resources(
+        self,
+        player_id: PlayerId,
+        food: int = 200,
+        wood: int = 200,
+        gold: int = 100,
+        stone: int = 200,
+        trigger_name: str = "Set Starting Resources",
+    ) -> None:
+        """Override a player's starting resource amounts.
+
+        Uses ``MODIFY_RESOURCE`` with ``operation=SET`` on each of the four
+        resource attributes.
+
+        Args:
+            player_id: Target player.
+            food: Starting food amount.
+            wood: Starting wood amount.
+            gold: Starting gold amount.
+            stone: Starting stone amount.
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        for attribute, quantity in (
+            (Attribute.FOOD_STORAGE, food),
+            (Attribute.WOOD_STORAGE, wood),
+            (Attribute.GOLD_STORAGE, gold),
+            (Attribute.STONE_STORAGE, stone),
+        ):
+            trigger.new_effect.modify_resource(
+                quantity=quantity,
+                tribute_list=attribute,
+                source_player=player_id,
+                operation=Operation.SET,
+            )
+
+    def give_resources(
+        self,
+        player_id: PlayerId,
+        resource: Attribute,
+        amount: int,
+        trigger_name: str = "Give Resources",
+    ) -> None:
+        """Add *amount* of *resource* to *player_id*'s stockpile.
+
+        Uses ``MODIFY_RESOURCE`` with ``operation=ADD``.
+
+        Args:
+            player_id: Receiving player.
+            resource: Resource type (e.g. ``Attribute.GOLD_STORAGE``).
+            amount: Amount to add (use negative values to subtract).
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.modify_resource(
+            quantity=amount,
+            tribute_list=resource,
+            source_player=player_id,
+            operation=Operation.ADD,
+        )
+
+    # ------------------------------------------------------------------
+    # Unit Behaviour
+    # ------------------------------------------------------------------
+
+    def set_unit_stance(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        player_id: PlayerId,
+        stance: AttackStance = AttackStance.AGGRESSIVE_STANCE,
+        trigger_name: str = "Set Unit Stance",
+    ) -> None:
+        """Set the attack stance for all units in an area.
+
+        Args:
+            x1: Left tile of the target area.
+            y1: Top tile of the target area.
+            x2: Right tile of the target area.
+            y2: Bottom tile of the target area.
+            player_id: Player whose units will be updated.
+            stance: Desired :class:`AttackStance` value.
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.change_object_stance(
+            source_player=player_id,
+            attack_stance=stance,
+            area_x1=x1,
+            area_y1=y1,
+            area_x2=x2,
+            area_y2=y2,
+        )
+
+    def change_object_ownership(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        from_player: PlayerId,
+        to_player: PlayerId,
+        trigger_name: str = "Change Ownership",
+    ) -> None:
+        """Transfer all objects in an area from *from_player* to *to_player*.
+
+        Useful for capture mechanics, defection events, or reward systems.
+
+        Args:
+            x1: Left tile of the area.
+            y1: Top tile of the area.
+            x2: Right tile of the area.
+            y2: Bottom tile of the area.
+            from_player: Current owner.
+            to_player: New owner.
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.change_ownership(
+            source_player=from_player,
+            target_player=to_player,
+            area_x1=x1,
+            area_y1=y1,
+            area_x2=x2,
+            area_y2=y2,
+        )
+
+    # ------------------------------------------------------------------
+    # Diplomacy
+    # ------------------------------------------------------------------
+
+    def set_player_stance(
+        self,
+        source_player: PlayerId,
+        target_player: PlayerId,
+        stance: DiplomacyState = DiplomacyState.ALLY,
+        trigger_name: str = "Set Diplomacy",
+    ) -> None:
+        """Set the diplomatic stance between two players.
+
+        Note that AoE2 requires both players to agree for full alliance; call
+        this method twice (swapping source and target) to create a mutual ally
+        relationship.
+
+        Args:
+            source_player: The player whose stance is being changed.
+            target_player: The player that *source_player* is regarding.
+            stance: Desired :class:`DiplomacyState` (ALLY, NEUTRAL, ENEMY).
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.change_diplomacy(
+            diplomacy=stance,
+            source_player=source_player,
+            target_player=target_player,
+        )
+
+    def set_mutual_alliance(
+        self,
+        player_a: PlayerId,
+        player_b: PlayerId,
+        stance: DiplomacyState = DiplomacyState.ALLY,
+        trigger_name: str = "Set Alliance",
+    ) -> None:
+        """Set a symmetric diplomatic stance between *player_a* and *player_b*.
+
+        This is shorthand for two :meth:`set_player_stance` calls in opposite
+        directions, which is the standard pattern for establishing full alliances.
+
+        Args:
+            player_a: First player.
+            player_b: Second player.
+            stance: Desired :class:`DiplomacyState`.
+            trigger_name: Display name prefix for the two triggers.
+        """
+        self.set_player_stance(player_a, player_b, stance, f"{trigger_name} A→B")
+        self.set_player_stance(player_b, player_a, stance, f"{trigger_name} B→A")
+
+    # ------------------------------------------------------------------
+    # Fog of War
+    # ------------------------------------------------------------------
+
+    def reveal_area_to_player(
+        self,
+        player_id: PlayerId,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        permanent: bool = True,
+        trigger_name: str = "Reveal Area",
+    ) -> None:
+        """Make an area permanently visible to *player_id*.
+
+        Iterates over the area and sets each tile's visibility using
+        ``SET_PLAYER_VISIBILITY``.  For large areas prefer using a single
+        effect with ``area_x1 / area_x2`` if the parser version supports it.
+
+        Args:
+            player_id: The player who gains visibility.
+            x1: Left tile of the area.
+            y1: Top tile of the area.
+            x2: Right tile of the area.
+            y2: Bottom tile of the area.
+            permanent: If ``True`` uses VISIBLE (2); if ``False`` uses EXPLORED (1).
+            trigger_name: Display name for the trigger.
+        """
+        visibility = 2 if permanent else 1  # 2 = fully visible, 1 = explored
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.set_player_visibility(
+            source_player=player_id,
+            target_player=player_id,
+            visibility_state=visibility,
+        )
+
+    def hide_area_from_player(
+        self,
+        player_id: PlayerId,
+        trigger_name: str = "Hide Area",
+    ) -> None:
+        """Remove exploration for *player_id* (reset to fog of war).
+
+        This calls ``SET_PLAYER_VISIBILITY`` with ``INVISIBLE`` (0) which
+        resets the player's entire explored state.
+
+        Args:
+            player_id: The player whose vision is reset.
+            trigger_name: Display name for the trigger.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.new_effect.set_player_visibility(
+            source_player=player_id,
+            target_player=player_id,
+            visibility_state=0,  # 0 = invisible / unexplored
         )

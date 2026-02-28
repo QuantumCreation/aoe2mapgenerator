@@ -26,15 +26,14 @@ from aoe2mapgenerator.units.utils import default_clumping_func
 
 @dataclass
 class AddBordersConfig:
-    """
-    Configuration for adding borders to a map.
+    """Configuration for adding border objects around a region.
 
     Args:
-        point_manager (PointManager): Manages the points to be placed.
-        map_layer_type (MapLayerType): The map type.
-        obj_type (AOE2ObjectType): The type of object to be placed.
-        player_id (PlayerId = DEFAULT_PLAYER): Id of the objects being placed.
-        margin (int = 1): Margin between each object and any other object.
+        point_collection: Tiles forming the region interior.
+        map_layer_type: Layer on which borders are placed.
+        obj_type: Object used to mark each border tile.
+        player_id: Owner of the border objects.
+        border_width: Perimeter thickness in tiles (>= 1).
     """
 
     point_collection: PointCollection
@@ -42,6 +41,12 @@ class AddBordersConfig:
     obj_type: AOE2ObjectType
     player_id: PlayerId = DEFAULT_PLAYER
     border_width: int = 1
+
+    def __post_init__(self) -> None:
+        if self.border_width < 1:
+            raise ValueError(
+                f"AddBordersConfig.border_width must be >= 1, got {self.border_width}"
+            )
 
 
 @dataclass
@@ -77,6 +82,28 @@ class PlaceGroupsConfig:
     margin: int = 0
     start_point: tuple | None = None
 
+    def __post_init__(self) -> None:
+        if self.groups < 1:
+            raise ValueError(
+                f"PlaceGroupsConfig.groups must be >= 1, got {self.groups}"
+            )
+        if self.group_size < 1:
+            raise ValueError(
+                f"PlaceGroupsConfig.group_size must be >= 1, got {self.group_size}"
+            )
+        if self.margin < 0:
+            raise ValueError(
+                f"PlaceGroupsConfig.margin must be >= 0, got {self.margin}"
+            )
+        if self.group_density is not None and not (0.0 <= self.group_density <= 1.0):
+            raise ValueError(
+                f"PlaceGroupsConfig.group_density must be in [0, 1], got {self.group_density}"
+            )
+        if self.groups_density is not None and not (0.0 <= self.groups_density <= 1.0):
+            raise ValueError(
+                f"PlaceGroupsConfig.groups_density must be in [0, 1], got {self.groups_density}"
+            )
+
 
 @dataclass
 class VoronoiGeneratorConfig:
@@ -92,6 +119,13 @@ class VoronoiGeneratorConfig:
     point_collection: PointCollection
     interpoint_distance: int
     map_layer_type: MapLayerType
+
+    def __post_init__(self) -> None:
+        if self.interpoint_distance <= 0:
+            raise ValueError(
+                f"VoronoiGeneratorConfig.interpoint_distance must be > 0, "
+                f"got {self.interpoint_distance}"
+            )
 
 
 @dataclass
@@ -211,6 +245,18 @@ class PlaceGateOnEightSidesConfig:
 
 @dataclass
 class PlacePathConfig:
+    """Configuration for path (road) generation.
+
+    Args:
+        point_collection: Valid tiles for path placement.
+        map_layer_type: Layer on which the path is drawn.
+        obj_type: Object used to mark each path tile.
+        player_id: Owner of path objects.
+        key_points: Ordered waypoints; path visits each in sequence (>= 2).
+        num_divisions: Per-segment subdivision counts.
+        random_shift_range: Per-segment random offset range in tiles (>= 0 each).
+    """
+
     point_collection: PointCollection
     map_layer_type: MapLayerType
     obj_type: AOE2ObjectType
@@ -218,3 +264,21 @@ class PlacePathConfig:
     key_points: list[tuple[int, int]]
     num_divisions: list[int]
     random_shift_range: list[int]
+
+    def __post_init__(self) -> None:
+        if len(self.key_points) < 2:
+            raise ValueError(
+                f"PlacePathConfig.key_points must have at least 2 points, "
+                f"got {len(self.key_points)}"
+            )
+        if len(self.num_divisions) != len(self.random_shift_range):
+            raise ValueError(
+                "PlacePathConfig.num_divisions and random_shift_range must have "
+                f"the same length, got {len(self.num_divisions)} vs "
+                f"{len(self.random_shift_range)}"
+            )
+        for i, s in enumerate(self.random_shift_range):
+            if s < 0:
+                raise ValueError(
+                    f"PlacePathConfig.random_shift_range[{i}] must be >= 0, got {s}"
+                )
