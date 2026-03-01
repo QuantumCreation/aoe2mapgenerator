@@ -179,9 +179,11 @@ class TriggerManager:
         object: UnitInfo,
         player_id: PlayerId,
         looping: bool = True,
+        spawn_delay: int = 5,
     ):
         """
-        Spawns infinite waves of objects from the x11, y11, x21, y21 area to the x12, y12, x22, y22 area
+        Spawns infinite waves of objects. The spawn area will wait until it's clear 
+        before spawning and teleporting the next wave.
 
         Args:
             x11 (int): x11 coordinate of the source area
@@ -192,42 +194,66 @@ class TriggerManager:
             y12 (int): y12 coordinate of the target area
             x22 (int): x22 coordinate of the target area
             y22 (int): y22 coordinate of the target area
+            target_x (int): x target point for attack move
+            target_y (int): y target point for attack move
             object (UnitInfo): object to be spawned
             player_id (PlayerId): player id of the object
             looping (bool, optional): if the trigger should loop. Defaults to True.
+            spawn_delay (int, optional): delay between waves in seconds. Defaults to 5.
         """
-        spawn = self.trigger_manager.add_trigger("Spawn")
-        teleport = self.trigger_manager.add_trigger("Teleport")
-        attack_move = self.trigger_manager.add_trigger("Attack Move")
-        timer = self.trigger_manager.add_trigger("Timer")
+        spawn = self.trigger_manager.add_trigger("Spawn Wave")
+        teleport = self.trigger_manager.add_trigger("Teleport and Attack")
 
         spawn.enabled = True
+        spawn.looping = looping
         teleport.enabled = False
-        attack_move.enabled = False
-        timer.enabled = False
+        teleport.looping = False
 
-        # Spawn troops
-        self.create_objects_in_area(x11, y11, x21, y21, object, player_id)
-        spawn.new_effect.activate_trigger(trigger_id=teleport.ID)
+        # Condition 1: Staging area must be clear
+        spawn.new_condition.objects_in_area(
+            quantity=0,
+            source_player=player_id,
+            area_x1=x11,
+            area_y1=y11,
+            area_x2=x21,
+            area_y2=y21,
+        )
+        
+        # Condition 2: Delay timer
+        if spawn_delay > 0:
+            spawn.new_condition.timer(timer=spawn_delay)
+
+        # Effect: Spawn troops
+        for i in range(x11, x21 + 1):
+            for j in range(y11, y21 + 1):
+                spawn.new_effect.create_object(
+                    object_list_unit_id=object.ID,
+                    source_player=player_id,
+                    location_x=i,
+                    location_y=j,
+                )
+                
+        # Effect: Activate the teleport trigger
+        spawn.new_effect.activate_trigger(trigger_id=teleport.trigger_id)
+
+        # Give a small timer to allow units to spawn before teleporting
+        teleport.new_condition.timer(timer=1)
 
         # Teleport troops to the target area
-        for i in range(0, 1 + x12 - x11):
-            for j in range(0, 1 + y12 - y11):
-                # This teleports objects from the x1, y1 area to the x2, y2 area
-                # The absolute values and modulo operations are used to make the objects stay within the target area
+        for i in range(0, 1 + x21 - x11):
+            for j in range(0, 1 + y21 - y11):
                 teleport.new_effect.teleport_object(
                     source_player=player_id,
-                    location_x=x21 + (i % (abs(x22 - x21))),
-                    location_y=y21 + (j % (abs(y22 - y21))),
+                    location_x=x12 + (i % (max(1, x22 - x12 + 1))),
+                    location_y=y12 + (j % (max(1, y22 - y12 + 1))),
                     area_x1=x11 + i,
                     area_y1=y11 + j,
                     area_x2=x11 + i,
                     area_y2=y11 + j,
                 )
-        teleport.new_effect.activate_trigger(trigger_id=attack_move.ID)
 
         # Attack move to the target point
-        attack_move.new_effect.attack_move(
+        teleport.new_effect.attack_move(
             source_player=player_id,
             location_x=target_x,
             location_y=target_y,
