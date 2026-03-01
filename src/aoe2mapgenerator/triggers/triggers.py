@@ -135,7 +135,8 @@ class TriggerManager:
         looping: bool = True,
     ):
         """
-        Teleports objects from the x11, y11, x21, y21 area to the x12, y12, x22, y22 area
+        Teleports objects from the x11, y11, x21, y21 area to the x12, y12, x22, y22 area,
+        preserving the relative grid formation of the units.
 
         Args:
             x11 (int): x11 coordinate of the source area
@@ -150,16 +151,20 @@ class TriggerManager:
             looping (bool, optional): if the trigger should loop. Defaults to True."""
         trigger = self.trigger_manager.add_trigger("Teleport Objects From Area To Area")
 
-        for i in range(x12, x22 + 1):
-            for j in range(y12, y22 + 1):
+        # Calculate dimensions to safely modulo target points
+        width = max(1, x22 - x12 + 1)
+        height = max(1, y22 - y12 + 1)
+
+        for i in range(0, 1 + x21 - x11):
+            for j in range(0, 1 + y21 - y11):
                 trigger.new_effect.teleport_object(
                     source_player=player_id,
-                    location_x=i,
-                    location_y=j,
-                    area_x1=x11,
-                    area_y1=y11,
-                    area_x2=x21,
-                    area_y2=y21,
+                    location_x=x12 + (i % width),
+                    location_y=y12 + (j % height),
+                    area_x1=x11 + i,
+                    area_y1=y11 + j,
+                    area_x2=x11 + i,
+                    area_y2=y11 + j,
                 )
 
         trigger.looping = looping
@@ -738,3 +743,203 @@ class TriggerManager:
             target_player=player_id,
             visibility_state=0,  # 0 = invisible / unexplored
         )
+
+    # ------------------------------------------------------------------
+    # Advanced Gameplay (Auto-Generated Maps)
+    # ------------------------------------------------------------------
+
+    def setup_dynamic_ambush(
+        self,
+        trigger_area_x1: int,
+        trigger_area_y1: int,
+        trigger_area_x2: int,
+        trigger_area_y2: int,
+        spawn_area_x1: int,
+        spawn_area_y1: int,
+        spawn_area_x2: int,
+        spawn_area_y2: int,
+        target_player_id: PlayerId,
+        ambush_player_id: PlayerId,
+        unit_to_spawn: UnitInfo,
+        trigger_name: str = "Dynamic Ambush",
+    ) -> None:
+        """
+        Creates an ambush that spawns units when a target player enters a designated area.
+        The spawned units will immediately attack-move to the target player's position.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        
+        # Condition: target player enters area
+        trigger.new_condition.objects_in_area(
+            quantity=1,
+            source_player=target_player_id,
+            area_x1=trigger_area_x1,
+            area_y1=trigger_area_y1,
+            area_x2=trigger_area_x2,
+            area_y2=trigger_area_y2,
+        )
+
+        # Effect: create units
+        for i in range(spawn_area_x1, spawn_area_x2 + 1):
+            for j in range(spawn_area_y1, spawn_area_y2 + 1):
+                trigger.new_effect.create_object(
+                    object_list_unit_id=unit_to_spawn.ID,
+                    source_player=ambush_player_id,
+                    location_x=i,
+                    location_y=j,
+                )
+
+        # Effect: attack move towards the center of the trigger area
+        target_center_x = (trigger_area_x1 + trigger_area_x2) // 2
+        target_center_y = (trigger_area_y1 + trigger_area_y2) // 2
+        trigger.new_effect.attack_move(
+            source_player=ambush_player_id,
+            location_x=target_center_x,
+            location_y=target_center_y,
+            area_x1=spawn_area_x1,
+            area_y1=spawn_area_y1,
+            area_x2=spawn_area_x2,
+            area_y2=spawn_area_y2,
+        )
+
+    def setup_capturable_outpost(
+        self,
+        area_x1: int,
+        area_y1: int,
+        area_x2: int,
+        area_y2: int,
+        players_to_check: list[PlayerId],
+        base_trigger_name: str = "Capturable Outpost",
+    ) -> None:
+        """
+        Sets up king-of-the-hill style triggers for an outpost or structure.
+        When a player is the ONLY player with units in the area, they gain ownership
+        of all objects in that area.
+        """
+        for player in players_to_check:
+            trigger = self.trigger_manager.add_trigger(f"{base_trigger_name} - {player}")
+            trigger.looping = True
+            trigger.new_condition.timer(timer=2)
+
+            # The player must have units in the area
+            trigger.new_condition.objects_in_area(
+                quantity=1,
+                source_player=player,
+                area_x1=area_x1,
+                area_y1=area_y1,
+                area_x2=area_x2,
+                area_y2=area_y2,
+            )
+
+            # Other players must NOT have units in the area
+            for other_player in players_to_check:
+                if other_player == player:
+                    continue
+                trigger.new_condition.objects_in_area(
+                    quantity=0,
+                    source_player=other_player,
+                    area_x1=area_x1,
+                    area_y1=area_y1,
+                    area_x2=area_x2,
+                    area_y2=area_y2,
+                )
+
+            # Change ownership
+            # By standard, we target a specific Neutral player or Gaia as previous owner,
+            # but to be safe and simple we change ALL objects in the area to this player.
+            # Usually you want to isolate the building from standard units.
+            trigger.new_effect.change_ownership(
+                source_player=PlayerId.GAIA, # Neutral units (buildings)
+                target_player=player,
+                area_x1=area_x1,
+                area_y1=area_y1,
+                area_x2=area_x2,
+                area_y2=area_y2,
+            )
+            # We must also change from all other players in case they held it
+            for other_player in players_to_check:
+                if other_player == player:
+                    continue
+                trigger.new_effect.change_ownership(
+                    source_player=other_player,
+                    target_player=player,
+                    area_x1=area_x1,
+                    area_y1=area_y1,
+                    area_x2=area_x2,
+                    area_y2=area_y2,
+                )
+
+    def setup_resource_trickle(
+        self,
+        player_id: PlayerId,
+        resource: Attribute,
+        amount: int,
+        interval_seconds: int = 10,
+        trigger_name: str = "Resource Trickle",
+    ) -> None:
+        """
+        Creates a looping trigger that provides a steady stream of resources to a player.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.looping = True
+        
+        trigger.new_condition.timer(timer=interval_seconds)
+        
+        trigger.new_effect.modify_resource(
+            quantity=amount,
+            tribute_list=resource,
+            source_player=player_id,
+            operation=Operation.ADD,
+        )
+
+    def patrol_route(
+        self,
+        player_id: PlayerId,
+        area_x1: int,
+        area_y1: int,
+        area_x2: int,
+        area_y2: int,
+        waypoints: list[tuple[int, int]],
+        looping: bool = True,
+        trigger_name: str = "Patrol Route",
+        delay_between_waypoints: int = 10,
+    ) -> None:
+        """
+        Orders units in an area to patrol across a series of waypoints.
+        Since AoE2 does not natively support complex chained patrols easily via standard triggers,
+        this creates a sequence of chained triggers that move the units from waypoint to waypoint.
+        """
+        if not waypoints:
+            return
+
+        triggers = []
+        for idx, _ in enumerate(waypoints):
+            t = self.trigger_manager.add_trigger(f"{trigger_name} - WP {idx+1}")
+            t.enabled = False
+            triggers.append(t)
+
+        triggers[0].enabled = True
+
+        for idx, (wp_x, wp_y) in enumerate(waypoints):
+            t = triggers[idx]
+            next_idx = (idx + 1) % len(waypoints) if looping else idx + 1
+            
+            t.new_condition.timer(timer=delay_between_waypoints)
+            
+            # Use task_object to send them to the waypoint
+            t.new_effect.task_object(
+                source_player=player_id,
+                location_x=wp_x,
+                location_y=wp_y,
+                area_x1=area_x1,
+                area_y1=area_y1,
+                area_x2=area_x2,
+                area_y2=area_y2,
+            )
+
+            # Activate next trigger
+            if next_idx < len(waypoints):
+                t.new_effect.activate_trigger(trigger_id=triggers[next_idx].trigger_id)
+            
+            # Deactivate self to reset
+            t.new_effect.deactivate_trigger(trigger_id=t.trigger_id)
