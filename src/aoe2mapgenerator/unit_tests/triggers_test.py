@@ -137,3 +137,33 @@ def test_teleport_objects_from_area_to_area():
     
     scenario_mock.trigger_manager.add_trigger.assert_called_once_with("Teleport Objects From Area To Area")
     assert trigger_mock.new_effect.teleport_object.call_count == 9
+
+def test_upgrade_unit_on_variable():
+    scenario_mock = MagicMock(spec=AoE2DEScenario)
+    tm = TriggerManager(scenario_mock)
+    
+    trigger_mock = MagicMock()
+    scenario_mock.trigger_manager.add_trigger.return_value = trigger_mock
+    
+    from_unit = MagicMock(spec=UnitInfo)
+    from_unit.ID = 10
+    to_unit = MagicMock(spec=UnitInfo)
+    to_unit.ID = 20
+    
+    tm.upgrade_unit_on_variable(
+        variable_id=1, threshold=5,
+        player_id=1,
+        area_x1=0, area_y1=0, area_x2=2, area_y2=2,
+        from_unit=from_unit, to_unit=to_unit
+    )
+    
+    scenario_mock.trigger_manager.add_trigger.assert_called_once_with("Upgrade Wave")
+    trigger_mock.new_condition.variable_value.assert_called_once_with(
+        variable=1, quantity=5, comparison=2
+    )
+    trigger_mock.new_effect.replace_object.assert_called_once_with(
+        source_player=1,
+        object_list_unit_id=10,
+        object_list_unit_id_2=20,
+        area_x1=0, area_y1=0, area_x2=2, area_y2=2
+    )

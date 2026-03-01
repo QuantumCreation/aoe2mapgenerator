@@ -943,3 +943,43 @@ class TriggerManager:
             
             # Deactivate self to reset
             t.new_effect.deactivate_trigger(trigger_id=t.trigger_id)
+
+    def upgrade_unit_on_variable(
+        self,
+        variable_id: int,
+        threshold: int,
+        player_id: PlayerId,
+        area_x1: int,
+        area_y1: int,
+        area_x2: int,
+        area_y2: int,
+        from_unit: UnitInfo,
+        to_unit: UnitInfo,
+        trigger_name: str = "Upgrade Wave",
+    ) -> None:
+        """
+        Constantly replaces 'from_unit' with 'to_unit' in an area once a certain variable
+        reaches or exceeds the specified threshold. Useful for escalating wave difficulties.
+        """
+        trigger = self.trigger_manager.add_trigger(trigger_name)
+        trigger.looping = True
+        
+        # Condition: Variable >= threshold (Comparison 3 or 4 in AoE2 is usually >=, but 
+        # default condition behavior or variable logic depends on the Comparison Enum.
+        # By default in AoE2, variable_value checks if Variable == Quantity if comparison is not set,
+        # but let's assume standard behavior or just provide it. 2 is usually >= in AoE2.)
+        trigger.new_condition.variable_value(
+            variable=variable_id,
+            quantity=threshold,
+            comparison=2, # >=
+        )
+
+        trigger.new_effect.replace_object(
+            source_player=player_id,
+            object_list_unit_id=from_unit.ID,
+            object_list_unit_id_2=to_unit.ID,
+            area_x1=area_x1,
+            area_y1=area_y1,
+            area_x2=area_x2,
+            area_y2=area_y2,
+        )
