@@ -13,6 +13,11 @@ without notice between minor releases.
 """
 
 # ------------------------------------------------------------------
+# Third-party compatibility shims (must run before any serialization)
+# ------------------------------------------------------------------
+from aoe2mapgenerator.common import compat as _compat  # noqa: F401  (side effect: numpy-safe parser)
+
+# ------------------------------------------------------------------
 # Core façade
 # ------------------------------------------------------------------
 from aoe2mapgenerator.map.map_manager import MapManager

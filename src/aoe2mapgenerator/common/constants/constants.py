@@ -40,6 +40,44 @@ LINUX_PROJECT_PATH = os.path.join(
     "Documents/Projects/aoe2mapgenerator/",
 )
 
+
+def resolve_base_scenario_path() -> str:
+    """Return the first existing ``BASE_SCENARIO.aoe2scenario`` path.
+
+    Resolution order:
+    1. ``AOE2_BASE_SCENARIO`` environment variable (explicit override).
+    2. Each known candidate directory (WSL, Linux/Steam, Windows) in turn.
+
+    Raises:
+        FileNotFoundError: If no candidate path exists. The message lists every
+            path that was tried so the user can set the env var to fix it.
+    """
+    override = os.environ.get("AOE2_BASE_SCENARIO")
+    if override:
+        if os.path.isfile(override):
+            return override
+        raise FileNotFoundError(
+            f"AOE2_BASE_SCENARIO is set to '{override}' but that file does not exist."
+        )
+
+    candidates = [
+        BASE_SCENARIO_FULL_PATH_WINDOWS_WSL,
+        os.path.join(BASE_SCENE_DIR_LINUX, BASE_SCENARIO_NAME),
+        os.path.join(BASE_SCENE_DIR_WINDOWS, BASE_SCENARIO_NAME),
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+
+    tried = "\n  ".join(candidates)
+    raise FileNotFoundError(
+        "Could not find BASE_SCENARIO.aoe2scenario in any known location:\n"
+        f"  {tried}\n"
+        "Set the AOE2_BASE_SCENARIO environment variable to the full path of "
+        "your base scenario file."
+    )
+
+
 # Unit Test Paths
 LINUX_PROJECT_UNIT_TEST_PATH = (
     "/home/joseph/Documents/Projects/aoe2mapgenerator/src/unit_tests/"

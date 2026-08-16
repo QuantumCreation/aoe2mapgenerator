@@ -16,6 +16,7 @@ from aoe2mapgenerator.common.constants.constants import (
     BASE_SCENE_DIR_LINUX,
     X_SHIFT,
     Y_SHIFT,
+    resolve_base_scenario_path,
 )
 from aoe2mapgenerator.common.enums.enum import (
     GateType,
@@ -43,17 +44,19 @@ class Scenario:
     def __init__(
         self,
         aoe2_map: Map,
-        base_scenario_full_path: str = os.path.join(
-            BASE_SCENE_DIR_LINUX, BASE_SCENARIO_NAME
-        ),
+        base_scenario_full_path: str | None = None,
     ) -> None:
         """
         Creates a scenario with the given name.
 
         Args:
             map (Map): Map object to write to the scenario.
-            base_scenario_full_path (str, optional): Path to the base scenario file. Defaults to BASE_SCENARIO_FULL_PATH.
+            base_scenario_full_path (str, optional): Path to the base scenario file.
+                If omitted, the path is auto-resolved from known locations (or
+                the ``AOE2_BASE_SCENARIO`` env var).
         """
+        if base_scenario_full_path is None:
+            base_scenario_full_path = resolve_base_scenario_path()
         self.scenario: AoE2DEScenario = self._load_base_scenario(base_scenario_full_path)
         self.map: Map = aoe2_map
     
@@ -167,7 +170,13 @@ class Scenario:
         unit_manager = self.scenario.unit_manager
         rotation = 0
 
+        # Coerce to native Python ints: map layers are numpy-backed, and the
+        # scenario parser's byte serializer calls ``int.to_bytes`` which
+        # numpy scalars do not implement.
+        player = int(player)
+
         for i, (x, y) in enumerate(points):
+            x, y = int(x), int(y)
             # Adds a random rotation to each unit
             rotation = random.random() * (ObjectRotation(aoe2_object._name_).value)
 
@@ -212,8 +221,8 @@ class Scenario:
         map_manager = self.scenario.map_manager
 
         for i, (x, y) in enumerate(points):
-            tile = map_manager.get_tile(x, y)
-            tile.terrain_id = terrain_const.value
+            tile = map_manager.get_tile(int(x), int(y))
+            tile.terrain_id = int(terrain_const.value)
 
     def _write_elevation_points(
         self,
@@ -224,8 +233,8 @@ class Scenario:
         map_manager = self.scenario.map_manager
 
         for x, y in points:
-            tile = map_manager.get_tile(x, y)
-            tile.elevation = elevation
+            tile = map_manager.get_tile(int(x), int(y))
+            tile.elevation = int(elevation)
 
     def _change_map_size(self, map_size: int) -> None:
         """
