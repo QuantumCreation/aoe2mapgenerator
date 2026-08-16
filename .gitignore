@@ -24,3 +24,6 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+
+# Generated render output (Tier 1 contact sheets / composites)
+tools/out/
