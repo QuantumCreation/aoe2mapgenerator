@@ -30,3 +30,10 @@ class TemplateType(Enum):
     SAVANNAH = auto()               # Dry grassland with acacia/baobab and savannah fauna
     RAINFOREST = auto()             # Dense jungle with exotic flora and fauna
     MEDITERRANEAN = auto()          # Mediterranean grassland with mixed woodland
+
+    # ── Map-content toolkit templates ────────────────────────────────────
+    FAUNA_SCATTER = auto()          # Weighted scatter of wild animals (herds + predators)
+    BERRY_BUSH = auto()             # Forage/fruit bush scatter (berry patches)
+    BANDIT_CAMP = auto()            # Small hostile camp: tents, campfire, bandits
+    SNOWY_MOUNTAIN_RANGE = auto()   # Elongated ridgeline of snow mountains + elevation
+    LUSH_FOREST = auto()            # Dense mixed forest with berries, fauna, and clearings

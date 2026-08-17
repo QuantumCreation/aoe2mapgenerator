@@ -27,5 +27,14 @@ from aoe2mapgenerator.templates.nature import (
     MediterraneanTemplate,
 )
 
+# Map-content toolkit templates (fauna, berries, bandit camp, mountains, forest)
+from aoe2mapgenerator.templates.content_toolkit import (
+    FaunaScatterTemplate,
+    BerryBushTemplate,
+    BanditCampTemplate,
+    SnowyMountainRangeTemplate,
+    LushForestTemplate,
+)
+
 # Make the template manager accessible
 template_manager = get_template_manager()

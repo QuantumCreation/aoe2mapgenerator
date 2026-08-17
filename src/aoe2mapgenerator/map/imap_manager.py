@@ -239,6 +239,47 @@ class IMapManager(Protocol):
         **kwargs: Any,
     ) -> PointCollection: ...
 
+    def create_fauna_scatter(
+        self: T,
+        point_collection: PointCollection,
+        herd_count: int = ...,
+        predator_count: int = ...,
+        herd_size: Tuple[int, int] = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_berry_bush(
+        self: T,
+        point_collection: PointCollection,
+        density: float = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_bandit_camp(
+        self: T,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] | None = ...,
+        size: int = ...,
+        tents: int = ...,
+        bandits: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_snowy_mountain_range(
+        self: T,
+        point_collection: PointCollection,
+        max_elevation: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
+    def create_lush_forest(
+        self: T,
+        point_collection: PointCollection,
+        tree_density: float = ...,
+        clearings: int = ...,
+        **kwargs: Any,
+    ) -> PointCollection: ...
+
     def visualize_map(self: T, configuration: VisualizeMapConfig) -> T: ...
 
     def select_points(

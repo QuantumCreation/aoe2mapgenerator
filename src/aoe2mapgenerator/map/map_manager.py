@@ -874,6 +874,133 @@ class MapManager(IMapManager):
         )
 
     # ------------------------------------------------------------------
+    # Convenience wrappers for the map-content toolkit templates
+    # ------------------------------------------------------------------
+
+    def create_fauna_scatter(
+        self,
+        point_collection: PointCollection,
+        herd_count: int = 6,
+        predator_count: int = 3,
+        herd_size: Tuple[int, int] = (3, 6),
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Scatter wild animal herds and lone predators across a region.
+
+        Args:
+            point_collection: Candidate tile positions.
+            herd_count: Number of herd clusters.
+            predator_count: Number of lone predators.
+            herd_size: Inclusive (min, max) members per herd.
+            **kwargs: Forwarded to FaunaScatterTemplate.
+        """
+        return self._apply_content_template(
+            point_collection, TemplateType.FAUNA_SCATTER,
+            herd_count=herd_count, predator_count=predator_count,
+            herd_size=herd_size, **kwargs,
+        )
+
+    def create_berry_bush(
+        self,
+        point_collection: PointCollection,
+        density: float = 0.02,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Scatter forage / fruit bushes (a berry patch) across a region.
+
+        Args:
+            point_collection: Candidate tile positions.
+            density: Approximate fraction of tiles that receive a bush.
+            **kwargs: Forwarded to BerryBushTemplate.
+        """
+        return self._apply_content_template(
+            point_collection, TemplateType.BERRY_BUSH, density=density, **kwargs,
+        )
+
+    def create_bandit_camp(
+        self,
+        point_collection: PointCollection,
+        center_point: Tuple[int, int] | None = None,
+        size: int = 10,
+        tents: int = 5,
+        bandits: int = 6,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a small hostile bandit camp (dirt patch, bonfire, tents, bandits).
+
+        Args:
+            point_collection: Candidate tile positions.
+            center_point: Camp centre; defaults to the region centroid.
+            size: Camp radius in tiles.
+            tents: Number of tents in the ring.
+            bandits: Number of bandit units.
+            **kwargs: Forwarded to BanditCampTemplate.
+        """
+        return self._apply_content_template(
+            point_collection, TemplateType.BANDIT_CAMP,
+            center_point=center_point, size=size, tents=tents, bandits=bandits,
+            **kwargs,
+        )
+
+    def create_snowy_mountain_range(
+        self,
+        point_collection: PointCollection,
+        max_elevation: int = 6,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create an elongated snow-mountain ridgeline with elevation.
+
+        Args:
+            point_collection: Candidate tile positions (elongated for best shape).
+            max_elevation: Peak elevation at the ridge (0–7).
+            **kwargs: Forwarded to SnowyMountainRangeTemplate.
+        """
+        return self._apply_content_template(
+            point_collection, TemplateType.SNOWY_MOUNTAIN_RANGE,
+            max_elevation=max_elevation, **kwargs,
+        )
+
+    def create_lush_forest(
+        self,
+        point_collection: PointCollection,
+        tree_density: float = 0.15,
+        clearings: int = 3,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Create a dense mixed forest with berry bushes, fauna, and clearings.
+
+        Args:
+            point_collection: Candidate tile positions.
+            tree_density: Approximate fraction of tiles that receive a tree.
+            clearings: Number of open clearings.
+            **kwargs: Forwarded to LushForestTemplate.
+        """
+        return self._apply_content_template(
+            point_collection, TemplateType.LUSH_FOREST,
+            tree_density=tree_density, clearings=clearings, **kwargs,
+        )
+
+    def _apply_content_template(
+        self,
+        point_collection: PointCollection,
+        template_type: TemplateType,
+        **kwargs: Any,
+    ) -> PointCollection:
+        """Internal helper: apply a content-toolkit template via the manager."""
+        if len(point_collection.get_point_list()) == 0:
+            return point_collection
+        effective_center = kwargs.get(
+            "center_point", point_collection.get_average_point_position()
+        )
+        config = TemplateConfig(
+            point_collection=point_collection,
+            center_point=effective_center,
+            player_id=PlayerId.GAIA,
+        )
+        self.apply_template(point_collection, template_type, config=config, **kwargs)
+        return point_collection
+
+    # ------------------------------------------------------------------
     # Convenience wrappers for the new structural templates
     # ------------------------------------------------------------------
 
