@@ -53,9 +53,14 @@ def _grass_base(mg: MapManager, seed: int = 0) -> None:
     ``place_groups`` is a *clustering* placer (it scatters groups), so it is
     the wrong tool for a full base fill. Perlin terrain classifies every tile,
     giving a complete, natural-looking ground layer.
+
+    Note: the lowest band uses ``GRASS_OTHER`` (id 16) rather than ``GRASS_1``
+    (id 0). Terrain id 0 collides with the empty sentinel
+    (``DEFAULT_EMPTY_OBJECT = MapObject(0, GAIA)``), so ``GRASS_1`` tiles are
+    indistinguishable from empty and would render as dark gaps.
     """
     bands = (
-        TerrainBand(max_noise=0.30, terrain_id=TerrainId.GRASS_1),
+        TerrainBand(max_noise=0.30, terrain_id=TerrainId.GRASS_OTHER),
         TerrainBand(max_noise=0.60, terrain_id=TerrainId.GRASS_2),
         TerrainBand(max_noise=0.85, terrain_id=TerrainId.GRASS_3),
         TerrainBand(max_noise=1.00, terrain_id=TerrainId.DIRT_1),
@@ -144,6 +149,41 @@ def _build_forest(mg: MapManager, seed: int) -> None:
     )
 
 
+def _build_fauna(mg: MapManager, seed: int) -> None:
+    _grass_base(mg, seed)
+    pts = _region(mg, "fauna_region", 0, 0, 120, 120)
+    mg.create_fauna_scatter(
+        point_collection=pts, herd_count=8, predator_count=4, herd_size=(3, 6)
+    )
+
+
+def _build_berries(mg: MapManager, seed: int) -> None:
+    _grass_base(mg, seed)
+    pts = _region(mg, "berry_region", 0, 0, 120, 120)
+    mg.create_berry_bush(point_collection=pts, density=0.03)
+
+
+def _build_bandit_camp(mg: MapManager, seed: int) -> None:
+    _grass_base(mg, seed)
+    pts = _region(mg, "camp_region", 20, 20, 100, 100)
+    mg.create_bandit_camp(
+        point_collection=pts, center_point=(60, 60), size=14, tents=6, bandits=8
+    )
+
+
+def _build_snowy_mountains(mg: MapManager, seed: int) -> None:
+    _grass_base(mg, seed)
+    # Elongated region so the ridge reads as a range, not a blob.
+    pts = _region(mg, "range_region", 10, 35, 110, 85)
+    mg.create_snowy_mountain_range(point_collection=pts, max_elevation=6)
+
+
+def _build_lush_forest(mg: MapManager, seed: int) -> None:
+    _grass_base(mg, seed)
+    pts = _region(mg, "lush_region", 0, 0, 120, 120)
+    mg.create_lush_forest(point_collection=pts, tree_density=0.15, clearings=4)
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -171,6 +211,35 @@ RECIPES: dict[str, Recipe] = {
             description="Oak forest scatter (evenness showcase)",
             build=_build_forest,
             # Oak trees are placed on the UNIT layer (alongside fauna/bushes).
+            scatter_layer=MapLayerType.UNIT,
+        ),
+        Recipe(
+            name="fauna",
+            description="Wild animal herds and lone predators",
+            build=_build_fauna,
+            # No evenness metric: herds are intentionally clustered, so
+            # nearest-neighbour uniformity is the wrong measure here.
+        ),
+        Recipe(
+            name="berries",
+            description="Forage / fruit bush scatter (berry patch)",
+            build=_build_berries,
+            scatter_layer=MapLayerType.UNIT,
+        ),
+        Recipe(
+            name="bandit_camp",
+            description="Hostile camp: dirt patch, bonfire, tent ring, bandits",
+            build=_build_bandit_camp,
+        ),
+        Recipe(
+            name="snowy_mountains",
+            description="Elongated snow-mountain ridgeline with elevation",
+            build=_build_snowy_mountains,
+        ),
+        Recipe(
+            name="lush_forest",
+            description="Dense mixed forest with berries, fauna, and clearings",
+            build=_build_lush_forest,
             scatter_layer=MapLayerType.UNIT,
         ),
     ]
